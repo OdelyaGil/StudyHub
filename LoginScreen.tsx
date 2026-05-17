@@ -6,14 +6,13 @@ import {
   Pressable,
   StyleSheet,
   ScrollView,
-  Alert,
   ActivityIndicator,
-  Platform,
   Modal,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import emailjs from '@emailjs/browser';
+import { useCustomAlert } from './src/hooks/useCustomAlert';
 
 // ─── EmailJS configuration ───────────────────────────────────────────────────
 // 1. Sign up at https://www.emailjs.com (free tier is enough)
@@ -29,6 +28,7 @@ const EMAILJS_PUBLIC_KEY  = 'JZxomANzuu5P6jRej';
 type RegisteredUser = { email: string; password: string; name: string; userType: string };
 
 const LoginScreen = ({ onLogin }: { navigation: any; onLogin: () => void }) => {
+  const { showAlert, alertNode } = useCustomAlert();
   const [email, setEmail]               = useState('');
   const [password, setPassword]         = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -63,11 +63,6 @@ const LoginScreen = ({ onLogin }: { navigation: any; onLogin: () => void }) => {
   };
 
   const validateEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
-
-  const showAlert = (title: string, message: string) => {
-    if (Platform.OS === 'web') window.alert(`${title}\n${message}`);
-    else Alert.alert(title, message);
-  };
 
   // ── Login ──────────────────────────────────────────────────────────────────
   const handleLogin = async () => {
@@ -390,6 +385,7 @@ const LoginScreen = ({ onLogin }: { navigation: any; onLogin: () => void }) => {
           </View>
         </View>
       </Modal>
+      {alertNode}
     </View>
   );
 };

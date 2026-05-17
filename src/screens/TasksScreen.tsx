@@ -6,13 +6,13 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  Alert,
   Modal,
   FlatList,
   RefreshControl,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useCustomAlert } from '../hooks/useCustomAlert';
 
 interface Task {
   id: number;
@@ -26,6 +26,7 @@ interface Task {
 }
 
 const TasksScreen = () => {
+  const { showAlert, showDestructiveConfirm, alertNode } = useCustomAlert();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [taskName, setTaskName] = useState('');
@@ -59,7 +60,7 @@ const TasksScreen = () => {
 
   const handleAddTask = async () => {
     if (!taskName || !taskDueDate) {
-      Alert.alert('שגיאה', 'אנא מלא את כל השדות הנדרשים');
+      showAlert('שגיאה', 'אנא מלא את כל השדות הנדרשים');
       return;
     }
 
@@ -86,9 +87,9 @@ const TasksScreen = () => {
       setTaskEstimate('');
       setTaskDescription('');
       setModalVisible(false);
-      Alert.alert('הצלחה', 'המטלה נשמרה בהצלחה');
+      showAlert('הצלחה', 'המטלה נשמרה בהצלחה');
     } catch (e) {
-      Alert.alert('שגיאה', 'שמירת המטלה נכשלה');
+      showAlert('שגיאה', 'שמירת המטלה נכשלה');
     }
   };
 
@@ -104,22 +105,16 @@ const TasksScreen = () => {
     }
   };
 
-  const handleDeleteTask = async (id: number) => {
-    Alert.alert('מחק מטלה', 'האם אתה בטוח?', [
-      { text: 'ביטול', onPress: () => {} },
-      {
-        text: 'מחק',
-        onPress: async () => {
-          const updatedTasks = tasks.filter((t) => t.id !== id);
-          setTasks(updatedTasks);
-          try {
-            await AsyncStorage.setItem('tasks', JSON.stringify(updatedTasks));
-          } catch (e) {
-            console.log(e);
-          }
-        },
-      },
-    ]);
+  const handleDeleteTask = (id: number) => {
+    showDestructiveConfirm('מחק מטלה', 'האם אתה בטוח שברצונך למחוק את המטלה?', 'מחק', async () => {
+      const updatedTasks = tasks.filter((t) => t.id !== id);
+      setTasks(updatedTasks);
+      try {
+        await AsyncStorage.setItem('tasks', JSON.stringify(updatedTasks));
+      } catch (e) {
+        console.log(e);
+      }
+    });
   };
 
   const getDaysLeft = (dueDate: string) => {
@@ -361,6 +356,7 @@ const TasksScreen = () => {
           </View>
         </View>
       </Modal>
+      {alertNode}
     </View>
   );
 };

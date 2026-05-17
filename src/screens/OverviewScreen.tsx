@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useFocusEffect } from '@react-navigation/native';
 
 const OverviewScreen = () => {
   const [grades, setGrades] = useState([]);
@@ -18,9 +19,9 @@ const OverviewScreen = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [avg, setAvg] = useState('-');
 
-  useEffect(() => {
+  useFocusEffect(useCallback(() => {
     loadData();
-  }, []);
+  }, []));
 
   const loadData = async () => {
     try {
