@@ -37,26 +37,33 @@ interface Grade {
 const SEMESTERS = ['א', 'ב', 'קיץ'];
 const YEARS     = ['שנה א', 'שנה ב', 'שנה ג', 'שנה ד'];
 
-const GradesScreen = () => {
-  const { showAlert, showDestructiveConfirm, alertNode } = useCustomAlert();
+// Accept both "30" and "0.3" as 30%
+const normalizePct = (val: string): number => {
+  const n = Number(val);
+  if (isNaN(n) || n <= 0) return 0;
+  return n > 0 && n <= 1 ? Math.round(n * 100) : Math.round(n);
+};
 
-  const [grades, setGrades]       = useState<Grade[]>([]);
+const GradesScreen = () => {
+  const { showAlert, showConfirm, showDestructiveConfirm, alertNode } = useCustomAlert();
+
+  const [grades, setGrades]         = useState<Grade[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
+  const [editingId, setEditingId]   = useState<number | null>(null);
 
   // Form fields
-  const [courseName, setCourseName]   = useState('');
-  const [credits, setCredits]         = useState('');
-  const [semester, setSemester]       = useState('א');
-  const [year, setYear]               = useState('שנה א');
-  const [finalGrade, setFinalGrade]   = useState('');
-  const [criteria, setCriteria]       = useState<Criterion[]>([]);
+  const [courseName, setCourseName] = useState('');
+  const [credits, setCredits]       = useState('');
+  const [semester, setSemester]     = useState('א');
+  const [year, setYear]             = useState('שנה א');
+  const [criteria, setCriteria]     = useState<Criterion[]>([]);
 
-  // Criterion being added
-  const [critName, setCritName]         = useState('');
-  const [critPct, setCritPct]           = useState('');
-  const [critGrade, setCritGrade]       = useState('');
-  const [showCritForm, setShowCritForm] = useState(false);
+  // Criterion form
+  const [critName,       setCritName]       = useState('');
+  const [critPct,        setCritPct]        = useState('');
+  const [critGrade,      setCritGrade]      = useState('');
+  const [showCritForm,   setShowCritForm]   = useState(false);
 
   useFocusEffect(useCallback(() => { loadGrades(); }, []));
 
@@ -73,7 +80,7 @@ const GradesScreen = () => {
     setRefreshing(false);
   };
 
-  // Weighted average: Σ(grade × credits) / Σ(credits)
+  // Weighted average: Σ(grade × credits) / Σ(credits) — skips courses with no grade yet
   const calcWeightedAvg = (list: Grade[]) => {
     const withGrades = list.filter((g) => g.value > 0 && g.credits > 0);
     if (withGrades.length === 0) return '-';
@@ -84,27 +91,28 @@ const GradesScreen = () => {
 
   const totalCredits = grades.reduce((s, g) => s + (g.credits || 0), 0);
 
-  // Auto-calculate final grade from criteria
+  const pctUsed = criteria.reduce((s, c) => s + c.percentage, 0);
+
+  // Returns computed grade only when all criteria are filled AND sum == 100
   const calcAutoGrade = () => {
     if (criteria.length === 0) return null;
-    const filled = criteria.filter((c) => c.grade !== '' && !isNaN(Number(c.grade)));
-    if (filled.length !== criteria.length) return null;
-    const pctSum = criteria.reduce((s, c) => s + c.percentage, 0);
-    if (pctSum !== 100) return null;
+    const allFilled = criteria.every((c) => c.grade !== '' && !isNaN(Number(c.grade)));
+    if (!allFilled) return null;
+    if (pctUsed !== 100) return null;
     const weighted = criteria.reduce((s, c) => s + Number(c.grade) * c.percentage / 100, 0);
-    return weighted.toFixed(2);
+    return String(Math.round(weighted));
   };
 
   const autoGrade = calcAutoGrade();
 
+  // ── Criterion CRUD ────────────────────────────────────────────────────────
   const handleAddCriterion = () => {
     if (!critName.trim()) return showAlert('שגיאה', 'הזן שם לקריטריון');
-    const pct = Number(critPct);
-    if (!critPct || isNaN(pct) || pct <= 0 || pct > 100)
-      return showAlert('שגיאה', 'הזן אחוז תקין (1-100)');
-    const usedPct = criteria.reduce((s, c) => s + c.percentage, 0);
-    if (usedPct + pct > 100)
-      return showAlert('שגיאה', `נותרו רק ${100 - usedPct}% לחלוקה`);
+    const pct = normalizePct(critPct);
+    if (pct <= 0) return showAlert('שגיאה', 'הזן אחוז תקין\n(למשל: 30 או 0.3)');
+    if (pct > 100) return showAlert('שגיאה', 'אחוז לא יכול לעלות על 100');
+    if (pctUsed + pct > 100)
+      return showAlert('שגיאה', `נותרו רק ${100 - pctUsed}% לחלוקה`);
 
     setCriteria([...criteria, { id: Date.now(), name: critName.trim(), percentage: pct, grade: critGrade }]);
     setCritName(''); setCritPct(''); setCritGrade('');
@@ -117,39 +125,68 @@ const GradesScreen = () => {
   const updateCritGrade = (id: number, val: string) =>
     setCriteria(criteria.map((c) => c.id === id ? { ...c, grade: val } : c));
 
+  // ── Form reset / open edit ────────────────────────────────────────────────
   const resetForm = () => {
     setCourseName(''); setCredits(''); setSemester('א'); setYear('שנה א');
-    setFinalGrade(''); setCriteria([]); setCritName(''); setCritPct('');
-    setCritGrade(''); setShowCritForm(false);
+    setCriteria([]); setCritName(''); setCritPct(''); setCritGrade('');
+    setShowCritForm(false); setEditingId(null);
   };
 
-  const handleAddGrade = async () => {
-    if (!courseName.trim()) return showAlert('שגיאה', 'אנא הזן שם קורס');
-    const cred = Number(credits);
-    if (credits === '' || isNaN(cred) || cred < 0) return showAlert('שגיאה', 'אנא הזן מספר נקודות זכות תקין');
+  const openEdit = (item: Grade) => {
+    setCourseName(item.name);
+    setCredits(String(item.credits));
+    setSemester(item.semester);
+    setYear(item.year);
+    setCriteria(item.criteria ?? []);
+    setCritName(''); setCritPct(''); setCritGrade('');
+    setShowCritForm(false);
+    setEditingId(item.id);
+    setModalVisible(true);
+  };
 
-    const effectiveGrade = autoGrade ? Number(autoGrade) : Number(finalGrade);
-    if (!autoGrade && (!finalGrade || isNaN(effectiveGrade)))
-      return showAlert('שגיאה', 'אנא הזן ציון סופי');
-
-    const newGrade: Grade = {
-      id: Date.now(),
+  // ── Save (add or edit) ────────────────────────────────────────────────────
+  const doSave = async (gradeValue: number) => {
+    const gradeObj: Grade = {
+      id: editingId ?? Date.now(),
       name: courseName.trim(),
-      credits: cred,
-      value: effectiveGrade,
+      credits: Number(credits),
+      value: gradeValue,
       semester,
       year,
       criteria,
       date: new Date().toLocaleDateString('he-IL'),
     };
+    const updated = editingId !== null
+      ? grades.map((g) => g.id === editingId ? gradeObj : g)
+      : [...grades, gradeObj];
 
-    const updated = [...grades, newGrade];
     setGrades(updated);
     try {
       await AsyncStorage.setItem('grades', JSON.stringify(updated));
       resetForm();
       setModalVisible(false);
     } catch { showAlert('שגיאה', 'שמירת הציון נכשלה'); }
+  };
+
+  const handleSaveGrade = async () => {
+    if (!courseName.trim()) return showAlert('שגיאה', 'אנא הזן שם קורס');
+    const cred = Number(credits);
+    if (credits === '' || isNaN(cred) || cred < 0)
+      return showAlert('שגיאה', 'אנא הזן מספר נקודות זכות תקין');
+    if (criteria.length === 0)
+      return showAlert('שגיאה', 'אנא הוסף לפחות קריטריון אחד\n(ניתן להוסיף קריטריון אחד עם 100%)');
+
+    if (pctUsed < 100) {
+      showConfirm(
+        'שים לב',
+        `סך האחוזים הוא ${pctUsed}% בלבד.\nהציון הסופי לא יחושב עד שסך האחוזים יגיע ל-100%.\nהאם להמשיך?`,
+        () => doSave(0),
+      );
+      return;
+    }
+
+    // pctUsed === 100
+    await doSave(autoGrade ? Number(autoGrade) : 0);
   };
 
   const handleDeleteGrade = (id: number) => {
@@ -160,8 +197,7 @@ const GradesScreen = () => {
     });
   };
 
-  const pctUsed = criteria.reduce((s, c) => s + c.percentage, 0);
-
+  // ── Grade list item ───────────────────────────────────────────────────────
   const GradeItem = ({ item }: { item: Grade }) => {
     const itemCriteria = item.criteria ?? [];
     return (
@@ -181,15 +217,23 @@ const GradesScreen = () => {
           )}
         </View>
         <View style={styles.gradeRight}>
-          <Text style={styles.gradeValue}>{item.value}</Text>
-          <TouchableOpacity onPress={() => handleDeleteGrade(item.id)} style={styles.deleteBtn}>
-            <MaterialCommunityIcons name="trash-can" size={18} color="#ff6b6b" />
-          </TouchableOpacity>
+          <Text style={[styles.gradeValue, item.value === 0 && styles.gradeValuePending]}>
+            {item.value > 0 ? item.value : '—'}
+          </Text>
+          <View style={styles.gradeActions}>
+            <TouchableOpacity onPress={() => openEdit(item)} style={styles.actionBtn}>
+              <MaterialCommunityIcons name="pencil-outline" size={17} color="#667eea" />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => handleDeleteGrade(item.id)} style={styles.actionBtn}>
+              <MaterialCommunityIcons name="trash-can-outline" size={17} color="#ff6b6b" />
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     );
   };
 
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <View style={styles.container}>
       <ScrollView
@@ -218,7 +262,7 @@ const GradesScreen = () => {
               .filter((g) => g.year === yr)
               .sort((a, b) => (semOrder[a.semester] ?? 9) - (semOrder[b.semester] ?? 9));
             if (yearGrades.length === 0) return null;
-            const yearAvg = calcWeightedAvg(yearGrades);
+            const yearAvg     = calcWeightedAvg(yearGrades);
             const yearCredits = yearGrades.reduce((s, g) => s + (g.credits || 0), 0);
             return (
               <View key={yr} style={styles.yearSection}>
@@ -249,16 +293,16 @@ const GradesScreen = () => {
       </ScrollView>
 
       {/* FAB */}
-      <TouchableOpacity style={styles.fab} onPress={() => setModalVisible(true)}>
+      <TouchableOpacity style={styles.fab} onPress={() => { resetForm(); setModalVisible(true); }}>
         <MaterialCommunityIcons name="plus" size={28} color="#fff" />
       </TouchableOpacity>
 
-      {/* Add Grade Modal */}
+      {/* Add / Edit Grade Modal */}
       <Modal visible={modalVisible} animationType="slide" transparent>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>הוסף ציון חדש</Text>
+              <Text style={styles.modalTitle}>{editingId !== null ? 'עריכת ציון' : 'הוסף ציון חדש'}</Text>
               <TouchableOpacity onPress={() => { resetForm(); setModalVisible(false); }}>
                 <MaterialCommunityIcons name="close" size={24} color="#333" />
               </TouchableOpacity>
@@ -266,35 +310,27 @@ const GradesScreen = () => {
 
             <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
 
-              {/* Course Name */}
               <Text style={styles.label}>שם הקורס</Text>
               <TextInput style={styles.input} placeholder="למשל: חדו״א 1"
                 value={courseName} onChangeText={setCourseName} />
 
-              {/* Credits */}
               <Text style={styles.label}>נקודות זכות</Text>
               <TextInput style={styles.input} placeholder="למשל: 3"
                 value={credits} onChangeText={setCredits} keyboardType="decimal-pad" />
 
-              {/* Semester */}
               <Text style={styles.label}>סמסטר</Text>
               <View style={styles.chipRow}>
                 {SEMESTERS.map((s) => (
-                  <Pressable key={s}
-                    style={[styles.chip, semester === s && styles.chipActive]}
-                    onPress={() => setSemester(s)}>
+                  <Pressable key={s} style={[styles.chip, semester === s && styles.chipActive]} onPress={() => setSemester(s)}>
                     <Text style={[styles.chipText, semester === s && styles.chipTextActive]}>סמסטר {s}</Text>
                   </Pressable>
                 ))}
               </View>
 
-              {/* Year */}
               <Text style={styles.label}>שנה</Text>
               <View style={styles.chipRow}>
                 {YEARS.map((y) => (
-                  <Pressable key={y}
-                    style={[styles.chip, year === y && styles.chipActive]}
-                    onPress={() => setYear(y)}>
+                  <Pressable key={y} style={[styles.chip, year === y && styles.chipActive]} onPress={() => setYear(y)}>
                     <Text style={[styles.chipText, year === y && styles.chipTextActive]}>{y}</Text>
                   </Pressable>
                 ))}
@@ -304,7 +340,7 @@ const GradesScreen = () => {
               <View style={styles.criteriaSection}>
                 <View style={styles.criteriaHeader}>
                   <Text style={styles.label}>קריטריונים לציון</Text>
-                  <Text style={styles.pctBadge}>{pctUsed}/100%</Text>
+                  <Text style={[styles.pctBadge, pctUsed === 100 && styles.pctBadgeFull]}>{pctUsed}/100%</Text>
                 </View>
 
                 {criteria.map((c) => (
@@ -331,8 +367,13 @@ const GradesScreen = () => {
                     <TextInput style={styles.critInput} placeholder="שם (למשל: בחינה סופית)"
                       value={critName} onChangeText={setCritName} />
                     <View style={styles.critRow}>
-                      <TextInput style={[styles.critInput, { flex: 1 }]} placeholder="אחוז"
-                        value={critPct} onChangeText={setCritPct} keyboardType="decimal-pad" />
+                      <TextInput
+                        style={[styles.critInput, { flex: 1 }]}
+                        placeholder="משקל: 30 או 0.3"
+                        value={critPct}
+                        onChangeText={setCritPct}
+                        keyboardType="decimal-pad"
+                      />
                       <TextInput style={[styles.critInput, { flex: 1 }]} placeholder="ציון (אופציונלי)"
                         value={critGrade} onChangeText={setCritGrade} keyboardType="decimal-pad" />
                     </View>
@@ -353,20 +394,16 @@ const GradesScreen = () => {
                 ) : null}
               </View>
 
-              {/* Final Grade */}
-              <Text style={styles.label}>ציון סופי</Text>
-              {autoGrade ? (
+              {/* Computed grade preview */}
+              {autoGrade && (
                 <View style={styles.autoGradeBox}>
-                  <Text style={styles.autoGradeLabel}>חושב אוטומטית מהקריטריונים:</Text>
+                  <Text style={styles.autoGradeLabel}>ציון סופי מחושב</Text>
                   <Text style={styles.autoGradeValue}>{autoGrade}</Text>
                 </View>
-              ) : (
-                <TextInput style={styles.input} placeholder="0–100"
-                  value={finalGrade} onChangeText={setFinalGrade} keyboardType="decimal-pad" />
               )}
 
-              <TouchableOpacity style={styles.submitBtn} onPress={handleAddGrade}>
-                <Text style={styles.submitBtnText}>הוסף ציון</Text>
+              <TouchableOpacity style={styles.submitBtn} onPress={handleSaveGrade}>
+                <Text style={styles.submitBtnText}>{editingId !== null ? 'שמור שינויים' : 'הוסף ציון'}</Text>
               </TouchableOpacity>
             </ScrollView>
           </View>
@@ -386,8 +423,6 @@ const styles = StyleSheet.create({
   avgDivider:  { width: 1, height: 40, backgroundColor: 'rgba(255,255,255,0.3)' },
   avgLabel:    { color: '#fff', fontSize: 12, fontWeight: '600', opacity: 0.85 },
   avgValue:    { color: '#fff', fontSize: 32, fontWeight: '700', marginTop: 4 },
-  section:     { marginBottom: 20 },
-  sectionTitle:{ fontSize: 16, fontWeight: '700', color: '#333', marginBottom: 12 },
   yearSection:  { marginBottom: 24 },
   yearHeader:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   yearTitle:    { fontSize: 16, fontWeight: '700', color: '#333' },
@@ -401,16 +436,18 @@ const styles = StyleSheet.create({
     borderLeftWidth: 4, borderLeftColor: '#667eea',
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.07, shadowRadius: 4, elevation: 2,
   },
-  gradeInfo:    { flex: 1 },
-  gradeName:    { fontSize: 15, fontWeight: '700', color: '#333', marginBottom: 3 },
-  gradeMeta:    { fontSize: 11, color: '#999', marginBottom: 5 },
-  criteriaRow:  { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
-  criterionTag: { fontSize: 10, color: '#667eea', backgroundColor: '#f0f3ff', borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 },
-  gradeRight:   { alignItems: 'flex-end' },
-  gradeValue:   { fontSize: 26, fontWeight: '700', color: '#667eea', marginBottom: 6 },
-  deleteBtn:    { padding: 6 },
-  emptyState:   { alignItems: 'center', justifyContent: 'center', paddingVertical: 60 },
-  emptyStateText: { fontSize: 14, color: '#999', marginTop: 12 },
+  gradeInfo:         { flex: 1, marginRight: 8 },
+  gradeName:         { fontSize: 15, fontWeight: '700', color: '#333', marginBottom: 3 },
+  gradeMeta:         { fontSize: 11, color: '#999', marginBottom: 5 },
+  criteriaRow:       { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
+  criterionTag:      { fontSize: 10, color: '#667eea', backgroundColor: '#f0f3ff', borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 },
+  gradeRight:        { alignItems: 'flex-end' },
+  gradeValue:        { fontSize: 26, fontWeight: '700', color: '#667eea', marginBottom: 4 },
+  gradeValuePending: { fontSize: 20, color: '#ccc' },
+  gradeActions:      { flexDirection: 'row', gap: 2 },
+  actionBtn:         { padding: 5 },
+  emptyState:        { alignItems: 'center', justifyContent: 'center', paddingVertical: 60 },
+  emptyStateText:    { fontSize: 14, color: '#999', marginTop: 12 },
   fab: {
     position: 'absolute', bottom: 20, right: 20,
     width: 56, height: 56, borderRadius: 28,
@@ -432,29 +469,30 @@ const styles = StyleSheet.create({
   chipActive:     { borderColor: '#667eea', backgroundColor: '#f0f3ff' },
   chipText:       { fontSize: 13, color: '#999', fontWeight: '600' },
   chipTextActive: { color: '#667eea' },
-  criteriaSection:{ marginBottom: 18 },
-  criteriaHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-  pctBadge:       { fontSize: 12, fontWeight: '700', color: '#667eea', backgroundColor: '#f0f3ff', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
-  criterionRow:   { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f9f9f9', borderRadius: 10, padding: 10, marginBottom: 6, gap: 8 },
-  criterionInfo:  { flex: 1 },
-  criterionName:  { fontSize: 13, fontWeight: '600', color: '#333' },
-  criterionPct:   { fontSize: 11, color: '#999' },
+  criteriaSection: { marginBottom: 18 },
+  criteriaHeader:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  pctBadge:        { fontSize: 12, fontWeight: '700', color: '#667eea', backgroundColor: '#f0f3ff', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
+  pctBadgeFull:    { color: '#fff', backgroundColor: '#51cf66' },
+  criterionRow:    { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f9f9f9', borderRadius: 10, padding: 10, marginBottom: 6, gap: 8 },
+  criterionInfo:   { flex: 1 },
+  criterionName:   { fontSize: 13, fontWeight: '600', color: '#333' },
+  criterionPct:    { fontSize: 11, color: '#999' },
   criterionGradeInput: { width: 60, borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 6, fontSize: 13, textAlign: 'center', backgroundColor: '#fff' },
-  addCritBtn:     { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 10, paddingHorizontal: 14, borderRadius: 10, borderWidth: 1.5, borderColor: '#667eea' },
-  addCritText:    { fontSize: 13, color: '#667eea', fontWeight: '600' },
-  critFormBox:    { backgroundColor: '#f9f9f9', borderRadius: 12, padding: 14, marginTop: 4 },
-  critInput:      { borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 13, backgroundColor: '#fff', marginBottom: 10, color: '#333' },
-  critRow:        { flexDirection: 'row', gap: 8 },
-  critButtons:    { flexDirection: 'row', gap: 8 },
-  critCancelBtn:  { flex: 1, paddingVertical: 10, borderRadius: 8, borderWidth: 1, borderColor: '#e0e0e0', alignItems: 'center' },
-  critCancelText: { fontSize: 13, color: '#999', fontWeight: '600' },
-  critAddBtn:     { flex: 1, paddingVertical: 10, borderRadius: 8, backgroundColor: '#667eea', alignItems: 'center' },
-  critAddText:    { fontSize: 13, color: '#fff', fontWeight: '700' },
-  autoGradeBox:   { backgroundColor: '#f0f3ff', borderRadius: 10, padding: 14, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 },
-  autoGradeLabel: { fontSize: 13, color: '#667eea' },
-  autoGradeValue: { fontSize: 22, fontWeight: '700', color: '#667eea' },
-  submitBtn:      { backgroundColor: '#667eea', paddingVertical: 14, borderRadius: 10, alignItems: 'center', marginTop: 4, marginBottom: 24 },
-  submitBtnText:  { color: '#fff', fontSize: 15, fontWeight: '700' },
+  addCritBtn:      { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 10, paddingHorizontal: 14, borderRadius: 10, borderWidth: 1.5, borderColor: '#667eea' },
+  addCritText:     { fontSize: 13, color: '#667eea', fontWeight: '600' },
+  critFormBox:     { backgroundColor: '#f9f9f9', borderRadius: 12, padding: 14, marginTop: 4 },
+  critInput:       { borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 13, backgroundColor: '#fff', marginBottom: 10, color: '#333' },
+  critRow:         { flexDirection: 'row', gap: 8 },
+  critButtons:     { flexDirection: 'row', gap: 8 },
+  critCancelBtn:   { flex: 1, paddingVertical: 10, borderRadius: 8, borderWidth: 1, borderColor: '#e0e0e0', alignItems: 'center' },
+  critCancelText:  { fontSize: 13, color: '#999', fontWeight: '600' },
+  critAddBtn:      { flex: 1, paddingVertical: 10, borderRadius: 8, backgroundColor: '#667eea', alignItems: 'center' },
+  critAddText:     { fontSize: 13, color: '#fff', fontWeight: '700' },
+  autoGradeBox:    { backgroundColor: '#f0f3ff', borderRadius: 10, padding: 14, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 },
+  autoGradeLabel:  { fontSize: 13, color: '#667eea' },
+  autoGradeValue:  { fontSize: 22, fontWeight: '700', color: '#667eea' },
+  submitBtn:       { backgroundColor: '#667eea', paddingVertical: 14, borderRadius: 10, alignItems: 'center', marginTop: 4, marginBottom: 24 },
+  submitBtnText:   { color: '#fff', fontSize: 15, fontWeight: '700' },
 });
 
 export default GradesScreen;
