@@ -56,10 +56,10 @@ const OverviewScreen = () => {
   return (
     <ScrollView style={styles.container} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
       <View style={styles.statsGrid}>
-        <StatCard title="ממוצע"   value={avg}          icon="chart-line"             colors={['#667eea', '#764ba2']} />
-        <StatCard title="מטלות"   value={activeTasks}  icon="checkbox-multiple-marked" colors={['#f093fb', '#f5576c']} />
-        <StatCard title="קורסים"  value={courseCount}  icon="school"                 colors={['#4facfe', '#00f2fe']} />
-        <StatCard title="נושאים"  value={topics.length} icon="brain"                 colors={['#fa709a', '#fee140']} />
+        <StatCard title="ממוצע"   value={avg}          icon="chart-line"             colors={['#CE6385', '#9E3F65']} />
+        <StatCard title="מטלות"   value={activeTasks}  icon="checkbox-multiple-marked" colors={['#4CAFAE', '#2A8F8E']} />
+        <StatCard title="קורסים"  value={courseCount}  icon="school"                 colors={['#EB98B4', '#CE6385']} />
+        <StatCard title="נושאים"  value={topics.length} icon="brain"                 colors={['#FCCE90', '#F5A623']} />
       </View>
 
       {nextTask && (
@@ -72,7 +72,7 @@ const OverviewScreen = () => {
                 {nextTask.course ? <Text style={styles.taskCourse}>{nextTask.course}</Text> : null}
               </View>
               <View style={[styles.priorityBadge, {
-                backgroundColor: nextTask.priority === 'גבוהה' ? '#ff6b6b' : nextTask.priority === 'בינונית' ? '#ffa94d' : '#51cf66'
+                backgroundColor: nextTask.priority === 'גבוהה' ? '#CE6385' : nextTask.priority === 'בינונית' ? '#EB98B4' : '#4CAFAE'
               }]}>
                 <Text style={styles.priorityText}>{nextTask.priority}</Text>
               </View>
@@ -111,17 +111,17 @@ const OverviewScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container:     { flex: 1, backgroundColor: '#f5f5f5', padding: 15 },
+  container:     { flex: 1, backgroundColor: '#FFF5F7', padding: 15 },
   statsGrid:     { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 20 },
-  statCard:      { width: '48%', borderRadius: 15, padding: 15, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 5, elevation: 3 },
+  statCard:      { width: '48%', borderRadius: 20, padding: 15, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 8, elevation: 4 },
   statTitle:     { color: '#fff', fontSize: 12, fontWeight: '600', marginTop: 10, opacity: 0.9 },
   statValue:     { color: '#fff', fontSize: 28, fontWeight: '700', marginTop: 5 },
   section:       { marginBottom: 20 },
   sectionTitle:  { fontSize: 16, fontWeight: '700', color: '#333', marginBottom: 12, textAlign: 'right' },
   taskCard: {
-    backgroundColor: '#fff', borderRadius: 12, padding: 15,
-    borderRightWidth: 4, borderRightColor: '#667eea',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 5, elevation: 2,
+    backgroundColor: '#fff', borderRadius: 16, padding: 15,
+    borderRightWidth: 4, borderRightColor: '#CE6385',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3,
   },
   taskHeader:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   taskName:      { fontSize: 15, fontWeight: '700', color: '#333', textAlign: 'right' },
@@ -130,9 +130,9 @@ const styles = StyleSheet.create({
   priorityText:  { color: '#fff', fontSize: 11, fontWeight: '600' },
   taskDueDate:   { fontSize: 13, color: '#ff6b6b', fontWeight: '600', textAlign: 'right' },
   progressGrid:  { flexDirection: 'row', gap: 12 },
-  progressCard:  { flex: 1, backgroundColor: '#fff', borderRadius: 12, padding: 15, alignItems: 'center', borderTopWidth: 3, borderTopColor: '#667eea', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 5, elevation: 2 },
+  progressCard:  { flex: 1, backgroundColor: '#fff', borderRadius: 16, padding: 15, alignItems: 'center', borderTopWidth: 3, borderTopColor: '#4CAFAE', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3 },
   progressLabel: { fontSize: 12, color: '#999', fontWeight: '600' },
-  progressValue: { fontSize: 24, fontWeight: '700', color: '#667eea', marginTop: 8 },
+  progressValue: { fontSize: 24, fontWeight: '700', color: '#CE6385', marginTop: 8 },
   emptyState:    { alignItems: 'center', justifyContent: 'center', paddingVertical: 40 },
   emptyStateText:{ fontSize: 14, color: '#999', marginTop: 12 },
 });

@@ -33,7 +33,7 @@ const HEBREW_MONTHS = [
   'יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר',
 ];
 const DAY_LABELS = ['א׳','ב׳','ג׳','ד׳','ה׳','ו׳','ש׳'];
-const EVENT_COLORS = ['#667eea','#f5576c','#43e97b','#f093fb','#fda085','#4facfe','#fa709a','#38f9d7'];
+const EVENT_COLORS = ['#CE6385','#4CAFAE','#EB98B4','#FCCE90','#9E3F65','#2A8F8E','#F5A623','#E65C7A'];
 const RECURRENCE_OPTIONS: { key: CalendarEvent['recurrence']; label: string }[] = [
   { key: 'none',    label: 'ללא' },
   { key: 'daily',   label: 'יומי' },
@@ -312,15 +312,15 @@ const ScheduleScreen = () => {
     return (
       <View style={styles.webPickerRow}>
         <View style={styles.webPickerCol}>
-          <Text style={styles.webPickerSubLabel}>יום</Text>
+          <Text style={styles.webPickerSubLabel}>שנה</Text>
           <Picker
-            selectedValue={day}
-            onValueChange={d => onChange(buildDateISO(Number(d), m, y))}
-            style={[styles.webPickerBase, styles.webPickerDay]}
+            selectedValue={y}
+            onValueChange={newY => onChange(buildDateISO(day, m, Number(newY)))}
+            style={[styles.webPickerBase, styles.webPickerYear]}
           >
-            {Array.from({ length: maxDay }, (_, i) => i + 1).map(d => (
-              <Picker.Item key={d} label={String(d)} value={d} />
-            ))}
+            {YEAR_OPTIONS
+              .filter(yr => !minParts || yr >= minParts.year)
+              .map(yr => <Picker.Item key={yr} label={String(yr)} value={yr} />)}
           </Picker>
         </View>
         <View style={[styles.webPickerCol, { flex: 1 }]}>
@@ -336,15 +336,15 @@ const ScheduleScreen = () => {
           </Picker>
         </View>
         <View style={styles.webPickerCol}>
-          <Text style={styles.webPickerSubLabel}>שנה</Text>
+          <Text style={styles.webPickerSubLabel}>יום</Text>
           <Picker
-            selectedValue={y}
-            onValueChange={newY => onChange(buildDateISO(day, m, Number(newY)))}
-            style={[styles.webPickerBase, styles.webPickerYear]}
+            selectedValue={day}
+            onValueChange={d => onChange(buildDateISO(Number(d), m, y))}
+            style={[styles.webPickerBase, styles.webPickerDay]}
           >
-            {YEAR_OPTIONS
-              .filter(yr => !minParts || yr >= minParts.year)
-              .map(yr => <Picker.Item key={yr} label={String(yr)} value={yr} />)}
+            {Array.from({ length: maxDay }, (_, i) => i + 1).map(d => (
+              <Picker.Item key={d} label={String(d)} value={d} />
+            ))}
           </Picker>
         </View>
       </View>
@@ -441,14 +441,14 @@ const ScheduleScreen = () => {
       <View style={styles.calBlock}>
         <View style={styles.calHeader}>
           <TouchableOpacity onPress={goToPrev} style={styles.navBtn}>
-            <MaterialCommunityIcons name="chevron-right" size={24} color="#667eea" />
+            <MaterialCommunityIcons name="chevron-right" size={24} color="#CE6385" />
           </TouchableOpacity>
           <TouchableOpacity style={styles.monthYearBtn} onPress={() => { setPickerYear(year); setPickerVisible(true); }}>
             <Text style={styles.monthLabel}>{HEBREW_MONTHS[month]} {year}</Text>
-            <MaterialCommunityIcons name="menu-down" size={18} color="#667eea" />
+            <MaterialCommunityIcons name="menu-down" size={18} color="#CE6385" />
           </TouchableOpacity>
           <TouchableOpacity onPress={goToNext} style={styles.navBtn}>
-            <MaterialCommunityIcons name="chevron-left" size={24} color="#667eea" />
+            <MaterialCommunityIcons name="chevron-left" size={24} color="#CE6385" />
           </TouchableOpacity>
           <TouchableOpacity onPress={goToToday} style={styles.todayBtn}>
             <Text style={styles.todayBtnText}>היום</Text>
@@ -511,7 +511,7 @@ const ScheduleScreen = () => {
                 </View>
                 <View style={styles.eventActions}>
                   <TouchableOpacity onPress={() => openEdit(ev)} style={styles.actionBtn}>
-                    <MaterialCommunityIcons name="pencil-outline" size={18} color="#667eea" />
+                    <MaterialCommunityIcons name="pencil-outline" size={18} color="#CE6385" />
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => handleDelete(ev.id)} style={styles.actionBtn}>
                     <MaterialCommunityIcons name="trash-can-outline" size={18} color="#ff6b6b" />
@@ -534,11 +534,11 @@ const ScheduleScreen = () => {
           <View style={styles.pickerBox} onStartShouldSetResponder={() => true}>
             <View style={styles.pickerYearRow}>
               <TouchableOpacity onPress={() => setPickerYear(y => y - 1)} style={styles.pickerYearBtn}>
-                <MaterialCommunityIcons name="chevron-right" size={22} color="#667eea" />
+                <MaterialCommunityIcons name="chevron-right" size={22} color="#CE6385" />
               </TouchableOpacity>
               <Text style={styles.pickerYearText}>{pickerYear}</Text>
               <TouchableOpacity onPress={() => setPickerYear(y => y + 1)} style={styles.pickerYearBtn}>
-                <MaterialCommunityIcons name="chevron-left" size={22} color="#667eea" />
+                <MaterialCommunityIcons name="chevron-left" size={22} color="#CE6385" />
               </TouchableOpacity>
             </View>
             <View style={styles.pickerMonthGrid}>
@@ -588,7 +588,7 @@ const ScheduleScreen = () => {
                     activeOpacity={0.7}
                   >
                     <Text style={styles.pickerBtnText}>{fmtDate(eventDate)}</Text>
-                    <MaterialCommunityIcons name="calendar" size={18} color="#667eea" />
+                    <MaterialCommunityIcons name="calendar" size={18} color="#CE6385" />
                   </TouchableOpacity>
                 )}
               </View>
@@ -623,7 +623,7 @@ const ScheduleScreen = () => {
                         activeOpacity={0.7}
                       >
                         <Text style={styles.pickerBtnText}>{eventStartTime || '09:00'}</Text>
-                        <MaterialCommunityIcons name="clock-outline" size={18} color="#667eea" />
+                        <MaterialCommunityIcons name="clock-outline" size={18} color="#CE6385" />
                       </TouchableOpacity>
                     </View>
 
@@ -640,7 +640,7 @@ const ScheduleScreen = () => {
                         activeOpacity={0.7}
                       >
                         <Text style={styles.pickerBtnText}>{eventEndTime}</Text>
-                        <MaterialCommunityIcons name="clock-outline" size={18} color="#667eea" />
+                        <MaterialCommunityIcons name="clock-outline" size={18} color="#CE6385" />
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -705,7 +705,7 @@ const ScheduleScreen = () => {
                         <MaterialCommunityIcons
                           name="calendar"
                           size={18}
-                          color={eventRecurrenceEnd ? '#667eea' : '#ccc'}
+                          color={eventRecurrenceEnd ? '#CE6385' : '#ccc'}
                         />
                       </TouchableOpacity>
                       {!!eventRecurrenceEnd && (
@@ -785,14 +785,14 @@ const ScheduleScreen = () => {
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
-  calBlock:  { backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#e8e8e8' },
+  container: { flex: 1, backgroundColor: '#FFF5F7' },
+  calBlock:  { backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F5D5E0' },
 
   calHeader:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, height: CAL_TOP_H },
   navBtn:       { padding: 6 },
   monthYearBtn: { flexDirection: 'row', alignItems: 'center', gap: 2, flex: 1, justifyContent: 'center' },
   monthLabel:   { fontSize: 15, fontWeight: '700', color: '#333' },
-  todayBtn:     { backgroundColor: '#667eea', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4 },
+  todayBtn:     { backgroundColor: '#CE6385', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4 },
   todayBtnText: { color: '#fff', fontSize: 12, fontWeight: '700' },
 
   dayLabelRow:  { flexDirection: 'row', height: DAY_ROW_H, alignItems: 'center' },
@@ -800,10 +800,10 @@ const styles = StyleSheet.create({
 
   grid:             { flexDirection: 'row', flexWrap: 'wrap', paddingBottom: 6 },
   cell:             { width: '14.2857%', height: CELL_H, alignItems: 'center', justifyContent: 'flex-start', paddingTop: 4, borderRadius: 6 },
-  cellToday:        { backgroundColor: '#f0f3ff' },
-  cellSelected:     { backgroundColor: '#667eea' },
+  cellToday:        { backgroundColor: '#FFF0F5' },
+  cellSelected:     { backgroundColor: '#CE6385' },
   cellText:         { fontSize: 12, fontWeight: '600', color: '#333' },
-  cellTextToday:    { color: '#667eea', fontWeight: '800' },
+  cellTextToday:    { color: '#CE6385', fontWeight: '800' },
   cellTextSelected: { color: '#fff',    fontWeight: '800' },
   dotRow:           { flexDirection: 'row', gap: 2, marginTop: 2 },
   dot:              { width: 4, height: 4, borderRadius: 2 },
@@ -813,17 +813,17 @@ const styles = StyleSheet.create({
   eventsSectionTitle: { fontSize: 14, fontWeight: '700', color: '#333', marginBottom: 10, textAlign: 'right' },
   noEventsText:       { fontSize: 13, color: '#bbb', textAlign: 'center', paddingVertical: 16 },
 
-  eventItem:     { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 12, marginBottom: 10, borderRightWidth: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.07, shadowRadius: 3, elevation: 2, overflow: 'hidden' },
+  eventItem:     { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 16, marginBottom: 10, borderRightWidth: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3, overflow: 'hidden' },
   eventColorBar: { width: 4, alignSelf: 'stretch' },
   eventBody:     { flex: 1, paddingVertical: 10, paddingHorizontal: 12 },
   eventTitle:    { fontSize: 14, fontWeight: '700', color: '#333', marginBottom: 3, textAlign: 'right' },
   eventMeta:     { flexDirection: 'row', gap: 10, flexWrap: 'wrap' },
-  eventTime:     { fontSize: 12, color: '#667eea', fontWeight: '600' },
+  eventTime:     { fontSize: 12, color: '#CE6385', fontWeight: '600' },
   eventRecur:    { fontSize: 12, color: '#999' },
   eventActions:  { flexDirection: 'column', justifyContent: 'center', paddingHorizontal: 4 },
   actionBtn:     { padding: 8 },
 
-  fab: { position: 'absolute', bottom: 20, right: 20, width: 56, height: 56, borderRadius: 28, backgroundColor: '#667eea', justifyContent: 'center', alignItems: 'center', shadowColor: '#667eea', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 5 },
+  fab: { position: 'absolute', bottom: 20, right: 20, width: 56, height: 56, borderRadius: 28, backgroundColor: '#CE6385', justifyContent: 'center', alignItems: 'center', shadowColor: '#CE6385', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 5 },
 
   pickerOverlay:         { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center' },
   pickerBox:             { backgroundColor: '#fff', borderRadius: 16, padding: 20, width: SCREEN_W * 0.85, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 12, elevation: 8 },
@@ -831,8 +831,8 @@ const styles = StyleSheet.create({
   pickerYearBtn:         { padding: 4 },
   pickerYearText:        { fontSize: 18, fontWeight: '700', color: '#333', minWidth: 60, textAlign: 'center' },
   pickerMonthGrid:       { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  pickerMonthCell:       { width: '30%', paddingVertical: 10, borderRadius: 10, alignItems: 'center', backgroundColor: '#f5f5f5' },
-  pickerMonthCellActive: { backgroundColor: '#667eea' },
+  pickerMonthCell:       { width: '30%', paddingVertical: 10, borderRadius: 12, alignItems: 'center', backgroundColor: '#FFF0F5' },
+  pickerMonthCellActive: { backgroundColor: '#CE6385' },
   pickerMonthText:       { fontSize: 13, fontWeight: '600', color: '#555' },
   pickerMonthTextActive: { color: '#fff' },
 
@@ -857,21 +857,21 @@ const styles = StyleSheet.create({
   timeSep:      { paddingBottom: 13 },
   timeSepText:  { fontSize: 16, color: '#ccc', fontWeight: '700' },
 
-  colorRow:            { flexDirection: 'row', gap: 10, flexWrap: 'wrap' },
+  colorRow:            { flexDirection: 'row', gap: 10, flexWrap: 'wrap', justifyContent: 'flex-end' },
   colorCircle:         { width: 32, height: 32, borderRadius: 16 },
   colorCircleSelected: { borderWidth: 3, borderColor: '#333', transform: [{ scale: 1.15 }] },
 
-  recurrenceRow:           { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
+  recurrenceRow:           { flexDirection: 'row', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' },
   recurrenceBtn:           { paddingVertical: 8, paddingHorizontal: 14, borderRadius: 20, borderWidth: 1, borderColor: '#e0e0e0', backgroundColor: '#f5f5f5' },
-  recurrenceBtnActive:     { borderColor: '#667eea', backgroundColor: '#f0f3ff' },
+  recurrenceBtnActive:     { borderColor: '#CE6385', backgroundColor: '#FFF0F5' },
   recurrenceBtnText:       { fontSize: 13, color: '#999', fontWeight: '600' },
-  recurrenceBtnTextActive: { color: '#667eea' },
+  recurrenceBtnTextActive: { color: '#CE6385' },
 
-  submitBtn:     { backgroundColor: '#667eea', paddingVertical: 13, borderRadius: 10, alignItems: 'center', marginTop: 10, marginBottom: 20 },
+  submitBtn:     { backgroundColor: '#CE6385', paddingVertical: 13, borderRadius: 10, alignItems: 'center', marginTop: 10, marginBottom: 20 },
   submitBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
 
   // Web Picker dropdowns (rendered as <select> on web)
-  webPickerRow:      { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
+  webPickerRow:      { flexDirection: 'row', alignItems: 'flex-end', gap: 8, justifyContent: 'flex-end' },
   webPickerCol:      { flexDirection: 'column' },
   webPickerSubLabel: { fontSize: 11, color: '#aaa', fontWeight: '600', marginBottom: 5 },
   webPickerBase:     { backgroundColor: '#f5f5f5', borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 10, height: 44, fontSize: 14, color: '#333' },
@@ -881,11 +881,11 @@ const styles = StyleSheet.create({
   webPickerHour:     { width: 80 },
   webPickerMinute:   { width: 80 },
   webPickerColonWrap:{ paddingBottom: 11 },
-  webPickerColon:    { fontSize: 20, fontWeight: '700', color: '#667eea' },
+  webPickerColon:    { fontSize: 20, fontWeight: '700', color: '#CE6385' },
   webEndTimeRow:     { flexDirection: 'row', alignItems: 'center', gap: 6 },
 
   // Web time section layout
-  webTimeRow:      { flexDirection: 'row', alignItems: 'center', gap: 0 },
+  webTimeRow:      { flexDirection: 'row-reverse', alignItems: 'center', gap: 0 },
   webTimeGroup:    { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
   webTimeLabel:    { fontSize: 11, color: '#aaa', fontWeight: '600', flexShrink: 0 },
   webTimeDivider:  { width: 1, backgroundColor: '#e0e0e0', height: 44, marginHorizontal: 12 },
@@ -898,7 +898,7 @@ const styles = StyleSheet.create({
   dtPickerHeaderBtn:  { minWidth: 60, padding: 4 },
   dtPickerTitle:      { fontSize: 15, fontWeight: '700', color: '#333' },
   dtPickerCancelText: { fontSize: 15, color: '#999' },
-  dtPickerDoneText:   { fontSize: 15, color: '#667eea', fontWeight: '700', textAlign: 'right' },
+  dtPickerDoneText:   { fontSize: 15, color: '#CE6385', fontWeight: '700', textAlign: 'right' },
   dtPickerControl:    { width: '100%' },
 });
 

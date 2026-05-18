@@ -101,10 +101,10 @@ const LearningScreen = () => {
       </View>
       <View style={styles.topicActions}>
         <TouchableOpacity style={[styles.actionBtn, item.known && styles.actionBtnActive]} onPress={() => handleToggleKnown(item.id)}>
-          <MaterialCommunityIcons name={item.known ? 'check-circle' : 'check-circle-outline'} size={20} color={item.known ? '#51cf66' : '#999'} />
+          <MaterialCommunityIcons name={item.known ? 'check-circle' : 'check-circle-outline'} size={20} color={item.known ? '#4CAFAE' : '#999'} />
         </TouchableOpacity>
         <TouchableOpacity style={[styles.actionBtn, item.needsReview && styles.actionBtnActive]} onPress={() => handleToggleReview(item.id)}>
-          <MaterialCommunityIcons name="refresh" size={20} color={item.needsReview ? '#ffa94d' : '#999'} />
+          <MaterialCommunityIcons name="refresh" size={20} color={item.needsReview ? '#CE6385' : '#999'} />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => handleDeleteTopic(item.id)} style={styles.actionBtn}>
           <MaterialCommunityIcons name="trash-can" size={20} color="#ff6b6b" />
@@ -118,12 +118,12 @@ const LearningScreen = () => {
       <ScrollView style={styles.scrollView} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
         {topics.length > 0 && (
           <View style={styles.statsContainer}>
-            <LinearGradient colors={['#51cf66', '#2f9e44']} style={styles.statCard}>
+            <LinearGradient colors={['#4CAFAE', '#2A8F8E']} style={styles.statCard}>
               <MaterialCommunityIcons name="check-circle" size={32} color="#fff" />
               <Text style={styles.statLabel}>נושאים שיודעת</Text>
               <Text style={styles.statValue}>{topicsKnown}</Text>
             </LinearGradient>
-            <LinearGradient colors={['#ffa94d', '#e8590f']} style={styles.statCard}>
+            <LinearGradient colors={['#CE6385', '#9E3F65']} style={styles.statCard}>
               <MaterialCommunityIcons name="refresh" size={32} color="#fff" />
               <Text style={styles.statLabel}>צריכים חזרה</Text>
               <Text style={styles.statValue}>{topicsNeedReview}</Text>
@@ -173,7 +173,7 @@ const LearningScreen = () => {
               </View>
               <View style={styles.infoBox}>
                 <Text style={styles.infoText}>תוכל לסמן את הנושא כ"יודע" או "צריך חזרה" לאחר הוספה</Text>
-                <MaterialCommunityIcons name="information" size={20} color="#667eea" />
+                <MaterialCommunityIcons name="information" size={20} color="#CE6385" />
               </View>
               <TouchableOpacity style={styles.submitBtn} onPress={handleAddTopic}>
                 <Text style={styles.submitBtnText}>הוסף נושא</Text>
@@ -187,7 +187,7 @@ const LearningScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container:      { flex: 1, backgroundColor: '#f5f5f5' },
+  container:      { flex: 1, backgroundColor: '#FFF5F7' },
   scrollView:     { flex: 1, padding: 15 },
   statsContainer: { flexDirection: 'row', gap: 12, marginBottom: 20 },
   statCard:       { flex: 1, borderRadius: 15, padding: 15, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 5, elevation: 3 },
@@ -195,24 +195,24 @@ const styles = StyleSheet.create({
   statValue:      { color: '#fff', fontSize: 24, fontWeight: '700', marginTop: 4 },
   section:        { marginBottom: 20 },
   topicItem: {
-    backgroundColor: '#fff', borderRadius: 12, padding: 15, marginBottom: 10,
+    backgroundColor: '#fff', borderRadius: 16, padding: 15, marginBottom: 10,
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    borderRightWidth: 4, borderRightColor: '#667eea',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 5, elevation: 2,
+    borderRightWidth: 4, borderRightColor: '#4CAFAE',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3,
   },
   topicInfo:       { flex: 1 },
   topicName:       { fontSize: 14, fontWeight: '700', color: '#333', marginBottom: 4, textAlign: 'right' },
   topicCourse:     { fontSize: 12, color: '#999', textAlign: 'right' },
   topicActions:    { flexDirection: 'row', gap: 8 },
   actionBtn:       { padding: 8, justifyContent: 'center', alignItems: 'center' },
-  actionBtnActive: { backgroundColor: '#f0f3ff', borderRadius: 8 },
+  actionBtnActive: { backgroundColor: '#FFF0F5', borderRadius: 8 },
   separator:       { height: 0 },
   emptyState:      { alignItems: 'center', justifyContent: 'center', paddingVertical: 60 },
   emptyStateText:  { fontSize: 14, color: '#999', marginTop: 12 },
   fab: {
     position: 'absolute', bottom: 20, right: 20, width: 56, height: 56, borderRadius: 28,
-    backgroundColor: '#667eea', justifyContent: 'center', alignItems: 'center',
-    shadowColor: '#667eea', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 5,
+    backgroundColor: '#CE6385', justifyContent: 'center', alignItems: 'center',
+    shadowColor: '#CE6385', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 5,
   },
   modalContainer: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   modalContent:   { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingHorizontal: 20, paddingVertical: 20, maxHeight: '90%' },
@@ -221,9 +221,9 @@ const styles = StyleSheet.create({
   formGroup:      { marginBottom: 20 },
   label:          { fontSize: 13, fontWeight: '600', color: '#333', marginBottom: 8, textTransform: 'uppercase', textAlign: 'right' },
   input:          { borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 10, paddingHorizontal: 15, paddingVertical: 12, fontSize: 14, backgroundColor: '#f5f5f5', textAlign: 'right' },
-  infoBox:        { backgroundColor: '#f0f3ff', borderRightWidth: 4, borderRightColor: '#667eea', borderRadius: 8, padding: 12, marginBottom: 20, flexDirection: 'row', gap: 10, alignItems: 'flex-start' },
-  infoText:       { fontSize: 12, color: '#667eea', flex: 1, lineHeight: 18, textAlign: 'right' },
-  submitBtn:      { backgroundColor: '#667eea', paddingVertical: 13, borderRadius: 10, alignItems: 'center', marginTop: 10, marginBottom: 20 },
+  infoBox:        { backgroundColor: '#FFF0F5', borderRightWidth: 4, borderRightColor: '#CE6385', borderRadius: 8, padding: 12, marginBottom: 20, flexDirection: 'row', gap: 10, alignItems: 'flex-start' },
+  infoText:       { fontSize: 12, color: '#CE6385', flex: 1, lineHeight: 18, textAlign: 'right' },
+  submitBtn:      { backgroundColor: '#CE6385', paddingVertical: 13, borderRadius: 10, alignItems: 'center', marginTop: 10, marginBottom: 20 },
   submitBtnText:  { color: '#fff', fontSize: 15, fontWeight: '700' },
 });
 

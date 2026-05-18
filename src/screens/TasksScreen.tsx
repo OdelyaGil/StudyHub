@@ -88,14 +88,14 @@ const WebDatePicker = ({ iso, onChange }: { iso: string; onChange: (v: string) =
   return (
     <View style={styles.webPickerRow}>
       <View style={styles.webPickerCol}>
-        <Text style={styles.webPickerSubLabel}>יום</Text>
+        <Text style={styles.webPickerSubLabel}>שנה</Text>
         <Picker
-          selectedValue={day}
-          onValueChange={d => onChange(buildDateISO(Number(d), m, y))}
-          style={[styles.webPickerBase, styles.webPickerDay]}
+          selectedValue={y}
+          onValueChange={newY => onChange(buildDateISO(day, m, Number(newY)))}
+          style={[styles.webPickerBase, styles.webPickerYear]}
         >
-          {Array.from({ length: maxDay }, (_, i) => i + 1).map(d => (
-            <Picker.Item key={d} label={String(d)} value={d} />
+          {YEAR_OPTIONS.map(yr => (
+            <Picker.Item key={yr} label={String(yr)} value={yr} />
           ))}
         </Picker>
       </View>
@@ -112,14 +112,14 @@ const WebDatePicker = ({ iso, onChange }: { iso: string; onChange: (v: string) =
         </Picker>
       </View>
       <View style={styles.webPickerCol}>
-        <Text style={styles.webPickerSubLabel}>שנה</Text>
+        <Text style={styles.webPickerSubLabel}>יום</Text>
         <Picker
-          selectedValue={y}
-          onValueChange={newY => onChange(buildDateISO(day, m, Number(newY)))}
-          style={[styles.webPickerBase, styles.webPickerYear]}
+          selectedValue={day}
+          onValueChange={d => onChange(buildDateISO(Number(d), m, y))}
+          style={[styles.webPickerBase, styles.webPickerDay]}
         >
-          {YEAR_OPTIONS.map(yr => (
-            <Picker.Item key={yr} label={String(yr)} value={yr} />
+          {Array.from({ length: maxDay }, (_, i) => i + 1).map(d => (
+            <Picker.Item key={d} label={String(d)} value={d} />
           ))}
         </Picker>
       </View>
@@ -139,7 +139,7 @@ interface TaskItemProps {
 const TaskItem: React.FC<TaskItemProps> = ({ item, onToggle, onDelete, onEdit, onFileOpen }) => {
   const [filesExpanded, setFilesExpanded] = useState(false);
   const daysLeft = getDaysLeft(item.dueDate);
-  const priorityColor = item.priority === 'גבוהה' ? '#ff6b6b' : item.priority === 'בינונית' ? '#ffa94d' : '#51cf66';
+  const priorityColor = item.priority === 'גבוהה' ? '#CE6385' : item.priority === 'בינונית' ? '#EB98B4' : '#4CAFAE';
   const files: TaskFile[] = (item as any).files ?? [];
 
   return (
@@ -178,9 +178,9 @@ const TaskItem: React.FC<TaskItemProps> = ({ item, onToggle, onDelete, onEdit, o
           <View style={styles.taskFilesList}>
             {files.map((file, i) => (
               <TouchableOpacity key={i} style={styles.taskFileItem} onPress={() => onFileOpen(file)}>
-                <MaterialCommunityIcons name="file-outline" size={13} color="#667eea" />
+                <MaterialCommunityIcons name="file-outline" size={13} color="#CE6385" />
                 <Text style={styles.taskFileItemName} numberOfLines={1}>{file.name}</Text>
-                <MaterialCommunityIcons name="download-outline" size={13} color="#667eea" />
+                <MaterialCommunityIcons name="download-outline" size={13} color="#CE6385" />
               </TouchableOpacity>
             ))}
           </View>
@@ -204,7 +204,7 @@ const TaskItem: React.FC<TaskItemProps> = ({ item, onToggle, onDelete, onEdit, o
         </View>
         <View style={styles.taskActions}>
           <TouchableOpacity onPress={() => onEdit(item)} style={styles.actionIcon}>
-            <MaterialCommunityIcons name="pencil-outline" size={17} color="#667eea" />
+            <MaterialCommunityIcons name="pencil-outline" size={17} color="#CE6385" />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => onDelete(item.id)} style={styles.actionIcon}>
             <MaterialCommunityIcons name="trash-can-outline" size={17} color="#ff6b6b" />
@@ -519,14 +519,14 @@ const TasksScreen = () => {
               <View style={styles.formGroup}>
                 <Text style={styles.label}>קבצים מצורפים</Text>
                 <TouchableOpacity style={styles.filePickerBtn} onPress={handlePickFiles}>
-                  <MaterialCommunityIcons name="paperclip" size={18} color="#667eea" />
+                  <MaterialCommunityIcons name="paperclip" size={18} color="#CE6385" />
                   <Text style={styles.filePickerBtnText}>הוסף קבצים</Text>
                 </TouchableOpacity>
                 {taskFiles.length > 0 && (
                   <View style={styles.fileList}>
                     {taskFiles.map((file, i) => (
                       <View key={i} style={styles.fileChip}>
-                        <MaterialCommunityIcons name="file-outline" size={14} color="#667eea" />
+                        <MaterialCommunityIcons name="file-outline" size={14} color="#CE6385" />
                         <Text style={styles.fileChipText} numberOfLines={1}>{file.name}</Text>
                         {file.size != null && (
                           <Text style={styles.fileChipSize}>{(file.size / 1024).toFixed(0)}KB</Text>
@@ -556,7 +556,7 @@ const TasksScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container:       { flex: 1, backgroundColor: '#f5f5f5' },
+  container:       { flex: 1, backgroundColor: '#FFF5F7' },
   scrollView:      { flex: 1, padding: 15 },
   section:         { marginBottom: 20 },
   separator:       { height: 0 },
@@ -564,17 +564,17 @@ const styles = StyleSheet.create({
   // Task card
   taskItem: {
     backgroundColor: '#fff',
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 12,
     marginBottom: 10,
     flexDirection: 'row',
     borderRightWidth: 4,
-    borderRightColor: '#667eea',
+    borderRightColor: '#CE6385',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
-    shadowRadius: 5,
-    elevation: 2,
+    shadowRadius: 8,
+    elevation: 3,
   },
   taskCheckBox:        { justifyContent: 'center', marginRight: 12 },
   checkbox:            { width: 24, height: 24, borderRadius: 6, borderWidth: 2, borderColor: '#e0e0e0', justifyContent: 'center', alignItems: 'center' },
@@ -590,7 +590,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: '#f8f6ff',
+    backgroundColor: '#FFF0F5',
     borderRadius: 6,
     paddingVertical: 5,
     paddingHorizontal: 8,
@@ -617,10 +617,10 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#667eea',
+    backgroundColor: '#CE6385',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#667eea',
+    shadowColor: '#CE6385',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -647,15 +647,15 @@ const styles = StyleSheet.create({
 
   prioritySelector:    { flexDirection: 'row', gap: 8 },
   priorityBtn:         { flex: 1, paddingVertical: 10, paddingHorizontal: 12, borderRadius: 8, borderWidth: 1, borderColor: '#e0e0e0', backgroundColor: '#f5f5f5', alignItems: 'center' },
-  priorityBtnActive:   { borderColor: '#667eea', backgroundColor: '#f0f3ff' },
+  priorityBtnActive:   { borderColor: '#CE6385', backgroundColor: '#FFF0F5' },
   priorityBtnText:     { fontSize: 12, color: '#999', fontWeight: '600' },
-  priorityBtnTextActive: { color: '#667eea' },
+  priorityBtnTextActive: { color: '#CE6385' },
 
-  submitBtn:     { backgroundColor: '#667eea', paddingVertical: 13, borderRadius: 10, alignItems: 'center', marginTop: 10, marginBottom: 20 },
+  submitBtn:     { backgroundColor: '#CE6385', paddingVertical: 13, borderRadius: 10, alignItems: 'center', marginTop: 10, marginBottom: 20 },
   submitBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
 
   // Web Pickers — same as ScheduleScreen
-  webPickerRow:       { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
+  webPickerRow:       { flexDirection: 'row', alignItems: 'flex-end', gap: 8, justifyContent: 'flex-end' },
   webPickerCol:       { flexDirection: 'column' },
   webPickerSubLabel:  { fontSize: 11, color: '#aaa', fontWeight: '600', marginBottom: 5 },
   webPickerBase:      { backgroundColor: '#f5f5f5', borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 10, height: 44, fontSize: 14, color: '#333' },
@@ -665,13 +665,13 @@ const styles = StyleSheet.create({
   webPickerHour:      { width: 80 },
   webPickerMinute:    { width: 80 },
   webPickerColonWrap: { paddingBottom: 11 },
-  webPickerColon:     { fontSize: 20, fontWeight: '700', color: '#667eea' },
+  webPickerColon:     { fontSize: 20, fontWeight: '700', color: '#CE6385' },
 
   // File attachment
-  filePickerBtn:     { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderColor: '#667eea', borderRadius: 10, borderStyle: 'dashed', paddingVertical: 12, paddingHorizontal: 16, backgroundColor: '#f8f6ff' },
-  filePickerBtnText: { fontSize: 14, color: '#667eea', fontWeight: '600' },
+  filePickerBtn:     { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderColor: '#CE6385', borderRadius: 10, borderStyle: 'dashed', paddingVertical: 12, paddingHorizontal: 16, backgroundColor: '#f8f6ff' },
+  filePickerBtnText: { fontSize: 14, color: '#CE6385', fontWeight: '600' },
   fileList:          { marginTop: 10, gap: 6 },
-  fileChip:          { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#f0f3ff', borderRadius: 8, paddingVertical: 7, paddingHorizontal: 10 },
+  fileChip:          { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#FFF0F5', borderRadius: 8, paddingVertical: 7, paddingHorizontal: 10 },
   fileChipText:      { flex: 1, fontSize: 13, color: '#333' },
   fileChipSize:      { fontSize: 11, color: '#aaa' },
   fileChipRemove:    { padding: 2 },

@@ -391,7 +391,7 @@ const LoginScreen = ({ onLogin }: { navigation: any; onLogin: () => void }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f2f2f2' },
+  container: { flex: 1, backgroundColor: '#FFF5F7' },
   scrollContent: {
     flexGrow: 1, alignItems: 'center',
     paddingHorizontal: 32, paddingTop: 80, paddingBottom: 40,
@@ -413,17 +413,17 @@ const styles = StyleSheet.create({
   passwordInput: { flex: 1, paddingHorizontal: 18, paddingVertical: 14, fontSize: 15, color: '#333', textAlign: 'right' },
   eyeBtn:        { paddingHorizontal: 14, paddingVertical: 14 },
   loginBtn: {
-    width: '100%', backgroundColor: '#c8a96e', borderRadius: 10,
+    width: '100%', backgroundColor: '#CE6385', borderRadius: 14,
     paddingVertical: 15, alignItems: 'center', justifyContent: 'center',
   },
   loginBtnDisabled: { opacity: 0.7 },
   loginBtnText: { color: '#fff', fontSize: 16, fontWeight: '700', letterSpacing: 0.5 },
   forgotContainer: { marginTop: 14, marginBottom: 30 },
-  forgotText:      { fontSize: 13, color: '#c8a96e', fontWeight: '500' },
+  forgotText:      { fontSize: 13, color: '#CE6385', fontWeight: '500' },
   divider:         { width: '100%', height: 1, backgroundColor: '#e0e0e0', marginBottom: 24 },
   signupContainer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
   signupText:      { fontSize: 13, color: '#666' },
-  signupLink:      { fontSize: 13, color: '#c8a96e', fontWeight: '700' },
+  signupLink:      { fontSize: 13, color: '#CE6385', fontWeight: '700' },
   modalOverlay:    { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 },
   modalCard:       { backgroundColor: '#fff', borderRadius: 20, padding: 24, maxHeight: '90%' },
   modalHeader:     { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
@@ -436,7 +436,7 @@ const styles = StyleSheet.create({
   },
   forgotHint:       { fontSize: 13, color: '#666', marginBottom: 20, lineHeight: 20 },
   resendContainer:  { alignItems: 'center', marginTop: 16 },
-  resendText:       { fontSize: 13, color: '#c8a96e', fontWeight: '500' },
+  resendText:       { fontSize: 13, color: '#CE6385', fontWeight: '500' },
 });
 
 export default LoginScreen;

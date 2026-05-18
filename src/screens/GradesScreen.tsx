@@ -222,7 +222,7 @@ const GradesScreen = () => {
           </Text>
           <View style={styles.gradeActions}>
             <TouchableOpacity onPress={() => openEdit(item)} style={styles.actionBtn}>
-              <MaterialCommunityIcons name="pencil-outline" size={17} color="#667eea" />
+              <MaterialCommunityIcons name="pencil-outline" size={17} color="#CE6385" />
             </TouchableOpacity>
             <TouchableOpacity onPress={() => handleDeleteGrade(item.id)} style={styles.actionBtn}>
               <MaterialCommunityIcons name="trash-can-outline" size={17} color="#ff6b6b" />
@@ -241,7 +241,7 @@ const GradesScreen = () => {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
         {/* Average Card */}
-        <LinearGradient colors={['#667eea', '#764ba2']} style={styles.avgCard}>
+        <LinearGradient colors={['#CE6385', '#9E3F65']} style={styles.avgCard}>
           <View style={styles.avgRow}>
             <View>
               <Text style={styles.avgLabel}>ממוצע משוקלל</Text>
@@ -388,7 +388,7 @@ const GradesScreen = () => {
                   </View>
                 ) : pctUsed < 100 ? (
                   <Pressable style={styles.addCritBtn} onPress={() => setShowCritForm(true)}>
-                    <MaterialCommunityIcons name="plus" size={16} color="#667eea" />
+                    <MaterialCommunityIcons name="plus" size={16} color="#CE6385" />
                     <Text style={styles.addCritText}>הוסף קריטריון</Text>
                   </Pressable>
                 ) : null}
@@ -416,9 +416,9 @@ const GradesScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container:   { flex: 1, backgroundColor: '#f5f5f5' },
+  container:   { flex: 1, backgroundColor: '#FFF5F7' },
   scrollView:  { flex: 1, padding: 15 },
-  avgCard:     { borderRadius: 15, padding: 20, marginBottom: 20 },
+  avgCard:     { borderRadius: 20, padding: 20, marginBottom: 20 },
   avgRow:      { flexDirection: 'row', alignItems: 'center', gap: 24 },
   avgDivider:  { width: 1, height: 40, backgroundColor: 'rgba(255,255,255,0.3)' },
   avgLabel:    { color: '#fff', fontSize: 12, fontWeight: '600', opacity: 0.85 },
@@ -428,21 +428,21 @@ const styles = StyleSheet.create({
   yearTitle:    { fontSize: 16, fontWeight: '700', color: '#333' },
   yearStats:    { flexDirection: 'row', alignItems: 'center', gap: 8 },
   yearStat:     { fontSize: 12, color: '#999', fontWeight: '600' },
-  yearAvgBadge: { backgroundColor: '#667eea', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 4 },
+  yearAvgBadge: { backgroundColor: '#CE6385', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 4 },
   yearAvgText:  { fontSize: 12, color: '#fff', fontWeight: '700' },
   gradeItem: {
-    backgroundColor: '#fff', borderRadius: 12, padding: 14,
+    backgroundColor: '#fff', borderRadius: 16, padding: 14,
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    borderRightWidth: 4, borderRightColor: '#667eea',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.07, shadowRadius: 4, elevation: 2,
+    borderRightWidth: 4, borderRightColor: '#4CAFAE',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3,
   },
   gradeInfo:         { flex: 1, marginLeft: 8 },
   gradeName:         { fontSize: 15, fontWeight: '700', color: '#333', marginBottom: 3, textAlign: 'right' },
   gradeMeta:         { fontSize: 11, color: '#999', marginBottom: 5, textAlign: 'right' },
   criteriaRow:       { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
-  criterionTag:      { fontSize: 10, color: '#667eea', backgroundColor: '#f0f3ff', borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 },
+  criterionTag:      { fontSize: 10, color: '#CE6385', backgroundColor: '#FFF0F5', borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 },
   gradeRight:        { alignItems: 'flex-end' },
-  gradeValue:        { fontSize: 26, fontWeight: '700', color: '#667eea', marginBottom: 4 },
+  gradeValue:        { fontSize: 26, fontWeight: '700', color: '#CE6385', marginBottom: 4 },
   gradeValuePending: { fontSize: 20, color: '#ccc' },
   gradeActions:      { flexDirection: 'row', gap: 2 },
   actionBtn:         { padding: 5 },
@@ -451,8 +451,8 @@ const styles = StyleSheet.create({
   fab: {
     position: 'absolute', bottom: 20, right: 20,
     width: 56, height: 56, borderRadius: 28,
-    backgroundColor: '#667eea', justifyContent: 'center', alignItems: 'center',
-    shadowColor: '#667eea', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 5,
+    backgroundColor: '#CE6385', justifyContent: 'center', alignItems: 'center',
+    shadowColor: '#CE6385', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 5,
   },
   modalContainer: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   modalContent:   { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingHorizontal: 20, paddingTop: 20, maxHeight: '92%' },
@@ -466,32 +466,32 @@ const styles = StyleSheet.create({
   },
   chipRow:        { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 18 },
   chip:           { paddingVertical: 8, paddingHorizontal: 14, borderRadius: 20, borderWidth: 1.5, borderColor: '#e0e0e0', backgroundColor: '#f9f9f9' },
-  chipActive:     { borderColor: '#667eea', backgroundColor: '#f0f3ff' },
+  chipActive:     { borderColor: '#CE6385', backgroundColor: '#FFF0F5' },
   chipText:       { fontSize: 13, color: '#999', fontWeight: '600' },
-  chipTextActive: { color: '#667eea' },
+  chipTextActive: { color: '#CE6385' },
   criteriaSection: { marginBottom: 18 },
   criteriaHeader:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-  pctBadge:        { fontSize: 12, fontWeight: '700', color: '#667eea', backgroundColor: '#f0f3ff', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
+  pctBadge:        { fontSize: 12, fontWeight: '700', color: '#CE6385', backgroundColor: '#FFF0F5', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
   pctBadgeFull:    { color: '#fff', backgroundColor: '#51cf66' },
   criterionRow:    { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f9f9f9', borderRadius: 10, padding: 10, marginBottom: 6, gap: 8 },
   criterionInfo:   { flex: 1 },
   criterionName:   { fontSize: 13, fontWeight: '600', color: '#333' },
   criterionPct:    { fontSize: 11, color: '#999' },
   criterionGradeInput: { width: 60, borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 6, fontSize: 13, textAlign: 'center', backgroundColor: '#fff' },
-  addCritBtn:      { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 10, paddingHorizontal: 14, borderRadius: 10, borderWidth: 1.5, borderColor: '#667eea' },
-  addCritText:     { fontSize: 13, color: '#667eea', fontWeight: '600' },
+  addCritBtn:      { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 10, paddingHorizontal: 14, borderRadius: 10, borderWidth: 1.5, borderColor: '#CE6385' },
+  addCritText:     { fontSize: 13, color: '#CE6385', fontWeight: '600' },
   critFormBox:     { backgroundColor: '#f9f9f9', borderRadius: 12, padding: 14, marginTop: 4 },
   critInput:       { borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 13, backgroundColor: '#fff', marginBottom: 10, color: '#333', textAlign: 'right' },
   critRow:         { flexDirection: 'row', gap: 8 },
   critButtons:     { flexDirection: 'row', gap: 8 },
   critCancelBtn:   { flex: 1, paddingVertical: 10, borderRadius: 8, borderWidth: 1, borderColor: '#e0e0e0', alignItems: 'center' },
   critCancelText:  { fontSize: 13, color: '#999', fontWeight: '600' },
-  critAddBtn:      { flex: 1, paddingVertical: 10, borderRadius: 8, backgroundColor: '#667eea', alignItems: 'center' },
+  critAddBtn:      { flex: 1, paddingVertical: 10, borderRadius: 8, backgroundColor: '#CE6385', alignItems: 'center' },
   critAddText:     { fontSize: 13, color: '#fff', fontWeight: '700' },
-  autoGradeBox:    { backgroundColor: '#f0f3ff', borderRadius: 10, padding: 14, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 },
-  autoGradeLabel:  { fontSize: 13, color: '#667eea' },
-  autoGradeValue:  { fontSize: 22, fontWeight: '700', color: '#667eea' },
-  submitBtn:       { backgroundColor: '#667eea', paddingVertical: 14, borderRadius: 10, alignItems: 'center', marginTop: 4, marginBottom: 24 },
+  autoGradeBox:    { backgroundColor: '#FFF0F5', borderRadius: 10, padding: 14, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 },
+  autoGradeLabel:  { fontSize: 13, color: '#CE6385' },
+  autoGradeValue:  { fontSize: 22, fontWeight: '700', color: '#CE6385' },
+  submitBtn:       { backgroundColor: '#CE6385', paddingVertical: 14, borderRadius: 10, alignItems: 'center', marginTop: 4, marginBottom: 24 },
   submitBtnText:   { color: '#fff', fontSize: 15, fontWeight: '700' },
 });
 

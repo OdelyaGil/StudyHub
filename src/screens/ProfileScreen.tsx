@@ -14,11 +14,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCustomAlert } from '../hooks/useCustomAlert';
 
 const THEMES = [
-  { name: 'סגול',  color: '#667eea' },
-  { name: 'כחול',  color: '#3b82f6' },
-  { name: 'ירוק',  color: '#10b981' },
-  { name: 'כתום',  color: '#f97316' },
-  { name: 'כהה',   color: '#374151' },
+  { name: 'ורוד',    color: '#CE6385' },
+  { name: 'טורקיז', color: '#4CAFAE' },
+  { name: 'ירוק',   color: '#10b981' },
+  { name: 'כתום',   color: '#f97316' },
+  { name: 'כהה',    color: '#374151' },
 ];
 
 type RegisteredUser = { email: string; password: string; name: string; userType: string };
@@ -244,7 +244,7 @@ const ProfileScreen = ({ theme, onSetTheme, onLogout }: Props) => {
 };
 
 const styles = StyleSheet.create({
-  container:   { flex: 1, backgroundColor: '#f5f5f5' },
+  container:   { flex: 1, backgroundColor: '#FFF5F7' },
   content:     { alignItems: 'center', padding: 20, paddingBottom: 40 },
   avatarCircle: {
     width: 90, height: 90, borderRadius: 45,
@@ -255,10 +255,10 @@ const styles = StyleSheet.create({
   nameHeader:  { fontSize: 20, fontWeight: '700', color: '#333', marginBottom: 4 },
   emailHeader: { fontSize: 13, color: '#999', marginBottom: 24 },
   card: {
-    width: '100%', backgroundColor: '#fff', borderRadius: 16,
+    width: '100%', backgroundColor: '#fff', borderRadius: 20,
     padding: 16, marginBottom: 16,
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06, shadowRadius: 8, elevation: 2,
+    shadowOpacity: 0.08, shadowRadius: 10, elevation: 3,
   },
   sectionTitle: { fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 12, textTransform: 'uppercase', textAlign: 'right' },
   row:          { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8 },
