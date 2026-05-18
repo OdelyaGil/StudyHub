@@ -135,6 +135,12 @@ const snapMinute = (m: number) =>
   MINUTE_OPTIONS.reduce((prev, cur) =>
     Math.abs(cur - m) < Math.abs(prev - m) ? cur : prev, 0);
 
+const addOneHour = (timeStr: string): string => {
+  const { hour, minute } = parseTimeParts(timeStr);
+  const newHour = Math.min(hour + 1, 23);
+  return `${String(newHour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+};
+
 // ── Component ─────────────────────────────────────────────────────────────────
 const ScheduleScreen = () => {
   const { showAlert, showDestructiveConfirm, alertNode } = useCustomAlert();
@@ -218,6 +224,11 @@ const ScheduleScreen = () => {
     .sort((a, b) => a.startTime.localeCompare(b.startTime));
 
   // ── Form helpers ──────────────────────────────────────────────────────────
+  const handleStartTimeChange = (newTime: string) => {
+    setEventStartTime(newTime);
+    setEventEndTime(addOneHour(newTime));
+  };
+
   const resetForm = () => {
     setEditingId(null);
     setEventTitle(''); setEventDate(selectedDate);
@@ -233,7 +244,7 @@ const ScheduleScreen = () => {
     setEventTitle(ev.title);
     setEventDate(ev.date);
     setEventStartTime(ev.startTime);
-    setEventEndTime(ev.endTime ?? '');
+    setEventEndTime(ev.endTime || addOneHour(ev.startTime));
     setEventColor(ev.color);
     setEventRecurrence(ev.recurrence);
     setEventRecurrenceEnd(ev.recurrenceEndDate ?? '');
@@ -268,7 +279,7 @@ const ScheduleScreen = () => {
   const applyPickerValue = (target: PickerTarget, date: Date) => {
     switch (target) {
       case 'date':          setEventDate(toISO(date));             break;
-      case 'startTime':     setEventStartTime(dateToTimeString(date)); break;
+      case 'startTime':     handleStartTimeChange(dateToTimeString(date)); break;
       case 'endTime':       setEventEndTime(dateToTimeString(date));   break;
       case 'recurrenceEnd': setEventRecurrenceEnd(toISO(date));    break;
     }
@@ -383,7 +394,7 @@ const ScheduleScreen = () => {
     if (!isValidDate(eventDate)) {
       showAlert('שגיאה', 'תאריך לא תקין'); return;
     }
-    if (eventEndTime && eventEndTime <= eventStartTime) {
+    if (eventEndTime <= eventStartTime) {
       showAlert('שגיאה', 'שעת הסיום חייבת להיות אחרי שעת ההתחלה'); return;
     }
     if (eventRecurrenceEnd && isValidDate(eventRecurrenceEnd) && eventRecurrenceEnd < eventDate) {
@@ -486,8 +497,7 @@ const ScheduleScreen = () => {
             const recurLabel = RECURRENCE_OPTIONS.find(r => r.key === ev.recurrence)?.label;
             const timeRange  = ev.endTime ? `${ev.startTime} – ${ev.endTime}` : ev.startTime;
             return (
-              <View key={ev.id} style={[styles.eventItem, { borderLeftColor: ev.color }]}>
-                <View style={[styles.eventColorBar, { backgroundColor: ev.color }]} />
+              <View key={ev.id} style={[styles.eventItem, { borderRightColor: ev.color }]}>
                 <View style={styles.eventBody}>
                   <Text style={styles.eventTitle}>{ev.title}</Text>
                   <View style={styles.eventMeta}>
@@ -590,24 +600,16 @@ const ScheduleScreen = () => {
                   <View style={styles.webTimeRow}>
                     {/* Start time */}
                     <View style={styles.webTimeGroup}>
-                      <WebTimePicker time={eventStartTime} onChange={setEventStartTime} />
+                      <WebTimePicker time={eventStartTime} onChange={handleStartTimeChange} />
                       <Text style={styles.webTimeLabel}>התחלה</Text>
                     </View>
 
                     <View style={styles.webTimeDivider} />
 
-                    {/* End time (optional) */}
+                    {/* End time */}
                     <View style={styles.webTimeGroup}>
-                      <WebTimePicker
-                        time={eventEndTime || '10:00'}
-                        onChange={setEventEndTime}
-                      />
-                      {!!eventEndTime && (
-                        <TouchableOpacity onPress={() => setEventEndTime('')} style={styles.webTimeClearBtn}>
-                          <MaterialCommunityIcons name="close-circle" size={16} color="#bbb" />
-                        </TouchableOpacity>
-                      )}
-                      <Text style={styles.webTimeLabel}>סיום (אופציונלי)</Text>
+                      <WebTimePicker time={eventEndTime} onChange={setEventEndTime} />
+                      <Text style={styles.webTimeLabel}>סיום</Text>
                     </View>
                   </View>
                 ) : (
@@ -629,30 +631,17 @@ const ScheduleScreen = () => {
                       <Text style={styles.timeSepText}>—</Text>
                     </View>
 
-                    {/* End time (optional) */}
+                    {/* End time */}
                     <View style={styles.timeCol}>
-                      <Text style={styles.timeSubLabel}>סיום (אופציונלי)</Text>
-                      <View style={styles.pickerBtnWithClear}>
-                        <TouchableOpacity
-                          style={[styles.input, styles.pickerBtn, styles.pickerBtnFlex]}
-                          onPress={() => openDtPicker('endTime')}
-                          activeOpacity={0.7}
-                        >
-                          <Text style={[styles.pickerBtnText, !eventEndTime && styles.pickerBtnPlaceholder]}>
-                            {eventEndTime || '--:--'}
-                          </Text>
-                          <MaterialCommunityIcons
-                            name="clock-outline"
-                            size={18}
-                            color={eventEndTime ? '#667eea' : '#ccc'}
-                          />
-                        </TouchableOpacity>
-                        {!!eventEndTime && (
-                          <TouchableOpacity onPress={() => setEventEndTime('')} style={styles.clearBtn}>
-                            <MaterialCommunityIcons name="close-circle" size={18} color="#ccc" />
-                          </TouchableOpacity>
-                        )}
-                      </View>
+                      <Text style={styles.timeSubLabel}>סיום</Text>
+                      <TouchableOpacity
+                        style={[styles.input, styles.pickerBtn]}
+                        onPress={() => openDtPicker('endTime')}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={styles.pickerBtnText}>{eventEndTime}</Text>
+                        <MaterialCommunityIcons name="clock-outline" size={18} color="#667eea" />
+                      </TouchableOpacity>
                     </View>
                   </View>
                 )}
@@ -821,13 +810,13 @@ const styles = StyleSheet.create({
 
   eventsScroll:       { flex: 1 },
   eventsContent:      { padding: 14, paddingBottom: 80 },
-  eventsSectionTitle: { fontSize: 14, fontWeight: '700', color: '#333', marginBottom: 10 },
+  eventsSectionTitle: { fontSize: 14, fontWeight: '700', color: '#333', marginBottom: 10, textAlign: 'right' },
   noEventsText:       { fontSize: 13, color: '#bbb', textAlign: 'center', paddingVertical: 16 },
 
-  eventItem:     { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 12, marginBottom: 10, borderLeftWidth: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.07, shadowRadius: 3, elevation: 2, overflow: 'hidden' },
+  eventItem:     { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 12, marginBottom: 10, borderRightWidth: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.07, shadowRadius: 3, elevation: 2, overflow: 'hidden' },
   eventColorBar: { width: 4, alignSelf: 'stretch' },
   eventBody:     { flex: 1, paddingVertical: 10, paddingHorizontal: 12 },
-  eventTitle:    { fontSize: 14, fontWeight: '700', color: '#333', marginBottom: 3 },
+  eventTitle:    { fontSize: 14, fontWeight: '700', color: '#333', marginBottom: 3, textAlign: 'right' },
   eventMeta:     { flexDirection: 'row', gap: 10, flexWrap: 'wrap' },
   eventTime:     { fontSize: 12, color: '#667eea', fontWeight: '600' },
   eventRecur:    { fontSize: 12, color: '#999' },
@@ -852,8 +841,8 @@ const styles = StyleSheet.create({
   modalHeader:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
   modalTitle:   { fontSize: 18, fontWeight: '700', color: '#333' },
   formGroup:    { marginBottom: 18 },
-  formLabel:    { fontSize: 13, fontWeight: '600', color: '#333', marginBottom: 8, textTransform: 'uppercase' },
-  input:        { borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 10, paddingHorizontal: 15, paddingVertical: 12, fontSize: 14, backgroundColor: '#f5f5f5' },
+  formLabel:    { fontSize: 13, fontWeight: '600', color: '#333', marginBottom: 8, textTransform: 'uppercase', textAlign: 'right' },
+  input:        { borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 10, paddingHorizontal: 15, paddingVertical: 12, fontSize: 14, backgroundColor: '#f5f5f5', textAlign: 'right' },
 
   pickerBtn:           { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   pickerBtnText:       { fontSize: 14, color: '#333', flex: 1 },
