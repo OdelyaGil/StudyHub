@@ -14,6 +14,14 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTheme } from '../context/ThemeContext';
+
+const darken = (hex: string, f = 0.75) => {
+  const r = Math.round(parseInt(hex.slice(1,3),16) * f);
+  const g = Math.round(parseInt(hex.slice(3,5),16) * f);
+  const b = Math.round(parseInt(hex.slice(5,7),16) * f);
+  return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
+};
 
 interface Topic {
   id: number;
@@ -24,6 +32,8 @@ interface Topic {
 }
 
 const LearningScreen = () => {
+  const theme = useTheme();
+  const light = theme + '1F';
   const [topics, setTopics] = useState<Topic[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [topicCourse, setTopicCourse] = useState('');
@@ -94,17 +104,17 @@ const LearningScreen = () => {
   const topicsNeedReview = topics.filter(t => t.needsReview).length;
 
   const TopicItem = ({ item }: { item: Topic }) => (
-    <View style={styles.topicItem}>
+    <View style={[styles.topicItem, { borderRightColor: theme }]}>
       <View style={styles.topicInfo}>
         <Text style={styles.topicName}>{item.name}</Text>
         {item.course ? <Text style={styles.topicCourse}>{item.course}</Text> : null}
       </View>
       <View style={styles.topicActions}>
         <TouchableOpacity style={[styles.actionBtn, item.known && styles.actionBtnActive]} onPress={() => handleToggleKnown(item.id)}>
-          <MaterialCommunityIcons name={item.known ? 'check-circle' : 'check-circle-outline'} size={20} color={item.known ? '#4CAFAE' : '#999'} />
+          <MaterialCommunityIcons name={item.known ? 'check-circle' : 'check-circle-outline'} size={20} color={item.known ? theme : '#999'} />
         </TouchableOpacity>
         <TouchableOpacity style={[styles.actionBtn, item.needsReview && styles.actionBtnActive]} onPress={() => handleToggleReview(item.id)}>
-          <MaterialCommunityIcons name="refresh" size={20} color={item.needsReview ? '#CE6385' : '#999'} />
+          <MaterialCommunityIcons name="refresh" size={20} color={item.needsReview ? theme : '#999'} />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => handleDeleteTopic(item.id)} style={styles.actionBtn}>
           <MaterialCommunityIcons name="trash-can" size={20} color="#ff6b6b" />
@@ -118,12 +128,12 @@ const LearningScreen = () => {
       <ScrollView style={styles.scrollView} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
         {topics.length > 0 && (
           <View style={styles.statsContainer}>
-            <LinearGradient colors={['#4CAFAE', '#2A8F8E']} style={styles.statCard}>
+            <LinearGradient colors={[theme, darken(theme)]} style={styles.statCard}>
               <MaterialCommunityIcons name="check-circle" size={32} color="#fff" />
               <Text style={styles.statLabel}>נושאים שיודעת</Text>
               <Text style={styles.statValue}>{topicsKnown}</Text>
             </LinearGradient>
-            <LinearGradient colors={['#CE6385', '#9E3F65']} style={styles.statCard}>
+            <LinearGradient colors={[theme, darken(theme)]} style={styles.statCard}>
               <MaterialCommunityIcons name="refresh" size={32} color="#fff" />
               <Text style={styles.statLabel}>צריכים חזרה</Text>
               <Text style={styles.statValue}>{topicsNeedReview}</Text>
@@ -149,7 +159,7 @@ const LearningScreen = () => {
         )}
       </ScrollView>
 
-      <TouchableOpacity style={styles.fab} onPress={() => setModalVisible(true)}>
+      <TouchableOpacity style={[styles.fab, { backgroundColor: theme, shadowColor: theme }]} onPress={() => setModalVisible(true)}>
         <MaterialCommunityIcons name="plus" size={28} color="#fff" />
       </TouchableOpacity>
 
@@ -171,11 +181,11 @@ const LearningScreen = () => {
                 <Text style={styles.label}>שם הנושא</Text>
                 <TextInput style={styles.input} placeholder="למשל: פונקציות של משתנה אחד" value={topicName} onChangeText={setTopicName} textAlign="right" />
               </View>
-              <View style={styles.infoBox}>
-                <Text style={styles.infoText}>תוכל לסמן את הנושא כ"יודע" או "צריך חזרה" לאחר הוספה</Text>
-                <MaterialCommunityIcons name="information" size={20} color="#CE6385" />
+              <View style={[styles.infoBox, { borderRightColor: theme, backgroundColor: light }]}>
+                <Text style={[styles.infoText, { color: theme }]}>תוכל לסמן את הנושא כ"יודע" או "צריך חזרה" לאחר הוספה</Text>
+                <MaterialCommunityIcons name="information" size={20} color={theme} />
               </View>
-              <TouchableOpacity style={styles.submitBtn} onPress={handleAddTopic}>
+              <TouchableOpacity style={[styles.submitBtn, { backgroundColor: theme }]} onPress={handleAddTopic}>
                 <Text style={styles.submitBtnText}>הוסף נושא</Text>
               </TouchableOpacity>
             </ScrollView>

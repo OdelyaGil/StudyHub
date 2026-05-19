@@ -14,11 +14,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCustomAlert } from '../hooks/useCustomAlert';
 
 const THEMES = [
-  { name: 'ורוד',    color: '#CE6385' },
-  { name: 'טורקיז', color: '#4CAFAE' },
-  { name: 'ירוק',   color: '#10b981' },
-  { name: 'כתום',   color: '#f97316' },
-  { name: 'כהה',    color: '#374151' },
+  { name: 'ורוד',   color: '#D58EAC' },
+  { name: 'סלמון',  color: '#E395A3' },
+  { name: 'כחול ים', color: '#80A9AF' },
+  { name: 'תכלת',   color: '#89D4E3' },
+  { name: 'טורקיז', color: '#46C0C1' },
 ];
 
 type RegisteredUser = { email: string; password: string; name: string; userType: string };

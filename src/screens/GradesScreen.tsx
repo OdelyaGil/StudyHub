@@ -15,6 +15,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCustomAlert } from '../hooks/useCustomAlert';
+import { useTheme } from '../context/ThemeContext';
+
+const darken = (hex: string, f = 0.75) => {
+  const r = Math.round(parseInt(hex.slice(1,3),16) * f);
+  const g = Math.round(parseInt(hex.slice(3,5),16) * f);
+  const b = Math.round(parseInt(hex.slice(5,7),16) * f);
+  return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
+};
 
 interface Criterion {
   id: number;
@@ -45,7 +53,9 @@ const normalizePct = (val: string): number => {
 };
 
 const GradesScreen = () => {
-  const { showAlert, showConfirm, showDestructiveConfirm, alertNode } = useCustomAlert();
+  const theme = useTheme();
+  const light = theme + '1F';
+  const { showAlert, showConfirm, showDestructiveConfirm, alertNode } = useCustomAlert(theme);
 
   const [grades, setGrades]         = useState<Grade[]>([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -201,7 +211,7 @@ const GradesScreen = () => {
   const GradeItem = ({ item }: { item: Grade }) => {
     const itemCriteria = item.criteria ?? [];
     return (
-      <View style={styles.gradeItem}>
+      <View style={[styles.gradeItem, { borderRightColor: theme }]}>
         <View style={styles.gradeInfo}>
           <Text style={styles.gradeName}>{item.name}</Text>
           <Text style={styles.gradeMeta}>
@@ -211,18 +221,18 @@ const GradesScreen = () => {
           {itemCriteria.length > 0 && (
             <View style={styles.criteriaRow}>
               {itemCriteria.map((c) => (
-                <Text key={c.id} style={styles.criterionTag}>{c.name} {c.percentage}%</Text>
+                <Text key={c.id} style={[styles.criterionTag, { color: theme, backgroundColor: light }]}>{c.name} {c.percentage}%</Text>
               ))}
             </View>
           )}
         </View>
         <View style={styles.gradeRight}>
-          <Text style={[styles.gradeValue, item.value === 0 && styles.gradeValuePending]}>
+          <Text style={[styles.gradeValue, { color: theme }, item.value === 0 && styles.gradeValuePending]}>
             {item.value > 0 ? item.value : '—'}
           </Text>
           <View style={styles.gradeActions}>
             <TouchableOpacity onPress={() => openEdit(item)} style={styles.actionBtn}>
-              <MaterialCommunityIcons name="pencil-outline" size={17} color="#CE6385" />
+              <MaterialCommunityIcons name="pencil-outline" size={17} color={theme} />
             </TouchableOpacity>
             <TouchableOpacity onPress={() => handleDeleteGrade(item.id)} style={styles.actionBtn}>
               <MaterialCommunityIcons name="trash-can-outline" size={17} color="#ff6b6b" />
@@ -241,7 +251,7 @@ const GradesScreen = () => {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
         {/* Average Card */}
-        <LinearGradient colors={['#CE6385', '#9E3F65']} style={styles.avgCard}>
+        <LinearGradient colors={[theme, darken(theme)]} style={styles.avgCard}>
           <View style={styles.avgRow}>
             <View>
               <Text style={styles.avgLabel}>ממוצע משוקלל</Text>
@@ -270,7 +280,7 @@ const GradesScreen = () => {
                   <Text style={styles.yearTitle}>{yr}</Text>
                   <View style={styles.yearStats}>
                     <Text style={styles.yearStat}>{yearCredits} נ"ז</Text>
-                    <View style={styles.yearAvgBadge}>
+                    <View style={[styles.yearAvgBadge, { backgroundColor: theme }]}>
                       <Text style={styles.yearAvgText}>ממוצע {yearAvg}</Text>
                     </View>
                   </View>
@@ -293,7 +303,7 @@ const GradesScreen = () => {
       </ScrollView>
 
       {/* FAB */}
-      <TouchableOpacity style={styles.fab} onPress={() => { resetForm(); setModalVisible(true); }}>
+      <TouchableOpacity style={[styles.fab, { backgroundColor: theme, shadowColor: theme }]} onPress={() => { resetForm(); setModalVisible(true); }}>
         <MaterialCommunityIcons name="plus" size={28} color="#fff" />
       </TouchableOpacity>
 
@@ -321,8 +331,8 @@ const GradesScreen = () => {
               <Text style={styles.label}>סמסטר</Text>
               <View style={styles.chipRow}>
                 {SEMESTERS.map((s) => (
-                  <Pressable key={s} style={[styles.chip, semester === s && styles.chipActive]} onPress={() => setSemester(s)}>
-                    <Text style={[styles.chipText, semester === s && styles.chipTextActive]}>סמסטר {s}</Text>
+                  <Pressable key={s} style={[styles.chip, semester === s && styles.chipActive, semester === s && { borderColor: theme, backgroundColor: light }]} onPress={() => setSemester(s)}>
+                    <Text style={[styles.chipText, semester === s && styles.chipTextActive, semester === s && { color: theme }]}>סמסטר {s}</Text>
                   </Pressable>
                 ))}
               </View>
@@ -330,8 +340,8 @@ const GradesScreen = () => {
               <Text style={styles.label}>שנה</Text>
               <View style={styles.chipRow}>
                 {YEARS.map((y) => (
-                  <Pressable key={y} style={[styles.chip, year === y && styles.chipActive]} onPress={() => setYear(y)}>
-                    <Text style={[styles.chipText, year === y && styles.chipTextActive]}>{y}</Text>
+                  <Pressable key={y} style={[styles.chip, year === y && styles.chipActive, year === y && { borderColor: theme, backgroundColor: light }]} onPress={() => setYear(y)}>
+                    <Text style={[styles.chipText, year === y && styles.chipTextActive, year === y && { color: theme }]}>{y}</Text>
                   </Pressable>
                 ))}
               </View>
@@ -340,7 +350,7 @@ const GradesScreen = () => {
               <View style={styles.criteriaSection}>
                 <View style={styles.criteriaHeader}>
                   <Text style={styles.label}>קריטריונים לציון</Text>
-                  <Text style={[styles.pctBadge, pctUsed === 100 && styles.pctBadgeFull]}>{pctUsed}/100%</Text>
+                  <Text style={[styles.pctBadge, { color: theme, backgroundColor: light }, pctUsed === 100 && styles.pctBadgeFull]}>{pctUsed}/100%</Text>
                 </View>
 
                 {criteria.map((c) => (
@@ -381,28 +391,28 @@ const GradesScreen = () => {
                       <Pressable style={styles.critCancelBtn} onPress={() => setShowCritForm(false)}>
                         <Text style={styles.critCancelText}>ביטול</Text>
                       </Pressable>
-                      <Pressable style={styles.critAddBtn} onPress={handleAddCriterion}>
+                      <Pressable style={[styles.critAddBtn, { backgroundColor: theme }]} onPress={handleAddCriterion}>
                         <Text style={styles.critAddText}>הוסף</Text>
                       </Pressable>
                     </View>
                   </View>
                 ) : pctUsed < 100 ? (
-                  <Pressable style={styles.addCritBtn} onPress={() => setShowCritForm(true)}>
-                    <MaterialCommunityIcons name="plus" size={16} color="#CE6385" />
-                    <Text style={styles.addCritText}>הוסף קריטריון</Text>
+                  <Pressable style={[styles.addCritBtn, { borderColor: theme }]} onPress={() => setShowCritForm(true)}>
+                    <MaterialCommunityIcons name="plus" size={16} color={theme} />
+                    <Text style={[styles.addCritText, { color: theme }]}>הוסף קריטריון</Text>
                   </Pressable>
                 ) : null}
               </View>
 
               {/* Computed grade preview */}
               {autoGrade && (
-                <View style={styles.autoGradeBox}>
-                  <Text style={styles.autoGradeLabel}>ציון סופי מחושב</Text>
-                  <Text style={styles.autoGradeValue}>{autoGrade}</Text>
+                <View style={[styles.autoGradeBox, { backgroundColor: light }]}>
+                  <Text style={[styles.autoGradeLabel, { color: theme }]}>ציון סופי מחושב</Text>
+                  <Text style={[styles.autoGradeValue, { color: theme }]}>{autoGrade}</Text>
                 </View>
               )}
 
-              <TouchableOpacity style={styles.submitBtn} onPress={handleSaveGrade}>
+              <TouchableOpacity style={[styles.submitBtn, { backgroundColor: theme }]} onPress={handleSaveGrade}>
                 <Text style={styles.submitBtnText}>{editingId !== null ? 'שמור שינויים' : 'הוסף ציון'}</Text>
               </TouchableOpacity>
             </ScrollView>

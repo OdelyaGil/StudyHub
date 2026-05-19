@@ -11,8 +11,17 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
+import { useTheme } from '../context/ThemeContext';
+
+const darken = (hex: string, f = 0.75) => {
+  const r = Math.round(parseInt(hex.slice(1,3),16) * f);
+  const g = Math.round(parseInt(hex.slice(3,5),16) * f);
+  const b = Math.round(parseInt(hex.slice(5,7),16) * f);
+  return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
+};
 
 const OverviewScreen = () => {
+  const theme = useTheme();
   const [grades, setGrades]   = useState<any[]>([]);
   const [tasks, setTasks]     = useState<any[]>([]);
   const [topics, setTopics]   = useState<any[]>([]);
@@ -56,23 +65,23 @@ const OverviewScreen = () => {
   return (
     <ScrollView style={styles.container} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
       <View style={styles.statsGrid}>
-        <StatCard title="ממוצע"   value={avg}          icon="chart-line"             colors={['#CE6385', '#9E3F65']} />
-        <StatCard title="מטלות"   value={activeTasks}  icon="checkbox-multiple-marked" colors={['#4CAFAE', '#2A8F8E']} />
-        <StatCard title="קורסים"  value={courseCount}  icon="school"                 colors={['#EB98B4', '#CE6385']} />
-        <StatCard title="נושאים"  value={topics.length} icon="brain"                 colors={['#FCCE90', '#F5A623']} />
+        <StatCard title="ממוצע"   value={avg}          icon="chart-line"              colors={[theme, darken(theme)]} />
+        <StatCard title="מטלות"   value={activeTasks}  icon="checkbox-multiple-marked" colors={[theme, darken(theme)]} />
+        <StatCard title="קורסים"  value={courseCount}  icon="school"                  colors={[theme, darken(theme)]} />
+        <StatCard title="נושאים"  value={topics.length} icon="brain"                  colors={[theme, darken(theme)]} />
       </View>
 
       {nextTask && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>📌 המטלה הקרובה</Text>
-          <TouchableOpacity style={styles.taskCard}>
+          <TouchableOpacity style={[styles.taskCard, { borderRightColor: theme }]}>
             <View style={styles.taskHeader}>
               <View>
                 <Text style={styles.taskName}>{nextTask.name}</Text>
                 {nextTask.course ? <Text style={styles.taskCourse}>{nextTask.course}</Text> : null}
               </View>
               <View style={[styles.priorityBadge, {
-                backgroundColor: nextTask.priority === 'גבוהה' ? '#CE6385' : nextTask.priority === 'בינונית' ? '#EB98B4' : '#4CAFAE'
+                backgroundColor: theme
               }]}>
                 <Text style={styles.priorityText}>{nextTask.priority}</Text>
               </View>
@@ -88,13 +97,13 @@ const OverviewScreen = () => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>📚 התקדמות למידה</Text>
           <View style={styles.progressGrid}>
-            <View style={styles.progressCard}>
+            <View style={[styles.progressCard, { borderTopColor: theme }]}>
               <Text style={styles.progressLabel}>נושאים שיודעת</Text>
-              <Text style={styles.progressValue}>{topicsKnown}</Text>
+              <Text style={[styles.progressValue, { color: theme }]}>{topicsKnown}</Text>
             </View>
-            <View style={styles.progressCard}>
+            <View style={[styles.progressCard, { borderTopColor: theme }]}>
               <Text style={styles.progressLabel}>צריכים חזרה</Text>
-              <Text style={styles.progressValue}>{topicsNeedReview}</Text>
+              <Text style={[styles.progressValue, { color: theme }]}>{topicsNeedReview}</Text>
             </View>
           </View>
         </View>

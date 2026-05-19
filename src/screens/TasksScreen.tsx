@@ -17,6 +17,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as DocumentPicker from 'expo-document-picker';
 import { Picker } from '@react-native-picker/picker';
 import { useCustomAlert } from '../hooks/useCustomAlert';
+import { useTheme } from '../context/ThemeContext';
 
 // ── Date helpers ─────────────────────────────────────────────────────────────
 const HEBREW_MONTHS = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
@@ -137,13 +138,14 @@ interface TaskItemProps {
 }
 
 const TaskItem: React.FC<TaskItemProps> = ({ item, onToggle, onDelete, onEdit, onFileOpen }) => {
+  const theme = useTheme();
   const [filesExpanded, setFilesExpanded] = useState(false);
   const daysLeft = getDaysLeft(item.dueDate);
-  const priorityColor = item.priority === 'גבוהה' ? '#CE6385' : item.priority === 'בינונית' ? '#EB98B4' : '#4CAFAE';
+  const priorityColor = theme;
   const files: TaskFile[] = (item as any).files ?? [];
 
   return (
-    <View style={[styles.taskItem, { opacity: item.completed ? 0.5 : 1 }]}>
+    <View style={[styles.taskItem, { borderRightColor: theme, opacity: item.completed ? 0.5 : 1 }]}>
       {/* Checkbox */}
       <View style={styles.taskCheckBox}>
         <TouchableOpacity
@@ -178,9 +180,9 @@ const TaskItem: React.FC<TaskItemProps> = ({ item, onToggle, onDelete, onEdit, o
           <View style={styles.taskFilesList}>
             {files.map((file, i) => (
               <TouchableOpacity key={i} style={styles.taskFileItem} onPress={() => onFileOpen(file)}>
-                <MaterialCommunityIcons name="file-outline" size={13} color="#CE6385" />
+                <MaterialCommunityIcons name="file-outline" size={13} color={theme} />
                 <Text style={styles.taskFileItemName} numberOfLines={1}>{file.name}</Text>
-                <MaterialCommunityIcons name="download-outline" size={13} color="#CE6385" />
+                <MaterialCommunityIcons name="download-outline" size={13} color={theme} />
               </TouchableOpacity>
             ))}
           </View>
@@ -204,7 +206,7 @@ const TaskItem: React.FC<TaskItemProps> = ({ item, onToggle, onDelete, onEdit, o
         </View>
         <View style={styles.taskActions}>
           <TouchableOpacity onPress={() => onEdit(item)} style={styles.actionIcon}>
-            <MaterialCommunityIcons name="pencil-outline" size={17} color="#CE6385" />
+            <MaterialCommunityIcons name="pencil-outline" size={17} color={theme} />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => onDelete(item.id)} style={styles.actionIcon}>
             <MaterialCommunityIcons name="trash-can-outline" size={17} color="#ff6b6b" />
@@ -217,7 +219,9 @@ const TaskItem: React.FC<TaskItemProps> = ({ item, onToggle, onDelete, onEdit, o
 
 // ── TasksScreen ───────────────────────────────────────────────────────────────
 const TasksScreen = () => {
-  const { showAlert, showDestructiveConfirm, alertNode } = useCustomAlert();
+  const theme = useTheme();
+  const light = theme + '1F';
+  const { showAlert, showDestructiveConfirm, alertNode } = useCustomAlert(theme);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
@@ -418,7 +422,7 @@ const TasksScreen = () => {
         )}
       </ScrollView>
 
-      <TouchableOpacity style={styles.fab} onPress={() => setModalVisible(true)}>
+      <TouchableOpacity style={[styles.fab, { backgroundColor: theme, shadowColor: theme }]} onPress={() => setModalVisible(true)}>
         <MaterialCommunityIcons name="plus" size={28} color="#fff" />
       </TouchableOpacity>
 
@@ -472,10 +476,10 @@ const TasksScreen = () => {
                   {['גבוהה', 'בינונית', 'נמוכה'].map(p => (
                     <TouchableOpacity
                       key={p}
-                      style={[styles.priorityBtn, taskPriority === p && styles.priorityBtnActive]}
+                      style={[styles.priorityBtn, taskPriority === p && styles.priorityBtnActive, taskPriority === p && { borderColor: theme, backgroundColor: light }]}
                       onPress={() => setTaskPriority(p)}
                     >
-                      <Text style={[styles.priorityBtnText, taskPriority === p && styles.priorityBtnTextActive]}>{p}</Text>
+                      <Text style={[styles.priorityBtnText, taskPriority === p && styles.priorityBtnTextActive, taskPriority === p && { color: theme }]}>{p}</Text>
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -498,7 +502,7 @@ const TasksScreen = () => {
                     </Picker>
                   </View>
                   <View style={styles.webPickerColonWrap}>
-                    <Text style={styles.webPickerColon}>:</Text>
+                    <Text style={[styles.webPickerColon, { color: theme }]}>:</Text>
                   </View>
                   <View style={styles.webPickerCol}>
                     <Text style={styles.webPickerSubLabel}>דקות</Text>
@@ -518,15 +522,15 @@ const TasksScreen = () => {
               {/* Files */}
               <View style={styles.formGroup}>
                 <Text style={styles.label}>קבצים מצורפים</Text>
-                <TouchableOpacity style={styles.filePickerBtn} onPress={handlePickFiles}>
-                  <MaterialCommunityIcons name="paperclip" size={18} color="#CE6385" />
-                  <Text style={styles.filePickerBtnText}>הוסף קבצים</Text>
+                <TouchableOpacity style={[styles.filePickerBtn, { borderColor: theme, backgroundColor: light }]} onPress={handlePickFiles}>
+                  <MaterialCommunityIcons name="paperclip" size={18} color={theme} />
+                  <Text style={[styles.filePickerBtnText, { color: theme }]}>הוסף קבצים</Text>
                 </TouchableOpacity>
                 {taskFiles.length > 0 && (
                   <View style={styles.fileList}>
                     {taskFiles.map((file, i) => (
                       <View key={i} style={styles.fileChip}>
-                        <MaterialCommunityIcons name="file-outline" size={14} color="#CE6385" />
+                        <MaterialCommunityIcons name="file-outline" size={14} color={theme} />
                         <Text style={styles.fileChipText} numberOfLines={1}>{file.name}</Text>
                         {file.size != null && (
                           <Text style={styles.fileChipSize}>{(file.size / 1024).toFixed(0)}KB</Text>
@@ -540,7 +544,7 @@ const TasksScreen = () => {
                 )}
               </View>
 
-              <TouchableOpacity style={styles.submitBtn} onPress={handleSaveTask}>
+              <TouchableOpacity style={[styles.submitBtn, { backgroundColor: theme }]} onPress={handleSaveTask}>
                 <Text style={styles.submitBtnText}>
                   {editingTaskId !== null ? 'עדכן מטלה' : 'הוסף מטלה'}
                 </Text>

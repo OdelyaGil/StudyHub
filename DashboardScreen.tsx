@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import ThemeContext from './src/context/ThemeContext';
 import OverviewScreen from './src/screens/OverviewScreen';
 import GradesScreen from './src/screens/GradesScreen';
 import TasksScreen from './src/screens/TasksScreen';
@@ -30,6 +31,7 @@ const DashboardScreen = ({ theme, onSetTheme, onLogout }: Props) => {
   }, []);
 
   return (
+    <ThemeContext.Provider value={theme}>
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerTitle: `שלום ${userName} 👋`,
@@ -65,6 +67,7 @@ const DashboardScreen = ({ theme, onSetTheme, onLogout }: Props) => {
         {() => <ProfileScreen theme={theme} onSetTheme={onSetTheme} onLogout={onLogout} />}
       </Tab.Screen>
     </Tab.Navigator>
+    </ThemeContext.Provider>
   );
 };
 

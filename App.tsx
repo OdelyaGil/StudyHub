@@ -11,7 +11,7 @@ const Stack = createNativeStackNavigator();
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading]   = useState(true);
-  const [theme, setTheme]           = useState('#CE6385');
+  const [theme, setTheme]           = useState('#D58EAC');
 
   useEffect(() => { bootstrapAsync(); }, []);
 

@@ -16,6 +16,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCustomAlert } from '../hooks/useCustomAlert';
+import { useTheme } from '../context/ThemeContext';
 
 interface CalendarEvent {
   id: number;
@@ -143,7 +144,9 @@ const addOneHour = (timeStr: string): string => {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 const ScheduleScreen = () => {
-  const { showAlert, showDestructiveConfirm, alertNode } = useCustomAlert();
+  const theme = useTheme();
+  const light = theme + '1F';
+  const { showAlert, showDestructiveConfirm, alertNode } = useCustomAlert(theme);
   const todayDate = new Date();
   const todayISO  = toISO(todayDate);
 
@@ -368,7 +371,7 @@ const ScheduleScreen = () => {
           </Picker>
         </View>
         <View style={styles.webPickerColonWrap}>
-          <Text style={styles.webPickerColon}>:</Text>
+          <Text style={[styles.webPickerColon, { color: theme }]}>:</Text>
         </View>
         <View style={styles.webPickerCol}>
           <Text style={styles.webPickerSubLabel}>דקות</Text>
@@ -441,16 +444,16 @@ const ScheduleScreen = () => {
       <View style={styles.calBlock}>
         <View style={styles.calHeader}>
           <TouchableOpacity onPress={goToPrev} style={styles.navBtn}>
-            <MaterialCommunityIcons name="chevron-right" size={24} color="#CE6385" />
+            <MaterialCommunityIcons name="chevron-right" size={24} color={theme} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.monthYearBtn} onPress={() => { setPickerYear(year); setPickerVisible(true); }}>
             <Text style={styles.monthLabel}>{HEBREW_MONTHS[month]} {year}</Text>
-            <MaterialCommunityIcons name="menu-down" size={18} color="#CE6385" />
+            <MaterialCommunityIcons name="menu-down" size={18} color={theme} />
           </TouchableOpacity>
           <TouchableOpacity onPress={goToNext} style={styles.navBtn}>
-            <MaterialCommunityIcons name="chevron-left" size={24} color="#CE6385" />
+            <MaterialCommunityIcons name="chevron-left" size={24} color={theme} />
           </TouchableOpacity>
-          <TouchableOpacity onPress={goToToday} style={styles.todayBtn}>
+          <TouchableOpacity onPress={goToToday} style={[styles.todayBtn, { backgroundColor: theme }]}>
             <Text style={styles.todayBtnText}>היום</Text>
           </TouchableOpacity>
         </View>
@@ -469,11 +472,11 @@ const ScheduleScreen = () => {
             return (
               <TouchableOpacity
                 key={iso}
-                style={[styles.cell, isToday && !isSelected && styles.cellToday, isSelected && styles.cellSelected]}
+                style={[styles.cell, isToday && !isSelected && styles.cellToday, isToday && !isSelected && { backgroundColor: light }, isSelected && styles.cellSelected, isSelected && { backgroundColor: theme }]}
                 onPress={() => setSelectedDate(iso)}
                 activeOpacity={0.7}
               >
-                <Text style={[styles.cellText, isToday && !isSelected && styles.cellTextToday, isSelected && styles.cellTextSelected]}>
+                <Text style={[styles.cellText, isToday && !isSelected && styles.cellTextToday, isToday && !isSelected && { color: theme }, isSelected && styles.cellTextSelected]}>
                   {day}
                 </Text>
                 {dots.length > 0 && (
@@ -501,7 +504,7 @@ const ScheduleScreen = () => {
                 <View style={styles.eventBody}>
                   <Text style={styles.eventTitle}>{ev.title}</Text>
                   <View style={styles.eventMeta}>
-                    <Text style={styles.eventTime}>{timeRange}</Text>
+                    <Text style={[styles.eventTime, { color: theme }]}>{timeRange}</Text>
                     {ev.recurrence !== 'none' && (
                       <Text style={styles.eventRecur}>
                         🔁 {recurLabel}{ev.recurrenceEndDate ? ` עד ${ev.recurrenceEndDate.split('-').reverse().join('/')}` : ''}
@@ -511,7 +514,7 @@ const ScheduleScreen = () => {
                 </View>
                 <View style={styles.eventActions}>
                   <TouchableOpacity onPress={() => openEdit(ev)} style={styles.actionBtn}>
-                    <MaterialCommunityIcons name="pencil-outline" size={18} color="#CE6385" />
+                    <MaterialCommunityIcons name="pencil-outline" size={18} color={theme} />
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => handleDelete(ev.id)} style={styles.actionBtn}>
                     <MaterialCommunityIcons name="trash-can-outline" size={18} color="#ff6b6b" />
@@ -524,7 +527,7 @@ const ScheduleScreen = () => {
       </ScrollView>
 
       {/* FAB */}
-      <TouchableOpacity style={styles.fab} onPress={openAdd}>
+      <TouchableOpacity style={[styles.fab, { backgroundColor: theme, shadowColor: theme }]} onPress={openAdd}>
         <MaterialCommunityIcons name="plus" size={28} color="#fff" />
       </TouchableOpacity>
 
@@ -534,11 +537,11 @@ const ScheduleScreen = () => {
           <View style={styles.pickerBox} onStartShouldSetResponder={() => true}>
             <View style={styles.pickerYearRow}>
               <TouchableOpacity onPress={() => setPickerYear(y => y - 1)} style={styles.pickerYearBtn}>
-                <MaterialCommunityIcons name="chevron-right" size={22} color="#CE6385" />
+                <MaterialCommunityIcons name="chevron-right" size={22} color={theme} />
               </TouchableOpacity>
               <Text style={styles.pickerYearText}>{pickerYear}</Text>
               <TouchableOpacity onPress={() => setPickerYear(y => y + 1)} style={styles.pickerYearBtn}>
-                <MaterialCommunityIcons name="chevron-left" size={22} color="#CE6385" />
+                <MaterialCommunityIcons name="chevron-left" size={22} color={theme} />
               </TouchableOpacity>
             </View>
             <View style={styles.pickerMonthGrid}>
@@ -546,7 +549,7 @@ const ScheduleScreen = () => {
                 const isActive = i === month && pickerYear === year;
                 return (
                   <TouchableOpacity key={name}
-                    style={[styles.pickerMonthCell, isActive && styles.pickerMonthCellActive]}
+                    style={[styles.pickerMonthCell, isActive && styles.pickerMonthCellActive, isActive && { backgroundColor: theme }]}
                     onPress={() => pickMonthYear(i)}>
                     <Text style={[styles.pickerMonthText, isActive && styles.pickerMonthTextActive]}>{name}</Text>
                   </TouchableOpacity>
@@ -588,7 +591,7 @@ const ScheduleScreen = () => {
                     activeOpacity={0.7}
                   >
                     <Text style={styles.pickerBtnText}>{fmtDate(eventDate)}</Text>
-                    <MaterialCommunityIcons name="calendar" size={18} color="#CE6385" />
+                    <MaterialCommunityIcons name="calendar" size={18} color={theme} />
                   </TouchableOpacity>
                 )}
               </View>
@@ -623,7 +626,7 @@ const ScheduleScreen = () => {
                         activeOpacity={0.7}
                       >
                         <Text style={styles.pickerBtnText}>{eventStartTime || '09:00'}</Text>
-                        <MaterialCommunityIcons name="clock-outline" size={18} color="#CE6385" />
+                        <MaterialCommunityIcons name="clock-outline" size={18} color={theme} />
                       </TouchableOpacity>
                     </View>
 
@@ -640,7 +643,7 @@ const ScheduleScreen = () => {
                         activeOpacity={0.7}
                       >
                         <Text style={styles.pickerBtnText}>{eventEndTime}</Text>
-                        <MaterialCommunityIcons name="clock-outline" size={18} color="#CE6385" />
+                        <MaterialCommunityIcons name="clock-outline" size={18} color={theme} />
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -665,9 +668,9 @@ const ScheduleScreen = () => {
                 <View style={styles.recurrenceRow}>
                   {RECURRENCE_OPTIONS.map(opt => (
                     <TouchableOpacity key={opt.key}
-                      style={[styles.recurrenceBtn, eventRecurrence === opt.key && styles.recurrenceBtnActive]}
+                      style={[styles.recurrenceBtn, eventRecurrence === opt.key && styles.recurrenceBtnActive, eventRecurrence === opt.key && { borderColor: theme, backgroundColor: light }]}
                       onPress={() => setEventRecurrence(opt.key)}>
-                      <Text style={[styles.recurrenceBtnText, eventRecurrence === opt.key && styles.recurrenceBtnTextActive]}>
+                      <Text style={[styles.recurrenceBtnText, eventRecurrence === opt.key && styles.recurrenceBtnTextActive, eventRecurrence === opt.key && { color: theme }]}>
                         {opt.label}
                       </Text>
                     </TouchableOpacity>
@@ -705,7 +708,7 @@ const ScheduleScreen = () => {
                         <MaterialCommunityIcons
                           name="calendar"
                           size={18}
-                          color={eventRecurrenceEnd ? '#CE6385' : '#ccc'}
+                          color={eventRecurrenceEnd ? theme : '#ccc'}
                         />
                       </TouchableOpacity>
                       {!!eventRecurrenceEnd && (
@@ -718,7 +721,7 @@ const ScheduleScreen = () => {
                 </View>
               )}
 
-              <TouchableOpacity style={styles.submitBtn} onPress={handleSave}>
+              <TouchableOpacity style={[styles.submitBtn, { backgroundColor: theme }]} onPress={handleSave}>
                 <Text style={styles.submitBtnText}>{editingId !== null ? 'שמור שינויים' : 'הוסף אירוע'}</Text>
               </TouchableOpacity>
             </ScrollView>
@@ -758,7 +761,7 @@ const ScheduleScreen = () => {
                 </TouchableOpacity>
                 <Text style={styles.dtPickerTitle}>{dtPickerTitle(dtPickerTarget)}</Text>
                 <TouchableOpacity onPress={confirmDtPicker} style={styles.dtPickerHeaderBtn}>
-                  <Text style={styles.dtPickerDoneText}>אישור</Text>
+                  <Text style={[styles.dtPickerDoneText, { color: theme }]}>אישור</Text>
                 </TouchableOpacity>
               </View>
               <DateTimePicker
