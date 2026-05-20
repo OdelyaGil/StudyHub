@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+import { auth, db } from './src/config/firebase';
 import LoginScreen from './LoginScreen';
 import DashboardScreen from './DashboardScreen';
 
@@ -13,19 +15,24 @@ export default function App() {
   const [isLoading, setIsLoading]   = useState(true);
   const [theme, setTheme]           = useState('#D58EAC');
 
-  useEffect(() => { bootstrapAsync(); }, []);
-
-  const bootstrapAsync = async () => {
-    try {
-      const [userToken, savedTheme] = await AsyncStorage.multiGet(['userToken', 'appTheme']);
-      setIsLoggedIn(!!userToken[1]);
-      if (savedTheme[1]) setTheme(savedTheme[1]);
-    } catch (e) {
-      console.log(e);
-    } finally {
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        try {
+          const snap = await getDoc(doc(db, 'users', user.uid));
+          if (snap.exists()) {
+            const savedTheme = snap.data().theme;
+            if (savedTheme) setTheme(savedTheme);
+          }
+        } catch (e) { console.log(e); }
+        setIsLoggedIn(true);
+      } else {
+        setIsLoggedIn(false);
+      }
       setIsLoading(false);
-    }
-  };
+    });
+    return unsubscribe;
+  }, []);
 
   if (isLoading) return null;
 

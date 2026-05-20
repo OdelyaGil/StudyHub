@@ -11,7 +11,7 @@ import {
   Pressable,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { loadField, saveField } from '../utils/firestore';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCustomAlert } from '../hooks/useCustomAlert';
@@ -79,8 +79,8 @@ const GradesScreen = () => {
 
   const loadGrades = async () => {
     try {
-      const data = await AsyncStorage.getItem('grades');
-      if (data) setGrades(JSON.parse(data));
+      const data = await loadField('grades');
+      if (data) setGrades(data);
     } catch (e) { console.log(e); }
   };
 
@@ -172,7 +172,7 @@ const GradesScreen = () => {
 
     setGrades(updated);
     try {
-      await AsyncStorage.setItem('grades', JSON.stringify(updated));
+      await saveField('grades', updated);
       resetForm();
       setModalVisible(false);
     } catch { showAlert('שגיאה', 'שמירת הציון נכשלה'); }
@@ -203,7 +203,7 @@ const GradesScreen = () => {
     showDestructiveConfirm('מחק ציון', 'האם אתה בטוח שברצונך למחוק את הציון?', 'מחק', async () => {
       const updated = grades.filter((g) => g.id !== id);
       setGrades(updated);
-      await AsyncStorage.setItem('grades', JSON.stringify(updated));
+      await saveField('grades', updated);
     });
   };
 

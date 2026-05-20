@@ -8,7 +8,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { loadField } from '../utils/firestore';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../context/ThemeContext';
@@ -32,16 +32,18 @@ const OverviewScreen = () => {
 
   const loadData = async () => {
     try {
-      const gradesData = await AsyncStorage.getItem('grades');
-      const tasksData  = await AsyncStorage.getItem('tasks');
-      const topicsData = await AsyncStorage.getItem('topics');
-      if (gradesData) setGrades(JSON.parse(gradesData));
-      if (tasksData)  setTasks(JSON.parse(tasksData));
-      if (topicsData) setTopics(JSON.parse(topicsData));
-      if (gradesData) {
-        const list = JSON.parse(gradesData);
-        if (list.length > 0) setAvg((list.reduce((s: number, g: any) => s + g.value, 0) / list.length).toFixed(2));
-      }
+      const [gradesList, tasksList, topicsList] = await Promise.all([
+        loadField('grades'),
+        loadField('tasks'),
+        loadField('topics'),
+      ]);
+      const g = gradesList ?? [];
+      const t = tasksList  ?? [];
+      const tp = topicsList ?? [];
+      setGrades(g);
+      setTasks(t);
+      setTopics(tp);
+      if (g.length > 0) setAvg((g.reduce((s: number, gr: any) => s + gr.value, 0) / g.length).toFixed(2));
     } catch (e) { console.log(e); }
   };
 

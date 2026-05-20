@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { auth, db } from './src/config/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 import ThemeContext from './src/context/ThemeContext';
 import OverviewScreen from './src/screens/OverviewScreen';
 import GradesScreen from './src/screens/GradesScreen';
@@ -27,7 +28,11 @@ const DashboardScreen = ({ theme, onSetTheme, onLogout }: Props) => {
   const [userName, setUserName] = useState('');
 
   useEffect(() => {
-    AsyncStorage.getItem('userName').then((name) => setUserName(name || ''));
+    const user = auth.currentUser;
+    if (!user) return;
+    getDoc(doc(db, 'users', user.uid)).then((snap) => {
+      if (snap.exists()) setUserName(snap.data().name || '');
+    });
   }, []);
 
   return (

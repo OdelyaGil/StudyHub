@@ -13,7 +13,7 @@ import {
   Linking,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { loadField, saveField } from '../utils/firestore';
 import * as DocumentPicker from 'expo-document-picker';
 import { Picker } from '@react-native-picker/picker';
 import { useCustomAlert } from '../hooks/useCustomAlert';
@@ -240,8 +240,8 @@ const TasksScreen = () => {
 
   const loadTasks = async () => {
     try {
-      const data = await AsyncStorage.getItem('tasks');
-      if (data) setTasks(JSON.parse(data));
+      const data = await loadField('tasks');
+      if (data) setTasks(data);
     } catch (e) { console.log(e); }
   };
 
@@ -358,7 +358,7 @@ const TasksScreen = () => {
 
     setTasks(updatedTasks);
     try {
-      await AsyncStorage.setItem('tasks', JSON.stringify(updatedTasks));
+      await saveField('tasks', updatedTasks);
       const isEdit = editingTaskId !== null;
       closeModal();
       showAlert('הצלחה', isEdit ? 'המטלה עודכנה בהצלחה' : 'המטלה נשמרה בהצלחה');
@@ -370,14 +370,14 @@ const TasksScreen = () => {
   const handleToggleTask = async (id: number) => {
     const updatedTasks = tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t);
     setTasks(updatedTasks);
-    try { await AsyncStorage.setItem('tasks', JSON.stringify(updatedTasks)); } catch (e) { console.log(e); }
+    try { await saveField('tasks', updatedTasks); } catch (e) { console.log(e); }
   };
 
   const handleDeleteTask = (id: number) => {
     showDestructiveConfirm('מחק מטלה', 'האם אתה בטוח שברצונך למחוק את המטלה?', 'מחק', async () => {
       const updatedTasks = tasks.filter(t => t.id !== id);
       setTasks(updatedTasks);
-      try { await AsyncStorage.setItem('tasks', JSON.stringify(updatedTasks)); } catch (e) { console.log(e); }
+      try { await saveField('tasks', updatedTasks); } catch (e) { console.log(e); }
     });
   };
 

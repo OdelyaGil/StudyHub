@@ -10,7 +10,9 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { EmailAuthProvider, reauthenticateWithCredential, updatePassword, deleteUser } from 'firebase/auth';
+import { doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
+import { auth, db } from '../config/firebase';
 import { useCustomAlert } from '../hooks/useCustomAlert';
 
 const THEMES = [
@@ -20,8 +22,6 @@ const THEMES = [
   { name: 'תכלת',   color: '#89D4E3' },
   { name: 'טורקיז', color: '#46C0C1' },
 ];
-
-type RegisteredUser = { email: string; password: string; name: string; userType: string };
 
 type Props = {
   theme: string;
@@ -47,21 +47,22 @@ const ProfileScreen = ({ theme, onSetTheme, onLogout }: Props) => {
   useEffect(() => { loadUser(); }, []);
 
   const loadUser = async () => {
-    const name  = await AsyncStorage.getItem('userName')  || '';
-    const email = await AsyncStorage.getItem('userEmail') || '';
-    setUserName(name);
-    setUserEmail(email);
-    setNewName(name);
+    const user = auth.currentUser;
+    if (!user) return;
+    const snap = await getDoc(doc(db, 'users', user.uid));
+    const data = snap.data() ?? {};
+    setUserName(data.name  || '');
+    setUserEmail(data.email || user.email || '');
+    setNewName(data.name || '');
   };
 
   // ── Save name ──────────────────────────────────────────────────────────────
   const handleSaveName = async () => {
     if (!newName.trim()) return showAlert('שגיאה', 'השם לא יכול להיות ריק');
+    const user = auth.currentUser;
+    if (!user) return;
     try {
-      await AsyncStorage.setItem('userName', newName.trim());
-      const raw: RegisteredUser[] = JSON.parse((await AsyncStorage.getItem('registeredUsers')) || '[]');
-      const updated = raw.map((u) => u.email === userEmail ? { ...u, name: newName.trim() } : u);
-      await AsyncStorage.setItem('registeredUsers', JSON.stringify(updated));
+      await setDoc(doc(db, 'users', user.uid), { name: newName.trim() }, { merge: true });
       setUserName(newName.trim());
       setEditingName(false);
     } catch { showAlert('שגיאה', 'שמירת השם נכשלה'); }
@@ -73,33 +74,35 @@ const ProfileScreen = ({ theme, onSetTheme, onLogout }: Props) => {
     if (newPass.length < 6)      return showAlert('שגיאה', 'הסיסמה החדשה חייבת להכיל לפחות 6 תווים');
     if (newPass !== confirmPass)  return showAlert('שגיאה', 'הסיסמאות אינן תואמות');
 
+    const user = auth.currentUser;
+    if (!user || !user.email) return;
     setPassLoading(true);
     try {
-      const raw: RegisteredUser[] = JSON.parse((await AsyncStorage.getItem('registeredUsers')) || '[]');
-      const user = raw.find((u) => u.email === userEmail);
-      if (!user || user.password !== currentPass) {
-        showAlert('שגיאה', 'הסיסמה הנוכחית שגויה');
-        return;
-      }
-      const updated = raw.map((u) => u.email === userEmail ? { ...u, password: newPass } : u);
-      await AsyncStorage.setItem('registeredUsers', JSON.stringify(updated));
+      const credential = EmailAuthProvider.credential(user.email, currentPass);
+      await reauthenticateWithCredential(user, credential);
+      await updatePassword(user, newPass);
       setShowPassModal(false);
       setCurrentPass(''); setNewPass(''); setConfirmPass('');
       showAlert('הצלחה', 'הסיסמה שונתה בהצלחה');
-    } catch { showAlert('שגיאה', 'שינוי הסיסמה נכשל'); }
-    finally  { setPassLoading(false); }
+    } catch (e: any) {
+      if (e?.code === 'auth/wrong-password' || e?.code === 'auth/invalid-credential')
+        showAlert('שגיאה', 'הסיסמה הנוכחית שגויה');
+      else
+        showAlert('שגיאה', 'שינוי הסיסמה נכשל');
+    } finally { setPassLoading(false); }
   };
 
   // ── Theme ──────────────────────────────────────────────────────────────────
   const handleSelectTheme = async (color: string) => {
-    await AsyncStorage.setItem('appTheme', color);
+    const user = auth.currentUser;
+    if (user) await setDoc(doc(db, 'users', user.uid), { theme: color }, { merge: true });
     onSetTheme(color);
   };
 
   // ── Logout ─────────────────────────────────────────────────────────────────
   const handleLogout = () => {
     showConfirm('התנתקות', 'האם אתה בטוח שברצונך להתנתק?', async () => {
-      await AsyncStorage.removeItem('userToken');
+      await auth.signOut();
       onLogout();
     });
   };
@@ -107,14 +110,13 @@ const ProfileScreen = ({ theme, onSetTheme, onLogout }: Props) => {
   // ── Delete account ─────────────────────────────────────────────────────────
   const handleDeleteAccount = () => {
     showDestructiveConfirm('מחיקת חשבון', 'פעולה זו תמחק את החשבון שלך לצמיתות. להמשיך?', 'מחק', async () => {
+      const user = auth.currentUser;
+      if (!user) return;
       try {
-        const raw: RegisteredUser[] = JSON.parse((await AsyncStorage.getItem('registeredUsers')) || '[]');
-        const updated = raw.filter((u) => u.email !== userEmail);
-        await AsyncStorage.setItem('registeredUsers', JSON.stringify(updated));
-        await AsyncStorage.multiRemove(['userToken', 'userEmail', 'userName', 'userType',
-          'grades', 'tasks', 'schedule', 'topics', 'savedEmail']);
+        await deleteDoc(doc(db, 'users', user.uid));
+        await deleteUser(user);
         onLogout();
-      } catch { showAlert('שגיאה', 'מחיקת החשבון נכשלה'); }
+      } catch { showAlert('שגיאה', 'מחיקת החשבון נכשלה. אם אינך מחובר לאחרונה, התנתק והתחבר שוב ואז נסה שוב.'); }
     });
   };
 

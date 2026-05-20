@@ -12,7 +12,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { loadField, saveField } from '../utils/firestore';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../context/ThemeContext';
 
@@ -44,8 +44,8 @@ const LearningScreen = () => {
 
   const loadTopics = async () => {
     try {
-      const topicsData = await AsyncStorage.getItem('topics');
-      if (topicsData) setTopics(JSON.parse(topicsData));
+      const data = await loadField('topics');
+      if (data) setTopics(data);
     } catch (e) { console.log(e); }
   };
 
@@ -64,7 +64,7 @@ const LearningScreen = () => {
     const updatedTopics = [...topics, newTopic];
     setTopics(updatedTopics);
     try {
-      await AsyncStorage.setItem('topics', JSON.stringify(updatedTopics));
+      await saveField('topics', updatedTopics);
       setTopicCourse('');
       setTopicName('');
       setModalVisible(false);
@@ -77,13 +77,13 @@ const LearningScreen = () => {
   const handleToggleKnown = async (id: number) => {
     const updatedTopics = topics.map(t => t.id === id ? { ...t, known: !t.known } : t);
     setTopics(updatedTopics);
-    try { await AsyncStorage.setItem('topics', JSON.stringify(updatedTopics)); } catch (e) { console.log(e); }
+    try { await saveField('topics', updatedTopics); } catch (e) { console.log(e); }
   };
 
   const handleToggleReview = async (id: number) => {
     const updatedTopics = topics.map(t => t.id === id ? { ...t, needsReview: !t.needsReview } : t);
     setTopics(updatedTopics);
-    try { await AsyncStorage.setItem('topics', JSON.stringify(updatedTopics)); } catch (e) { console.log(e); }
+    try { await saveField('topics', updatedTopics); } catch (e) { console.log(e); }
   };
 
   const handleDeleteTopic = async (id: number) => {
@@ -94,7 +94,7 @@ const LearningScreen = () => {
         onPress: async () => {
           const updatedTopics = topics.filter(t => t.id !== id);
           setTopics(updatedTopics);
-          try { await AsyncStorage.setItem('topics', JSON.stringify(updatedTopics)); } catch (e) { console.log(e); }
+          try { await saveField('topics', updatedTopics); } catch (e) { console.log(e); }
         },
       },
     ]);

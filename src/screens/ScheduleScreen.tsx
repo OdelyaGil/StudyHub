@@ -13,7 +13,7 @@ import {
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { loadField, saveField } from '../utils/firestore';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCustomAlert } from '../hooks/useCustomAlert';
 import { useTheme } from '../context/ThemeContext';
@@ -178,9 +178,9 @@ const ScheduleScreen = () => {
 
   const loadEvents = async () => {
     try {
-      const data = await AsyncStorage.getItem('calendarEvents');
+      const data = await loadField('schedule');
       if (data) {
-        const parsed = JSON.parse(data).map((e: any) => ({
+        const parsed = data.map((e: any) => ({
           ...e,
           startTime: e.startTime ?? e.time ?? '09:00',
           endTime:   e.endTime   ?? '',
@@ -191,7 +191,7 @@ const ScheduleScreen = () => {
   };
 
   const persist = async (updated: CalendarEvent[]) =>
-    AsyncStorage.setItem('calendarEvents', JSON.stringify(updated));
+    saveField('schedule', updated);
 
   // ── Month navigation ──────────────────────────────────────────────────────
   const goToPrev = () => {
