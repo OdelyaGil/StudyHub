@@ -11,11 +11,13 @@ import {
   RefreshControl,
   Platform,
   Linking,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { loadField, saveField } from '../utils/firestore';
 import * as DocumentPicker from 'expo-document-picker';
 import { Picker } from '@react-native-picker/picker';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useCustomAlert } from '../hooks/useCustomAlert';
 import { useTheme } from '../context/ThemeContext';
 
@@ -23,8 +25,6 @@ import { useTheme } from '../context/ThemeContext';
 const HEBREW_MONTHS = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
 const THIS_YEAR = new Date().getFullYear();
 const YEAR_OPTIONS = Array.from({ length: 16 }, (_, i) => THIS_YEAR - 5 + i);
-const HOUR_OPTIONS = Array.from({ length: 13 }, (_, i) => i);
-const MINUTE_OPTIONS = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
 
 const isValidDate = (iso: string) => /^\d{4}-\d{2}-\d{2}$/.test(iso) && !isNaN(Date.parse(iso));
 
@@ -235,6 +235,8 @@ const TasksScreen = () => {
   const [taskEstimateMinutes, setTaskEstimateMinutes] = useState(0);
   const [taskFiles, setTaskFiles] = useState<TaskFile[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [dtPickerOpen, setDtPickerOpen] = useState(false);
+  const [dtPickerTemp, setDtPickerTemp] = useState(new Date());
 
   useEffect(() => { loadTasks(); }, []);
 
@@ -428,6 +430,7 @@ const TasksScreen = () => {
 
       {/* Add / Edit Task Modal */}
       <Modal visible={modalVisible} animationType="slide" transparent={true}>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
@@ -466,7 +469,24 @@ const TasksScreen = () => {
               {/* Due date */}
               <View style={styles.formGroup}>
                 <Text style={styles.label}>תאריך הגשה</Text>
-                <WebDatePicker iso={taskDueDate} onChange={setTaskDueDate} />
+                {Platform.OS === 'web' ? (
+                  <WebDatePicker iso={taskDueDate} onChange={setTaskDueDate} />
+                ) : (
+                  <TouchableOpacity
+                    style={[styles.input, styles.pickerBtn]}
+                    onPress={() => {
+                      const d = isValidDate(taskDueDate) ? new Date(taskDueDate + 'T12:00:00') : new Date();
+                      setDtPickerTemp(d);
+                      setDtPickerOpen(true);
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.pickerBtnText}>
+                      {taskDueDate ? taskDueDate.split('-').reverse().join('/') : 'בחר תאריך'}
+                    </Text>
+                    <MaterialCommunityIcons name="calendar" size={18} color={theme} />
+                  </TouchableOpacity>
+                )}
               </View>
 
               {/* Priority */}
@@ -488,33 +508,33 @@ const TasksScreen = () => {
               {/* Estimate */}
               <View style={styles.formGroup}>
                 <Text style={styles.label}>משך זמן משוער</Text>
-                <View style={styles.webPickerRow}>
-                  <View style={styles.webPickerCol}>
+                <View style={styles.estimateRow}>
+                  <View style={styles.estimateCol}>
                     <Text style={styles.webPickerSubLabel}>שעות</Text>
-                    <Picker
-                      selectedValue={taskEstimateHours}
-                      onValueChange={v => setTaskEstimateHours(Number(v))}
-                      style={[styles.webPickerBase, styles.webPickerHour]}
-                    >
-                      {HOUR_OPTIONS.map(h => (
-                        <Picker.Item key={h} label={String(h).padStart(2, '0')} value={h} />
-                      ))}
-                    </Picker>
+                    <TextInput
+                      style={styles.estimateInput}
+                      value={taskEstimateHours === 0 ? '' : String(taskEstimateHours)}
+                      onChangeText={v => setTaskEstimateHours(Math.max(0, Math.min(23, parseInt(v) || 0)))}
+                      keyboardType="number-pad"
+                      placeholder="0"
+                      placeholderTextColor="#bbb"
+                      maxLength={2}
+                      textAlign="center"
+                    />
                   </View>
-                  <View style={styles.webPickerColonWrap}>
-                    <Text style={[styles.webPickerColon, { color: theme }]}>:</Text>
-                  </View>
-                  <View style={styles.webPickerCol}>
+                  <Text style={[styles.webPickerColon, { color: theme, paddingTop: 22 }]}>:</Text>
+                  <View style={styles.estimateCol}>
                     <Text style={styles.webPickerSubLabel}>דקות</Text>
-                    <Picker
-                      selectedValue={taskEstimateMinutes}
-                      onValueChange={v => setTaskEstimateMinutes(Number(v))}
-                      style={[styles.webPickerBase, styles.webPickerMinute]}
-                    >
-                      {MINUTE_OPTIONS.map(m => (
-                        <Picker.Item key={m} label={String(m).padStart(2, '0')} value={m} />
-                      ))}
-                    </Picker>
+                    <TextInput
+                      style={styles.estimateInput}
+                      value={taskEstimateMinutes === 0 ? '' : String(taskEstimateMinutes)}
+                      onChangeText={v => setTaskEstimateMinutes(Math.max(0, Math.min(59, parseInt(v) || 0)))}
+                      keyboardType="number-pad"
+                      placeholder="00"
+                      placeholderTextColor="#bbb"
+                      maxLength={2}
+                      textAlign="center"
+                    />
                   </View>
                 </View>
               </View>
@@ -553,7 +573,55 @@ const TasksScreen = () => {
             </ScrollView>
           </View>
         </View>
+        </KeyboardAvoidingView>
       </Modal>
+      {/* iOS DateTimePicker bottom sheet */}
+      {dtPickerOpen && Platform.OS === 'ios' && (
+        <Modal visible animationType="slide" transparent>
+          <TouchableOpacity style={styles.dtPickerOverlay} activeOpacity={1} onPress={() => setDtPickerOpen(false)}>
+            <View style={styles.dtPickerSheet} onStartShouldSetResponder={() => true}>
+              <View style={styles.dtPickerHeader}>
+                <TouchableOpacity onPress={() => setDtPickerOpen(false)} style={styles.dtPickerHeaderBtn}>
+                  <Text style={styles.dtPickerCancelText}>ביטול</Text>
+                </TouchableOpacity>
+                <Text style={styles.dtPickerTitle}>בחר תאריך</Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    setTaskDueDate(buildDateISO(dtPickerTemp.getDate(), dtPickerTemp.getMonth() + 1, dtPickerTemp.getFullYear()));
+                    setDtPickerOpen(false);
+                  }}
+                  style={styles.dtPickerHeaderBtn}
+                >
+                  <Text style={[styles.dtPickerDoneText, { color: theme }]}>אישור</Text>
+                </TouchableOpacity>
+              </View>
+              <DateTimePicker
+                value={dtPickerTemp}
+                mode="date"
+                display="spinner"
+                onChange={(_, date) => { if (date) setDtPickerTemp(date); }}
+                style={styles.dtPickerControl}
+              />
+            </View>
+          </TouchableOpacity>
+        </Modal>
+      )}
+
+      {/* Android DateTimePicker */}
+      {dtPickerOpen && Platform.OS === 'android' && (
+        <DateTimePicker
+          value={dtPickerTemp}
+          mode="date"
+          display="default"
+          onChange={(ev, date) => {
+            setDtPickerOpen(false);
+            if ((ev as any).type === 'set' && date) {
+              setTaskDueDate(buildDateISO(date.getDate(), date.getMonth() + 1, date.getFullYear()));
+            }
+          }}
+        />
+      )}
+
       {alertNode}
     </View>
   );
@@ -670,6 +738,25 @@ const styles = StyleSheet.create({
   webPickerMinute:    { width: 80 },
   webPickerColonWrap: { paddingBottom: 11 },
   webPickerColon:     { fontSize: 20, fontWeight: '700', color: '#CE6385' },
+
+  // Picker btn (native date)
+  pickerBtn:      { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  pickerBtnText:  { fontSize: 14, color: '#333' },
+
+  // Estimate inputs
+  estimateRow:   { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
+  estimateCol:   { flex: 1 },
+  estimateInput: { borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 10, paddingHorizontal: 15, paddingVertical: 12, fontSize: 16, backgroundColor: '#f5f5f5', textAlign: 'center', color: '#333' },
+
+  // DateTimePicker bottom sheet
+  dtPickerOverlay:    { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
+  dtPickerSheet:      { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingBottom: 20 },
+  dtPickerHeader:     { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
+  dtPickerHeaderBtn:  { padding: 4, minWidth: 60 },
+  dtPickerTitle:      { fontSize: 15, fontWeight: '700', color: '#333' },
+  dtPickerCancelText: { fontSize: 15, color: '#999' },
+  dtPickerDoneText:   { fontSize: 15, fontWeight: '700' },
+  dtPickerControl:    { height: 200 },
 
   // File attachment
   filePickerBtn:     { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderColor: '#CE6385', borderRadius: 10, borderStyle: 'dashed', paddingVertical: 12, paddingHorizontal: 16, backgroundColor: '#f8f6ff' },

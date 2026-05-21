@@ -9,6 +9,7 @@ import {
   Modal,
   Platform,
   Dimensions,
+  KeyboardAvoidingView,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
@@ -562,6 +563,7 @@ const ScheduleScreen = () => {
 
       {/* ─── Add / Edit event modal ───────────────────────────────────── */}
       <Modal visible={modalVisible} animationType="slide" transparent>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
@@ -727,6 +729,7 @@ const ScheduleScreen = () => {
             </ScrollView>
           </View>
         </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* ─── Native OS date/time picker (iOS & Android) ───────────────── */}

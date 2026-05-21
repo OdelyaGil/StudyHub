@@ -8,6 +8,8 @@ import {
   ScrollView,
   ActivityIndicator,
   Modal,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import {
@@ -118,7 +120,7 @@ const LoginScreen = ({ onLogin }: { navigation: any; onLogin: () => void }) => {
 
         <TextInput
           style={styles.input}
-          placeholder="Edu Email ID"
+          placeholder="Email"
           placeholderTextColor="#aaa"
           value={email}
           onChangeText={setEmail}
@@ -169,6 +171,7 @@ const LoginScreen = ({ onLogin }: { navigation: any; onLogin: () => void }) => {
 
       {/* Register Modal */}
       <Modal visible={showRegister} animationType="slide" transparent>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <View style={styles.modalHeader}>
@@ -199,10 +202,12 @@ const LoginScreen = ({ onLogin }: { navigation: any; onLogin: () => void }) => {
             </ScrollView>
           </View>
         </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Forgot Password Modal */}
       <Modal visible={showForgot} animationType="slide" transparent>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <View style={styles.modalHeader}>
@@ -236,6 +241,7 @@ const LoginScreen = ({ onLogin }: { navigation: any; onLogin: () => void }) => {
             </Pressable>
           </View>
         </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {alertNode}

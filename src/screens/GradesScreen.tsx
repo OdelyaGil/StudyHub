@@ -9,6 +9,8 @@ import {
   Modal,
   RefreshControl,
   Pressable,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { loadField, saveField } from '../utils/firestore';
@@ -309,6 +311,7 @@ const GradesScreen = () => {
 
       {/* Add / Edit Grade Modal */}
       <Modal visible={modalVisible} animationType="slide" transparent>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
@@ -418,6 +421,7 @@ const GradesScreen = () => {
             </ScrollView>
           </View>
         </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {alertNode}
