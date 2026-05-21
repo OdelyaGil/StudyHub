@@ -1,42 +1,50 @@
 import React, { useState, useEffect } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Pressable,
-  TextInput,
-  Modal,
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
+  View, Text, StyleSheet, ScrollView, Pressable,
+  TextInput, Modal, ActivityIndicator,
+  KeyboardAvoidingView, Platform, Switch,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { EmailAuthProvider, reauthenticateWithCredential, updatePassword, deleteUser } from 'firebase/auth';
+import {
+  EmailAuthProvider, reauthenticateWithCredential,
+  updatePassword, deleteUser,
+} from 'firebase/auth';
 import { doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
 import { useCustomAlert } from '../hooks/useCustomAlert';
+import { useTheme } from '../context/ThemeContext';
+import { ThemeMode } from '../context/ThemeContext';
 
-const THEMES = [
-  { name: 'ורוד',   color: '#D58EAC' },
-  { name: 'סלמון',  color: '#E395A3' },
+const DARK_ACCENTS = [
+  { name: 'ציאן',    color: '#00FFFF' },
+  { name: 'ירוק',    color: '#00FF88' },
+  { name: 'סגול',    color: '#BF5FFF' },
+  { name: 'ורוד',    color: '#FF2D78' },
+  { name: 'כתום',    color: '#FF8C00' },
+];
+
+const LIGHT_ACCENTS = [
+  { name: 'ורוד',     color: '#D58EAC' },
+  { name: 'סלמון',   color: '#E395A3' },
   { name: 'כחול ים', color: '#80A9AF' },
-  { name: 'תכלת',   color: '#89D4E3' },
-  { name: 'טורקיז', color: '#46C0C1' },
+  { name: 'תכלת',    color: '#89D4E3' },
+  { name: 'טורקיז',  color: '#46C0C1' },
 ];
 
 type Props = {
-  theme: string;
-  onSetTheme: (color: string) => void;
+  accent: string;
+  mode: ThemeMode;
+  onSetAccent: (c: string) => void;
+  onSetMode: (m: ThemeMode) => void;
   onLogout: () => void;
 };
 
-const ProfileScreen = ({ theme, onSetTheme, onLogout }: Props) => {
-  const { showAlert, showConfirm, showDestructiveConfirm, alertNode } = useCustomAlert(theme);
+const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout }: Props) => {
+  const theme = useTheme();
+  const { showAlert, showConfirm, showDestructiveConfirm, alertNode } = useCustomAlert(theme.accent);
 
   const [userName, setUserName]   = useState('');
   const [userEmail, setUserEmail] = useState('');
-
   const [editingName, setEditingName] = useState(false);
   const [newName, setNewName]         = useState('');
 
@@ -53,12 +61,11 @@ const ProfileScreen = ({ theme, onSetTheme, onLogout }: Props) => {
     if (!user) return;
     const snap = await getDoc(doc(db, 'users', user.uid));
     const data = snap.data() ?? {};
-    setUserName(data.name  || '');
+    setUserName(data.name || '');
     setUserEmail(data.email || user.email || '');
     setNewName(data.name || '');
   };
 
-  // ── Save name ──────────────────────────────────────────────────────────────
   const handleSaveName = async () => {
     if (!newName.trim()) return showAlert('שגיאה', 'השם לא יכול להיות ריק');
     const user = auth.currentUser;
@@ -70,18 +77,15 @@ const ProfileScreen = ({ theme, onSetTheme, onLogout }: Props) => {
     } catch { showAlert('שגיאה', 'שמירת השם נכשלה'); }
   };
 
-  // ── Change password ────────────────────────────────────────────────────────
   const handleChangePassword = async () => {
-    if (currentPass.length < 6)  return showAlert('שגיאה', 'הסיסמה הנוכחית קצרה מדי');
-    if (newPass.length < 6)      return showAlert('שגיאה', 'הסיסמה החדשה חייבת להכיל לפחות 6 תווים');
-    if (newPass !== confirmPass)  return showAlert('שגיאה', 'הסיסמאות אינן תואמות');
-
+    if (currentPass.length < 6) return showAlert('שגיאה', 'הסיסמה הנוכחית קצרה מדי');
+    if (newPass.length < 6)     return showAlert('שגיאה', 'הסיסמה החדשה חייבת להכיל לפחות 6 תווים');
+    if (newPass !== confirmPass) return showAlert('שגיאה', 'הסיסמאות אינן תואמות');
     const user = auth.currentUser;
     if (!user || !user.email) return;
     setPassLoading(true);
     try {
-      const credential = EmailAuthProvider.credential(user.email, currentPass);
-      await reauthenticateWithCredential(user, credential);
+      await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, currentPass));
       await updatePassword(user, newPass);
       setShowPassModal(false);
       setCurrentPass(''); setNewPass(''); setConfirmPass('');
@@ -89,27 +93,29 @@ const ProfileScreen = ({ theme, onSetTheme, onLogout }: Props) => {
     } catch (e: any) {
       if (e?.code === 'auth/wrong-password' || e?.code === 'auth/invalid-credential')
         showAlert('שגיאה', 'הסיסמה הנוכחית שגויה');
-      else
-        showAlert('שגיאה', 'שינוי הסיסמה נכשל');
+      else showAlert('שגיאה', 'שינוי הסיסמה נכשל');
     } finally { setPassLoading(false); }
   };
 
-  // ── Theme ──────────────────────────────────────────────────────────────────
-  const handleSelectTheme = async (color: string) => {
+  const handleSelectAccent = async (color: string) => {
     const user = auth.currentUser;
-    if (user) await setDoc(doc(db, 'users', user.uid), { theme: color }, { merge: true });
-    onSetTheme(color);
+    if (user) await setDoc(doc(db, 'users', user.uid), { accent: color }, { merge: true });
+    onSetAccent(color);
   };
 
-  // ── Logout ─────────────────────────────────────────────────────────────────
+  const handleToggleMode = async (val: boolean) => {
+    const newMode: ThemeMode = val ? 'dark' : 'light';
+    const user = auth.currentUser;
+    if (user) await setDoc(doc(db, 'users', user.uid), { mode: newMode }, { merge: true });
+    onSetMode(newMode);
+  };
+
   const handleLogout = () => {
     showConfirm('התנתקות', 'האם אתה בטוח שברצונך להתנתק?', async () => {
-      await auth.signOut();
-      onLogout();
+      await auth.signOut(); onLogout();
     });
   };
 
-  // ── Delete account ─────────────────────────────────────────────────────────
   const handleDeleteAccount = () => {
     showDestructiveConfirm('מחיקת חשבון', 'פעולה זו תמחק את החשבון שלך לצמיתות. להמשיך?', 'מחק', async () => {
       const user = auth.currentUser;
@@ -118,188 +124,235 @@ const ProfileScreen = ({ theme, onSetTheme, onLogout }: Props) => {
         await deleteDoc(doc(db, 'users', user.uid));
         await deleteUser(user);
         onLogout();
-      } catch { showAlert('שגיאה', 'מחיקת החשבון נכשלה. אם אינך מחובר לאחרונה, התנתק והתחבר שוב ואז נסה שוב.'); }
+      } catch { showAlert('שגיאה', 'מחיקת החשבון נכשלה. התנתק והתחבר שוב ונסה שוב.'); }
     });
   };
 
-  const initials = userName ? userName.split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 2) : '?';
+  const initials = userName
+    ? userName.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
+    : '?';
+
+  const isDark = mode === 'dark';
+  const accents = isDark ? DARK_ACCENTS : LIGHT_ACCENTS;
 
   return (
-    <View style={styles.container}>
-    <ScrollView contentContainerStyle={styles.content}>
+    <View style={[s.container, { backgroundColor: theme.bg }]}>
+      <ScrollView contentContainerStyle={s.content}>
 
-      {/* Avatar */}
-      <View style={[styles.avatarCircle, { backgroundColor: theme }]}>
-        <Text style={styles.avatarText}>{initials}</Text>
-      </View>
-      <Text style={styles.nameHeader}>{userName}</Text>
-      <Text style={styles.emailHeader}>{userEmail}</Text>
-
-      {/* Personal details */}
-      <View style={styles.card}>
-        <Text style={[styles.sectionTitle, { color: theme }]}>פרטים אישיים</Text>
-
-        <View style={styles.row}>
-          <MaterialCommunityIcons name="account" size={20} color="#999" />
-          {editingName ? (
-            <TextInput
-              style={styles.inlineInput}
-              value={newName}
-              onChangeText={setNewName}
-              autoFocus
-            />
-          ) : (
-            <Text style={styles.rowValue}>{userName}</Text>
-          )}
-          {editingName ? (
-            <Pressable onPress={handleSaveName}>
-              <MaterialCommunityIcons name="check" size={20} color={theme} />
-            </Pressable>
-          ) : (
-            <Pressable onPress={() => setEditingName(true)}>
-              <MaterialCommunityIcons name="pencil" size={18} color="#bbb" />
-            </Pressable>
-          )}
+        {/* Avatar */}
+        <View style={[s.avatarCircle, { borderColor: theme.accent, backgroundColor: theme.accent + '22' },
+          isDark && { shadowColor: theme.accent, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.6, shadowRadius: 20, elevation: 8 }
+        ]}>
+          <Text style={[s.avatarText, { color: theme.accent }]}>{initials}</Text>
         </View>
+        <Text style={[s.nameHeader, { color: theme.text }]}>{userName}</Text>
+        <Text style={[s.emailHeader, { color: theme.textSub }]}>{userEmail}</Text>
 
-        <View style={styles.divider} />
+        {/* Personal details */}
+        <View style={[s.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+          <Text style={[s.sectionTitle, { color: theme.accent }]}>פרטים אישיים</Text>
 
-        <View style={styles.row}>
-          <MaterialCommunityIcons name="email" size={20} color="#999" />
-          <Text style={styles.rowValue}>{userEmail}</Text>
-        </View>
-
-        <View style={styles.divider} />
-
-        <Pressable style={styles.row} onPress={() => setShowPassModal(true)}>
-          <MaterialCommunityIcons name="lock" size={20} color="#999" />
-          <Text style={styles.rowValue}>שינוי סיסמה</Text>
-          <MaterialCommunityIcons name="chevron-left" size={20} color="#bbb" />
-        </Pressable>
-      </View>
-
-      {/* Theme */}
-      <View style={styles.card}>
-        <Text style={[styles.sectionTitle, { color: theme }]}>ערכת נושא</Text>
-        <View style={styles.themeRow}>
-          {THEMES.map((t) => (
-            <Pressable
-              key={t.color}
-              onPress={() => handleSelectTheme(t.color)}
-              style={styles.themeItem}
-            >
-              <View style={[styles.themeCircle, { backgroundColor: t.color },
-                theme === t.color && styles.themeCircleActive]} />
-              <Text style={[styles.themeName, theme === t.color && { color: theme, fontWeight: '700' }]}>
-                {t.name}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-      </View>
-
-      {/* Actions */}
-      <Pressable style={[styles.logoutBtn, { borderColor: theme }]} onPress={handleLogout}>
-        <MaterialCommunityIcons name="logout" size={20} color={theme} />
-        <Text style={[styles.logoutText, { color: theme }]}>התנתקות</Text>
-      </Pressable>
-
-      <Pressable style={styles.deleteBtn} onPress={handleDeleteAccount}>
-        <MaterialCommunityIcons name="trash-can" size={20} color="#ff4757" />
-        <Text style={styles.deleteText}>מחיקת חשבון</Text>
-      </Pressable>
-
-      {/* Change password modal */}
-      <Modal visible={showPassModal} animationType="slide" transparent>
-        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>שינוי סיסמה</Text>
-              <Pressable onPress={() => setShowPassModal(false)}>
-                <MaterialCommunityIcons name="close" size={24} color="#333" />
+          <View style={s.row}>
+            <MaterialCommunityIcons name="account" size={20} color={theme.textSub} />
+            {editingName ? (
+              <TextInput
+                style={[s.inlineInput, { color: theme.text, borderBottomColor: theme.accent }]}
+                value={newName} onChangeText={setNewName} autoFocus
+              />
+            ) : (
+              <Text style={[s.rowValue, { color: theme.text }]}>{userName}</Text>
+            )}
+            {editingName ? (
+              <Pressable onPress={handleSaveName}>
+                <MaterialCommunityIcons name="check" size={20} color={theme.accent} />
               </Pressable>
+            ) : (
+              <Pressable onPress={() => setEditingName(true)}>
+                <MaterialCommunityIcons name="pencil" size={18} color={theme.textSub} />
+              </Pressable>
+            )}
+          </View>
+
+          <View style={[s.divider, { backgroundColor: theme.border }]} />
+
+          <View style={s.row}>
+            <MaterialCommunityIcons name="email" size={20} color={theme.textSub} />
+            <Text style={[s.rowValue, { color: theme.text }]}>{userEmail}</Text>
+          </View>
+
+          <View style={[s.divider, { backgroundColor: theme.border }]} />
+
+          <Pressable style={s.row} onPress={() => setShowPassModal(true)}>
+            <MaterialCommunityIcons name="lock" size={20} color={theme.textSub} />
+            <Text style={[s.rowValue, { color: theme.text }]}>שינוי סיסמה</Text>
+            <MaterialCommunityIcons name="chevron-left" size={20} color={theme.textSub} />
+          </Pressable>
+        </View>
+
+        {/* Theme settings */}
+        <View style={[s.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+          <Text style={[s.sectionTitle, { color: theme.accent }]}>ערכת נושא</Text>
+
+          {/* Dark / Light toggle */}
+          <View style={s.toggleRow}>
+            <View style={s.toggleLabels}>
+              <MaterialCommunityIcons
+                name={isDark ? 'weather-night' : 'weather-sunny'}
+                size={20}
+                color={theme.accent}
+              />
+              <Text style={[s.toggleText, { color: theme.text }]}>
+                {isDark ? 'מצב לילה' : 'מצב יום'}
+              </Text>
             </View>
-            <Text style={styles.fieldLabel}>סיסמה נוכחית</Text>
-            <TextInput style={styles.fieldInput} value={currentPass} onChangeText={setCurrentPass}
-              secureTextEntry placeholder="הסיסמה הנוכחית" placeholderTextColor="#bbb" />
-            <Text style={styles.fieldLabel}>סיסמה חדשה</Text>
-            <TextInput style={styles.fieldInput} value={newPass} onChangeText={setNewPass}
-              secureTextEntry placeholder="לפחות 6 תווים" placeholderTextColor="#bbb" />
-            <Text style={styles.fieldLabel}>אימות סיסמה</Text>
-            <TextInput style={styles.fieldInput} value={confirmPass} onChangeText={setConfirmPass}
-              secureTextEntry placeholder="הזן שוב" placeholderTextColor="#bbb" />
-            <Pressable
-              style={[styles.saveBtn, { backgroundColor: theme }, passLoading && { opacity: 0.7 }]}
-              onPress={handleChangePassword} disabled={passLoading}
-            >
-              {passLoading
-                ? <ActivityIndicator color="#fff" />
-                : <Text style={styles.saveBtnText}>שמור</Text>
-              }
-            </Pressable>
+            <Switch
+              value={isDark}
+              onValueChange={handleToggleMode}
+              thumbColor={theme.accent}
+              trackColor={{ false: theme.textSub + '44', true: theme.accent + '55' }}
+            />
+          </View>
+
+          <View style={[s.divider, { backgroundColor: theme.border }]} />
+
+          {/* Accent colors */}
+          <Text style={[s.subLabel, { color: theme.textSub }]}>צבע הדגשה</Text>
+          <View style={s.accentRow}>
+            {accents.map(a => (
+              <Pressable key={a.color} onPress={() => handleSelectAccent(a.color)} style={s.accentItem}>
+                <View style={[
+                  s.accentCircle,
+                  { backgroundColor: a.color },
+                  accent === a.color && { borderWidth: 3, borderColor: '#fff' },
+                  isDark && accent === a.color && {
+                    shadowColor: a.color,
+                    shadowOffset: { width: 0, height: 0 },
+                    shadowOpacity: 0.9,
+                    shadowRadius: 8,
+                    elevation: 6,
+                  },
+                ]} />
+                <Text style={[s.accentName, { color: accent === a.color ? theme.accent : theme.textSub }]}>
+                  {a.name}
+                </Text>
+              </Pressable>
+            ))}
           </View>
         </View>
-        </KeyboardAvoidingView>
-      </Modal>
 
-    </ScrollView>
-    {alertNode}
+        {/* Logout */}
+        <Pressable
+          style={[s.logoutBtn, { borderColor: theme.accent, backgroundColor: theme.accent + '11' }]}
+          onPress={handleLogout}
+        >
+          <MaterialCommunityIcons name="logout" size={20} color={theme.accent} />
+          <Text style={[s.logoutText, { color: theme.accent }]}>התנתקות</Text>
+        </Pressable>
+
+        <Pressable style={s.deleteBtn} onPress={handleDeleteAccount}>
+          <MaterialCommunityIcons name="trash-can" size={20} color="#ff4757" />
+          <Text style={s.deleteText}>מחיקת חשבון</Text>
+        </Pressable>
+
+        {/* Change password modal */}
+        <Modal visible={showPassModal} animationType="slide" transparent>
+          <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+            <View style={s.modalOverlay}>
+              <View style={[s.modalCard, { backgroundColor: theme.mode === 'dark' ? '#111122' : '#fff', borderColor: theme.border }]}>
+                <View style={s.modalHeader}>
+                  <Text style={[s.modalTitle, { color: theme.text }]}>שינוי סיסמה</Text>
+                  <Pressable onPress={() => setShowPassModal(false)}>
+                    <MaterialCommunityIcons name="close" size={24} color={theme.textSub} />
+                  </Pressable>
+                </View>
+                {[
+                  { label: 'סיסמה נוכחית', val: currentPass, set: setCurrentPass },
+                  { label: 'סיסמה חדשה',   val: newPass,     set: setNewPass },
+                  { label: 'אימות סיסמה',  val: confirmPass, set: setConfirmPass },
+                ].map(({ label, val, set }) => (
+                  <View key={label}>
+                    <Text style={[s.fieldLabel, { color: theme.textSub }]}>{label}</Text>
+                    <TextInput
+                      style={[s.fieldInput, { color: theme.text, backgroundColor: theme.surface, borderColor: theme.border }]}
+                      value={val} onChangeText={set}
+                      secureTextEntry placeholderTextColor={theme.textSub}
+                      placeholder="••••••"
+                    />
+                  </View>
+                ))}
+                <Pressable
+                  style={[s.saveBtn, { backgroundColor: theme.accent }, passLoading && { opacity: 0.7 }]}
+                  onPress={handleChangePassword} disabled={passLoading}
+                >
+                  {passLoading
+                    ? <ActivityIndicator color="#000" />
+                    : <Text style={[s.saveBtnText, { color: theme.mode === 'dark' ? '#000' : '#fff' }]}>שמור</Text>
+                  }
+                </Pressable>
+              </View>
+            </View>
+          </KeyboardAvoidingView>
+        </Modal>
+
+      </ScrollView>
+      {alertNode}
     </View>
   );
 };
 
-const styles = StyleSheet.create({
-  container:   { flex: 1, backgroundColor: '#FFF5F7' },
-  content:     { alignItems: 'center', padding: 20, paddingBottom: 40 },
+const s = StyleSheet.create({
+  container:     { flex: 1 },
+  content:       { alignItems: 'center', padding: 20, paddingBottom: 40 },
   avatarCircle: {
     width: 90, height: 90, borderRadius: 45,
     justifyContent: 'center', alignItems: 'center',
     marginTop: 20, marginBottom: 12,
+    borderWidth: 2,
   },
-  avatarText:  { fontSize: 32, fontWeight: '700', color: '#fff' },
-  nameHeader:  { fontSize: 20, fontWeight: '700', color: '#333', marginBottom: 4 },
-  emailHeader: { fontSize: 13, color: '#999', marginBottom: 24 },
+  avatarText:  { fontSize: 32, fontWeight: '800' },
+  nameHeader:  { fontSize: 20, fontWeight: '700', marginBottom: 4 },
+  emailHeader: { fontSize: 13, marginBottom: 24 },
   card: {
-    width: '100%', backgroundColor: '#fff', borderRadius: 20,
+    width: '100%', borderRadius: 20,
     padding: 16, marginBottom: 16,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08, shadowRadius: 10, elevation: 3,
+    borderWidth: 1,
   },
-  sectionTitle: { fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 12, textTransform: 'uppercase', textAlign: 'right' },
+  sectionTitle: { fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 12, textTransform: 'uppercase', textAlign: 'right' },
   row:          { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8 },
-  rowValue:     { flex: 1, fontSize: 14, color: '#333', textAlign: 'right' },
-  inlineInput:  { flex: 1, fontSize: 14, color: '#333', borderBottomWidth: 1, borderBottomColor: '#667eea', paddingVertical: 2, textAlign: 'right' },
-  divider:      { height: 1, backgroundColor: '#f0f0f0', marginVertical: 2 },
-  themeRow:     { flexDirection: 'row', justifyContent: 'space-around', paddingVertical: 8 },
-  themeItem:    { alignItems: 'center', gap: 6 },
-  themeCircle:  { width: 40, height: 40, borderRadius: 20 },
-  themeCircleActive: { borderWidth: 3, borderColor: '#fff', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 4 },
-  themeName:    { fontSize: 11, color: '#999' },
+  rowValue:     { flex: 1, fontSize: 14, textAlign: 'right' },
+  inlineInput:  { flex: 1, fontSize: 14, borderBottomWidth: 1, paddingVertical: 2, textAlign: 'right' },
+  divider:      { height: 1, marginVertical: 2 },
+  toggleRow:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8 },
+  toggleLabels: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  toggleText:   { fontSize: 14, fontWeight: '600' },
+  subLabel:     { fontSize: 11, fontWeight: '600', marginTop: 12, marginBottom: 10, textAlign: 'right' },
+  accentRow:    { flexDirection: 'row', justifyContent: 'space-around', paddingVertical: 8 },
+  accentItem:   { alignItems: 'center', gap: 6 },
+  accentCircle: { width: 40, height: 40, borderRadius: 20 },
+  accentName:   { fontSize: 10 },
   logoutBtn: {
     width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 8, paddingVertical: 14, borderRadius: 12, borderWidth: 2,
-    marginBottom: 12, backgroundColor: '#fff',
+    gap: 8, paddingVertical: 14, borderRadius: 12, borderWidth: 1.5, marginBottom: 12,
   },
   logoutText:   { fontSize: 15, fontWeight: '700' },
   deleteBtn: {
     width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 8, paddingVertical: 14, borderRadius: 12,
-    backgroundColor: '#fff2f3', borderWidth: 2, borderColor: '#ff4757',
+    backgroundColor: 'rgba(255,71,87,0.1)', borderWidth: 1.5, borderColor: '#ff4757',
   },
   deleteText:   { fontSize: 15, fontWeight: '700', color: '#ff4757' },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 },
-  modalCard:    { backgroundColor: '#fff', borderRadius: 20, padding: 24 },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', padding: 20 },
+  modalCard:    { borderRadius: 20, padding: 24, borderWidth: 1 },
   modalHeader:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
-  modalTitle:   { fontSize: 18, fontWeight: '700', color: '#333' },
-  fieldLabel:   { fontSize: 12, fontWeight: '600', color: '#333', marginBottom: 6, textAlign: 'right' },
+  modalTitle:   { fontSize: 18, fontWeight: '700' },
+  fieldLabel:   { fontSize: 12, fontWeight: '600', marginBottom: 6, textAlign: 'right' },
   fieldInput: {
-    borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 10,
-    paddingHorizontal: 14, paddingVertical: 12, fontSize: 14,
-    backgroundColor: '#f5f5f5', marginBottom: 16, color: '#333', textAlign: 'right',
+    borderWidth: 1, borderRadius: 10,
+    paddingHorizontal: 14, paddingVertical: 12,
+    fontSize: 14, marginBottom: 16, textAlign: 'right',
   },
   saveBtn:      { borderRadius: 10, paddingVertical: 13, alignItems: 'center' },
-  saveBtnText:  { color: '#fff', fontSize: 15, fontWeight: '700' },
+  saveBtnText:  { fontSize: 15, fontWeight: '700' },
 });
 
 export default ProfileScreen;

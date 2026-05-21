@@ -54,9 +54,16 @@ const normalizePct = (val: string): number => {
   return n > 0 && n <= 1 ? Math.round(n * 100) : Math.round(n);
 };
 
-const GradesScreen = () => {
-  const theme = useTheme();
-  const light = theme + '1F';
+const GradesScreen = ({ onClose }: { onClose?: () => void }) => {
+  const themeObj = useTheme();
+  const theme    = themeObj.accent;
+  const bg       = themeObj.bg;
+  const surface  = themeObj.surface;
+  const tabBg    = themeObj.tabBg;
+  const textColor = themeObj.text;
+  const textSub  = themeObj.textSub;
+  const borderClr = themeObj.border;
+  const light    = theme + '22';
   const { showAlert, showConfirm, showDestructiveConfirm, alertNode } = useCustomAlert(theme);
 
   const [grades, setGrades]         = useState<Grade[]>([]);
@@ -213,10 +220,10 @@ const GradesScreen = () => {
   const GradeItem = ({ item }: { item: Grade }) => {
     const itemCriteria = item.criteria ?? [];
     return (
-      <View style={[styles.gradeItem, { borderRightColor: theme }]}>
+      <View style={[styles.gradeItem, { borderRightColor: theme, backgroundColor: surface }]}>
         <View style={styles.gradeInfo}>
-          <Text style={styles.gradeName}>{item.name}</Text>
-          <Text style={styles.gradeMeta}>
+          <Text style={[styles.gradeName, { color: textColor }]}>{item.name}</Text>
+          <Text style={[styles.gradeMeta, { color: textSub }]}>
             {[item.year, item.semester ? `סמסטר ${item.semester}` : null, item.credits ? `${item.credits} נ"ז` : null]
               .filter(Boolean).join(' · ')}
           </Text>
@@ -247,10 +254,10 @@ const GradesScreen = () => {
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: bg }]}>
       <ScrollView
         style={styles.scrollView}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme} />}
       >
         {/* Average Card */}
         <LinearGradient colors={[theme, darken(theme)]} style={styles.avgCard}>
@@ -279,9 +286,9 @@ const GradesScreen = () => {
             return (
               <View key={yr} style={styles.yearSection}>
                 <View style={styles.yearHeader}>
-                  <Text style={styles.yearTitle}>{yr}</Text>
+                  <Text style={[styles.yearTitle, { color: textColor }]}>{yr}</Text>
                   <View style={styles.yearStats}>
-                    <Text style={styles.yearStat}>{yearCredits} נ"ז</Text>
+                    <Text style={[styles.yearStat, { color: textSub }]}>{yearCredits} נ"ז</Text>
                     <View style={[styles.yearAvgBadge, { backgroundColor: theme }]}>
                       <Text style={styles.yearAvgText}>ממוצע {yearAvg}</Text>
                     </View>
@@ -298,8 +305,8 @@ const GradesScreen = () => {
           })
         ) : (
           <View style={styles.emptyState}>
-            <MaterialCommunityIcons name="file-document-outline" size={60} color="#ccc" />
-            <Text style={styles.emptyStateText}>אין ציונים עדיין</Text>
+            <MaterialCommunityIcons name="file-document-outline" size={60} color={textSub} />
+            <Text style={[styles.emptyStateText, { color: textSub }]}>אין ציונים עדיין</Text>
           </View>
         )}
       </ScrollView>
@@ -313,38 +320,38 @@ const GradesScreen = () => {
       <Modal visible={modalVisible} animationType="slide" transparent>
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, { backgroundColor: tabBg }]}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{editingId !== null ? 'עריכת ציון' : 'הוסף ציון חדש'}</Text>
+              <Text style={[styles.modalTitle, { color: textColor }]}>{editingId !== null ? 'עריכת ציון' : 'הוסף ציון חדש'}</Text>
               <TouchableOpacity onPress={() => { resetForm(); setModalVisible(false); }}>
-                <MaterialCommunityIcons name="close" size={24} color="#333" />
+                <MaterialCommunityIcons name="close" size={24} color={textSub} />
               </TouchableOpacity>
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
 
-              <Text style={styles.label}>שם הקורס</Text>
-              <TextInput style={styles.input} placeholder="למשל: חדו״א 1"
+              <Text style={[styles.label, { color: textSub }]}>שם הקורס</Text>
+              <TextInput style={[styles.input, { backgroundColor: surface, borderColor: borderClr, color: textColor }]} placeholder="למשל: חדו״א 1" placeholderTextColor={textSub}
                 value={courseName} onChangeText={setCourseName} />
 
-              <Text style={styles.label}>נקודות זכות</Text>
-              <TextInput style={styles.input} placeholder="למשל: 3"
+              <Text style={[styles.label, { color: textSub }]}>נקודות זכות</Text>
+              <TextInput style={[styles.input, { backgroundColor: surface, borderColor: borderClr, color: textColor }]} placeholder="למשל: 3" placeholderTextColor={textSub}
                 value={credits} onChangeText={setCredits} keyboardType="decimal-pad" />
 
-              <Text style={styles.label}>סמסטר</Text>
+              <Text style={[styles.label, { color: textSub }]}>סמסטר</Text>
               <View style={styles.chipRow}>
                 {SEMESTERS.map((s) => (
-                  <Pressable key={s} style={[styles.chip, semester === s && styles.chipActive, semester === s && { borderColor: theme, backgroundColor: light }]} onPress={() => setSemester(s)}>
-                    <Text style={[styles.chipText, semester === s && styles.chipTextActive, semester === s && { color: theme }]}>סמסטר {s}</Text>
+                  <Pressable key={s} style={[styles.chip, { borderColor: borderClr, backgroundColor: surface }, semester === s && { borderColor: theme, backgroundColor: light }]} onPress={() => setSemester(s)}>
+                    <Text style={[styles.chipText, { color: textSub }, semester === s && { color: theme }]}>סמסטר {s}</Text>
                   </Pressable>
                 ))}
               </View>
 
-              <Text style={styles.label}>שנה</Text>
+              <Text style={[styles.label, { color: textSub }]}>שנה</Text>
               <View style={styles.chipRow}>
                 {YEARS.map((y) => (
-                  <Pressable key={y} style={[styles.chip, year === y && styles.chipActive, year === y && { borderColor: theme, backgroundColor: light }]} onPress={() => setYear(y)}>
-                    <Text style={[styles.chipText, year === y && styles.chipTextActive, year === y && { color: theme }]}>{y}</Text>
+                  <Pressable key={y} style={[styles.chip, { borderColor: borderClr, backgroundColor: surface }, year === y && { borderColor: theme, backgroundColor: light }]} onPress={() => setYear(y)}>
+                    <Text style={[styles.chipText, { color: textSub }, year === y && { color: theme }]}>{y}</Text>
                   </Pressable>
                 ))}
               </View>
@@ -352,18 +359,18 @@ const GradesScreen = () => {
               {/* Criteria */}
               <View style={styles.criteriaSection}>
                 <View style={styles.criteriaHeader}>
-                  <Text style={styles.label}>קריטריונים לציון</Text>
+                  <Text style={[styles.label, { color: textSub }]}>קריטריונים לציון</Text>
                   <Text style={[styles.pctBadge, { color: theme, backgroundColor: light }, pctUsed === 100 && styles.pctBadgeFull]}>{pctUsed}/100%</Text>
                 </View>
 
                 {criteria.map((c) => (
-                  <View key={c.id} style={styles.criterionRow}>
+                  <View key={c.id} style={[styles.criterionRow, { backgroundColor: surface }]}>
                     <View style={styles.criterionInfo}>
-                      <Text style={styles.criterionName}>{c.name}</Text>
-                      <Text style={styles.criterionPct}>{c.percentage}%</Text>
+                      <Text style={[styles.criterionName, { color: textColor }]}>{c.name}</Text>
+                      <Text style={[styles.criterionPct, { color: textSub }]}>{c.percentage}%</Text>
                     </View>
                     <TextInput
-                      style={styles.criterionGradeInput}
+                      style={[styles.criterionGradeInput, { borderColor: borderClr, backgroundColor: tabBg, color: textColor }]}
                       placeholder="ציון"
                       value={c.grade}
                       onChangeText={(v) => updateCritGrade(c.id, v)}
@@ -376,18 +383,18 @@ const GradesScreen = () => {
                 ))}
 
                 {showCritForm ? (
-                  <View style={styles.critFormBox}>
-                    <TextInput style={styles.critInput} placeholder="שם (למשל: בחינה סופית)"
+                  <View style={[styles.critFormBox, { backgroundColor: surface }]}>
+                    <TextInput style={[styles.critInput, { borderColor: borderClr, backgroundColor: tabBg, color: textColor }]} placeholder="שם (למשל: בחינה סופית)" placeholderTextColor={textSub}
                       value={critName} onChangeText={setCritName} />
                     <View style={styles.critRow}>
                       <TextInput
-                        style={[styles.critInput, { flex: 1 }]}
-                        placeholder="משקל: 30 או 0.3"
+                        style={[styles.critInput, { flex: 1, borderColor: borderClr, backgroundColor: tabBg, color: textColor }]}
+                        placeholder="משקל: 30 או 0.3" placeholderTextColor={textSub}
                         value={critPct}
                         onChangeText={setCritPct}
                         keyboardType="decimal-pad"
                       />
-                      <TextInput style={[styles.critInput, { flex: 1 }]} placeholder="ציון (אופציונלי)"
+                      <TextInput style={[styles.critInput, { flex: 1, borderColor: borderClr, backgroundColor: tabBg, color: textColor }]} placeholder="ציון (אופציונלי)" placeholderTextColor={textSub}
                         value={critGrade} onChangeText={setCritGrade} keyboardType="decimal-pad" />
                     </View>
                     <View style={styles.critButtons}>
@@ -430,7 +437,7 @@ const GradesScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container:   { flex: 1, backgroundColor: '#FFF5F7' },
+  container:   { flex: 1 },
   scrollView:  { flex: 1, padding: 15 },
   avgCard:     { borderRadius: 20, padding: 20, marginBottom: 20 },
   avgRow:      { flexDirection: 'row', alignItems: 'center', gap: 24 },

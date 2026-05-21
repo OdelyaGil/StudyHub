@@ -138,14 +138,19 @@ interface TaskItemProps {
 }
 
 const TaskItem: React.FC<TaskItemProps> = ({ item, onToggle, onDelete, onEdit, onFileOpen }) => {
-  const theme = useTheme();
+  const themeObj = useTheme();
+  const theme    = themeObj.accent;
+  const surface  = themeObj.surface;
+  const tabBg    = themeObj.tabBg;
+  const textColor = themeObj.text;
+  const textSub  = themeObj.textSub;
   const [filesExpanded, setFilesExpanded] = useState(false);
   const daysLeft = getDaysLeft(item.dueDate);
   const priorityColor = theme;
   const files: TaskFile[] = (item as any).files ?? [];
 
   return (
-    <View style={[styles.taskItem, { borderRightColor: theme, opacity: item.completed ? 0.5 : 1 }]}>
+    <View style={[styles.taskItem, { borderRightColor: theme, backgroundColor: surface, opacity: item.completed ? 0.5 : 1 }]}>
       {/* Checkbox */}
       <View style={styles.taskCheckBox}>
         <TouchableOpacity
@@ -158,8 +163,8 @@ const TaskItem: React.FC<TaskItemProps> = ({ item, onToggle, onDelete, onEdit, o
 
       {/* Main info */}
       <View style={styles.taskInfoContainer}>
-        <Text style={[styles.taskNameText, item.completed && styles.taskNameCompleted]}>{item.name}</Text>
-        {item.course ? <Text style={styles.taskCourseText}>{item.course}</Text> : null}
+        <Text style={[styles.taskNameText, { color: textColor }, item.completed && styles.taskNameCompleted]}>{item.name}</Text>
+        {item.course ? <Text style={[styles.taskCourseText, { color: textSub }]}>{item.course}</Text> : null}
 
         {/* Files toggle */}
         {files.length > 0 && (
@@ -219,8 +224,15 @@ const TaskItem: React.FC<TaskItemProps> = ({ item, onToggle, onDelete, onEdit, o
 
 // ── TasksScreen ───────────────────────────────────────────────────────────────
 const TasksScreen = () => {
-  const theme = useTheme();
-  const light = theme + '1F';
+  const themeObj  = useTheme();
+  const theme     = themeObj.accent;
+  const bg        = themeObj.bg;
+  const surface   = themeObj.surface;
+  const tabBg     = themeObj.tabBg;
+  const textColor = themeObj.text;
+  const textSub   = themeObj.textSub;
+  const borderClr = themeObj.border;
+  const light     = theme + '22';
   const { showAlert, showDestructiveConfirm, alertNode } = useCustomAlert(theme);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
@@ -393,10 +405,10 @@ const TasksScreen = () => {
   });
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: bg }]}>
       <ScrollView
         style={styles.scrollView}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme} />}
       >
         {tasks.length > 0 ? (
           <View style={styles.section}>
@@ -418,8 +430,8 @@ const TasksScreen = () => {
           </View>
         ) : (
           <View style={styles.emptyState}>
-            <MaterialCommunityIcons name="checkbox-multiple-marked" size={60} color="#ccc" />
-            <Text style={styles.emptyStateText}>אין מטלות עדיין</Text>
+            <MaterialCommunityIcons name="checkbox-multiple-marked" size={60} color={textSub} />
+            <Text style={[styles.emptyStateText, { color: textSub }]}>אין מטלות עדיין</Text>
           </View>
         )}
       </ScrollView>
@@ -432,13 +444,13 @@ const TasksScreen = () => {
       <Modal visible={modalVisible} animationType="slide" transparent={true}>
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, { backgroundColor: tabBg }]}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>
+              <Text style={[styles.modalTitle, { color: textColor }]}>
                 {editingTaskId !== null ? 'עריכת מטלה' : 'מטלה חדשה'}
               </Text>
               <TouchableOpacity onPress={closeModal}>
-                <MaterialCommunityIcons name="close" size={24} color="#333" />
+                <MaterialCommunityIcons name="close" size={24} color={textSub} />
               </TouchableOpacity>
             </View>
 
@@ -446,10 +458,10 @@ const TasksScreen = () => {
 
               {/* Task name */}
               <View style={styles.formGroup}>
-                <Text style={styles.label}>שם המטלה</Text>
+                <Text style={[styles.label, { color: textSub }]}>שם המטלה</Text>
                 <TextInput
-                  style={styles.input}
-                  placeholder="למשל: פתרון תרגיל 5"
+                  style={[styles.input, { backgroundColor: surface, borderColor: borderClr, color: textColor }]}
+                  placeholder="למשל: פתרון תרגיל 5" placeholderTextColor={textSub}
                   value={taskName}
                   onChangeText={setTaskName}
                 />
@@ -457,10 +469,10 @@ const TasksScreen = () => {
 
               {/* Course */}
               <View style={styles.formGroup}>
-                <Text style={styles.label}>קורס</Text>
+                <Text style={[styles.label, { color: textSub }]}>קורס</Text>
                 <TextInput
-                  style={styles.input}
-                  placeholder="שם הקורס"
+                  style={[styles.input, { backgroundColor: surface, borderColor: borderClr, color: textColor }]}
+                  placeholder="שם הקורס" placeholderTextColor={textSub}
                   value={taskCourse}
                   onChangeText={setTaskCourse}
                 />
@@ -468,12 +480,12 @@ const TasksScreen = () => {
 
               {/* Due date */}
               <View style={styles.formGroup}>
-                <Text style={styles.label}>תאריך הגשה</Text>
+                <Text style={[styles.label, { color: textSub }]}>תאריך הגשה</Text>
                 {Platform.OS === 'web' ? (
                   <WebDatePicker iso={taskDueDate} onChange={setTaskDueDate} />
                 ) : (
                   <TouchableOpacity
-                    style={[styles.input, styles.pickerBtn]}
+                    style={[styles.input, styles.pickerBtn, { backgroundColor: surface, borderColor: borderClr }]}
                     onPress={() => {
                       const d = isValidDate(taskDueDate) ? new Date(taskDueDate + 'T12:00:00') : new Date();
                       setDtPickerTemp(d);
@@ -481,7 +493,7 @@ const TasksScreen = () => {
                     }}
                     activeOpacity={0.7}
                   >
-                    <Text style={styles.pickerBtnText}>
+                    <Text style={[styles.pickerBtnText, { color: textColor }]}>
                       {taskDueDate ? taskDueDate.split('-').reverse().join('/') : 'בחר תאריך'}
                     </Text>
                     <MaterialCommunityIcons name="calendar" size={18} color={theme} />
@@ -491,15 +503,15 @@ const TasksScreen = () => {
 
               {/* Priority */}
               <View style={styles.formGroup}>
-                <Text style={styles.label}>עדיפות</Text>
+                <Text style={[styles.label, { color: textSub }]}>עדיפות</Text>
                 <View style={styles.prioritySelector}>
                   {['גבוהה', 'בינונית', 'נמוכה'].map(p => (
                     <TouchableOpacity
                       key={p}
-                      style={[styles.priorityBtn, taskPriority === p && styles.priorityBtnActive, taskPriority === p && { borderColor: theme, backgroundColor: light }]}
+                      style={[styles.priorityBtn, { borderColor: borderClr, backgroundColor: surface }, taskPriority === p && { borderColor: theme, backgroundColor: light }]}
                       onPress={() => setTaskPriority(p)}
                     >
-                      <Text style={[styles.priorityBtnText, taskPriority === p && styles.priorityBtnTextActive, taskPriority === p && { color: theme }]}>{p}</Text>
+                      <Text style={[styles.priorityBtnText, { color: textSub }, taskPriority === p && { color: theme }]}>{p}</Text>
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -507,31 +519,31 @@ const TasksScreen = () => {
 
               {/* Estimate */}
               <View style={styles.formGroup}>
-                <Text style={styles.label}>משך זמן משוער</Text>
+                <Text style={[styles.label, { color: textSub }]}>משך זמן משוער</Text>
                 <View style={styles.estimateRow}>
                   <View style={styles.estimateCol}>
-                    <Text style={styles.webPickerSubLabel}>שעות</Text>
+                    <Text style={[styles.webPickerSubLabel, { color: textSub }]}>שעות</Text>
                     <TextInput
-                      style={styles.estimateInput}
+                      style={[styles.estimateInput, { borderColor: borderClr, backgroundColor: surface, color: textColor }]}
                       value={taskEstimateHours === 0 ? '' : String(taskEstimateHours)}
                       onChangeText={v => setTaskEstimateHours(Math.max(0, Math.min(23, parseInt(v) || 0)))}
                       keyboardType="number-pad"
                       placeholder="0"
-                      placeholderTextColor="#bbb"
+                      placeholderTextColor={textSub}
                       maxLength={2}
                       textAlign="center"
                     />
                   </View>
                   <Text style={[styles.webPickerColon, { color: theme, paddingTop: 22 }]}>:</Text>
                   <View style={styles.estimateCol}>
-                    <Text style={styles.webPickerSubLabel}>דקות</Text>
+                    <Text style={[styles.webPickerSubLabel, { color: textSub }]}>דקות</Text>
                     <TextInput
-                      style={styles.estimateInput}
+                      style={[styles.estimateInput, { borderColor: borderClr, backgroundColor: surface, color: textColor }]}
                       value={taskEstimateMinutes === 0 ? '' : String(taskEstimateMinutes)}
                       onChangeText={v => setTaskEstimateMinutes(Math.max(0, Math.min(59, parseInt(v) || 0)))}
                       keyboardType="number-pad"
                       placeholder="00"
-                      placeholderTextColor="#bbb"
+                      placeholderTextColor={textSub}
                       maxLength={2}
                       textAlign="center"
                     />
@@ -541,7 +553,7 @@ const TasksScreen = () => {
 
               {/* Files */}
               <View style={styles.formGroup}>
-                <Text style={styles.label}>קבצים מצורפים</Text>
+                <Text style={[styles.label, { color: textSub }]}>קבצים מצורפים</Text>
                 <TouchableOpacity style={[styles.filePickerBtn, { borderColor: theme, backgroundColor: light }]} onPress={handlePickFiles}>
                   <MaterialCommunityIcons name="paperclip" size={18} color={theme} />
                   <Text style={[styles.filePickerBtnText, { color: theme }]}>הוסף קבצים</Text>
@@ -628,7 +640,7 @@ const TasksScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container:       { flex: 1, backgroundColor: '#FFF5F7' },
+  container:       { flex: 1 },
   scrollView:      { flex: 1, padding: 15 },
   section:         { marginBottom: 20 },
   separator:       { height: 0 },

@@ -145,8 +145,15 @@ const addOneHour = (timeStr: string): string => {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 const ScheduleScreen = () => {
-  const theme = useTheme();
-  const light = theme + '1F';
+  const themeObj  = useTheme();
+  const theme     = themeObj.accent;
+  const bg        = themeObj.bg;
+  const surface   = themeObj.surface;
+  const tabBg     = themeObj.tabBg;
+  const textColor = themeObj.text;
+  const textSub   = themeObj.textSub;
+  const borderClr = themeObj.border;
+  const light     = theme + '22';
   const { showAlert, showDestructiveConfirm, alertNode } = useCustomAlert(theme);
   const todayDate = new Date();
   const todayISO  = toISO(todayDate);
@@ -439,16 +446,16 @@ const ScheduleScreen = () => {
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: bg }]}>
 
       {/* ─── Fixed calendar block ─────────────────────────────────────── */}
-      <View style={styles.calBlock}>
+      <View style={[styles.calBlock, { backgroundColor: surface, borderBottomColor: borderClr }]}>
         <View style={styles.calHeader}>
           <TouchableOpacity onPress={goToPrev} style={styles.navBtn}>
             <MaterialCommunityIcons name="chevron-right" size={24} color={theme} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.monthYearBtn} onPress={() => { setPickerYear(year); setPickerVisible(true); }}>
-            <Text style={styles.monthLabel}>{HEBREW_MONTHS[month]} {year}</Text>
+            <Text style={[styles.monthLabel, { color: textColor }]}>{HEBREW_MONTHS[month]} {year}</Text>
             <MaterialCommunityIcons name="menu-down" size={18} color={theme} />
           </TouchableOpacity>
           <TouchableOpacity onPress={goToNext} style={styles.navBtn}>
@@ -460,7 +467,7 @@ const ScheduleScreen = () => {
         </View>
 
         <View style={styles.dayLabelRow}>
-          {DAY_LABELS.map(h => <Text key={h} style={styles.dayLabelText}>{h}</Text>)}
+          {DAY_LABELS.map(h => <Text key={h} style={[styles.dayLabelText, { color: textSub }]}>{h}</Text>)}
         </View>
 
         <View style={styles.grid}>
@@ -477,7 +484,7 @@ const ScheduleScreen = () => {
                 onPress={() => setSelectedDate(iso)}
                 activeOpacity={0.7}
               >
-                <Text style={[styles.cellText, isToday && !isSelected && styles.cellTextToday, isToday && !isSelected && { color: theme }, isSelected && styles.cellTextSelected]}>
+                <Text style={[styles.cellText, { color: textColor }, isToday && !isSelected && styles.cellTextToday, isToday && !isSelected && { color: theme }, isSelected && styles.cellTextSelected]}>
                   {day}
                 </Text>
                 {dots.length > 0 && (
@@ -493,17 +500,17 @@ const ScheduleScreen = () => {
 
       {/* ─── Scrollable events list ───────────────────────────────────── */}
       <ScrollView style={styles.eventsScroll} contentContainerStyle={styles.eventsContent}>
-        <Text style={styles.eventsSectionTitle}>אירועים ל-{displayDate}</Text>
+        <Text style={[styles.eventsSectionTitle, { color: textColor }]}>אירועים ל-{displayDate}</Text>
         {selectedEvts.length === 0 ? (
-          <Text style={styles.noEventsText}>אין אירועים ביום זה. לחץ + להוספה</Text>
+          <Text style={[styles.noEventsText, { color: textSub }]}>אין אירועים ביום זה. לחץ + להוספה</Text>
         ) : (
           selectedEvts.map(ev => {
             const recurLabel = RECURRENCE_OPTIONS.find(r => r.key === ev.recurrence)?.label;
             const timeRange  = ev.endTime ? `${ev.startTime} – ${ev.endTime}` : ev.startTime;
             return (
-              <View key={ev.id} style={[styles.eventItem, { borderRightColor: ev.color }]}>
+              <View key={ev.id} style={[styles.eventItem, { borderRightColor: ev.color, backgroundColor: surface }]}>
                 <View style={styles.eventBody}>
-                  <Text style={styles.eventTitle}>{ev.title}</Text>
+                  <Text style={[styles.eventTitle, { color: textColor }]}>{ev.title}</Text>
                   <View style={styles.eventMeta}>
                     <Text style={[styles.eventTime, { color: theme }]}>{timeRange}</Text>
                     {ev.recurrence !== 'none' && (
@@ -535,12 +542,12 @@ const ScheduleScreen = () => {
       {/* ─── Month / Year picker ──────────────────────────────────────── */}
       <Modal visible={pickerVisible} animationType="fade" transparent>
         <TouchableOpacity style={styles.pickerOverlay} activeOpacity={1} onPress={() => setPickerVisible(false)}>
-          <View style={styles.pickerBox} onStartShouldSetResponder={() => true}>
+          <View style={[styles.pickerBox, { backgroundColor: tabBg }]} onStartShouldSetResponder={() => true}>
             <View style={styles.pickerYearRow}>
               <TouchableOpacity onPress={() => setPickerYear(y => y - 1)} style={styles.pickerYearBtn}>
                 <MaterialCommunityIcons name="chevron-right" size={22} color={theme} />
               </TouchableOpacity>
-              <Text style={styles.pickerYearText}>{pickerYear}</Text>
+              <Text style={[styles.pickerYearText, { color: textColor }]}>{pickerYear}</Text>
               <TouchableOpacity onPress={() => setPickerYear(y => y + 1)} style={styles.pickerYearBtn}>
                 <MaterialCommunityIcons name="chevron-left" size={22} color={theme} />
               </TouchableOpacity>
@@ -550,9 +557,9 @@ const ScheduleScreen = () => {
                 const isActive = i === month && pickerYear === year;
                 return (
                   <TouchableOpacity key={name}
-                    style={[styles.pickerMonthCell, isActive && styles.pickerMonthCellActive, isActive && { backgroundColor: theme }]}
+                    style={[styles.pickerMonthCell, { backgroundColor: surface }, isActive && { backgroundColor: theme }]}
                     onPress={() => pickMonthYear(i)}>
-                    <Text style={[styles.pickerMonthText, isActive && styles.pickerMonthTextActive]}>{name}</Text>
+                    <Text style={[styles.pickerMonthText, { color: textSub }, isActive && styles.pickerMonthTextActive]}>{name}</Text>
                   </TouchableOpacity>
                 );
               })}
@@ -565,34 +572,34 @@ const ScheduleScreen = () => {
       <Modal visible={modalVisible} animationType="slide" transparent>
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, { backgroundColor: tabBg }]}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{editingId !== null ? 'עריכת אירוע' : 'אירוע חדש'}</Text>
+              <Text style={[styles.modalTitle, { color: textColor }]}>{editingId !== null ? 'עריכת אירוע' : 'אירוע חדש'}</Text>
               <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <MaterialCommunityIcons name="close" size={24} color="#333" />
+                <MaterialCommunityIcons name="close" size={24} color={textSub} />
               </TouchableOpacity>
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false}>
               {/* Title */}
               <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>שם האירוע</Text>
-                <TextInput style={styles.input} placeholder="למשל: הרצאת חדו״א"
+                <Text style={[styles.formLabel, { color: textSub }]}>שם האירוע</Text>
+                <TextInput style={[styles.input, { backgroundColor: surface, borderColor: borderClr, color: textColor }]} placeholder="למשל: הרצאת חדו״א" placeholderTextColor={textSub}
                   value={eventTitle} onChangeText={setEventTitle} />
               </View>
 
               {/* ── Date ───────────────────────────────────────────────── */}
               <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>תאריך</Text>
+                <Text style={[styles.formLabel, { color: textSub }]}>תאריך</Text>
                 {Platform.OS === 'web' ? (
                   <WebDatePicker iso={eventDate} onChange={setEventDate} />
                 ) : (
                   <TouchableOpacity
-                    style={[styles.input, styles.pickerBtn]}
+                    style={[styles.input, styles.pickerBtn, { backgroundColor: surface, borderColor: borderClr }]}
                     onPress={() => openDtPicker('date')}
                     activeOpacity={0.7}
                   >
-                    <Text style={styles.pickerBtnText}>{fmtDate(eventDate)}</Text>
+                    <Text style={[styles.pickerBtnText, { color: textColor }]}>{fmtDate(eventDate)}</Text>
                     <MaterialCommunityIcons name="calendar" size={18} color={theme} />
                   </TouchableOpacity>
                 )}
@@ -600,7 +607,7 @@ const ScheduleScreen = () => {
 
               {/* ── Time range ─────────────────────────────────────────── */}
               <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>שעות</Text>
+                <Text style={[styles.formLabel, { color: textSub }]}>שעות</Text>
                 {Platform.OS === 'web' ? (
                   <View style={styles.webTimeRow}>
                     {/* Start time */}
@@ -621,30 +628,30 @@ const ScheduleScreen = () => {
                   <View style={styles.timeRow}>
                     {/* Start time */}
                     <View style={styles.timeCol}>
-                      <Text style={styles.timeSubLabel}>התחלה</Text>
+                      <Text style={[styles.timeSubLabel, { color: textSub }]}>התחלה</Text>
                       <TouchableOpacity
-                        style={[styles.input, styles.pickerBtn]}
+                        style={[styles.input, styles.pickerBtn, { backgroundColor: surface, borderColor: borderClr }]}
                         onPress={() => openDtPicker('startTime')}
                         activeOpacity={0.7}
                       >
-                        <Text style={styles.pickerBtnText}>{eventStartTime || '09:00'}</Text>
+                        <Text style={[styles.pickerBtnText, { color: textColor }]}>{eventStartTime || '09:00'}</Text>
                         <MaterialCommunityIcons name="clock-outline" size={18} color={theme} />
                       </TouchableOpacity>
                     </View>
 
                     <View style={styles.timeSep}>
-                      <Text style={styles.timeSepText}>—</Text>
+                      <Text style={[styles.timeSepText, { color: textSub }]}>—</Text>
                     </View>
 
                     {/* End time */}
                     <View style={styles.timeCol}>
-                      <Text style={styles.timeSubLabel}>סיום</Text>
+                      <Text style={[styles.timeSubLabel, { color: textSub }]}>סיום</Text>
                       <TouchableOpacity
-                        style={[styles.input, styles.pickerBtn]}
+                        style={[styles.input, styles.pickerBtn, { backgroundColor: surface, borderColor: borderClr }]}
                         onPress={() => openDtPicker('endTime')}
                         activeOpacity={0.7}
                       >
-                        <Text style={styles.pickerBtnText}>{eventEndTime}</Text>
+                        <Text style={[styles.pickerBtnText, { color: textColor }]}>{eventEndTime}</Text>
                         <MaterialCommunityIcons name="clock-outline" size={18} color={theme} />
                       </TouchableOpacity>
                     </View>
@@ -654,7 +661,7 @@ const ScheduleScreen = () => {
 
               {/* Color */}
               <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>צבע</Text>
+                <Text style={[styles.formLabel, { color: textSub }]}>צבע</Text>
                 <View style={styles.colorRow}>
                   {EVENT_COLORS.map(c => (
                     <TouchableOpacity key={c}
@@ -666,13 +673,13 @@ const ScheduleScreen = () => {
 
               {/* Recurrence */}
               <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>חזרתיות</Text>
+                <Text style={[styles.formLabel, { color: textSub }]}>חזרתיות</Text>
                 <View style={styles.recurrenceRow}>
                   {RECURRENCE_OPTIONS.map(opt => (
                     <TouchableOpacity key={opt.key}
-                      style={[styles.recurrenceBtn, eventRecurrence === opt.key && styles.recurrenceBtnActive, eventRecurrence === opt.key && { borderColor: theme, backgroundColor: light }]}
+                      style={[styles.recurrenceBtn, { borderColor: borderClr, backgroundColor: surface }, eventRecurrence === opt.key && { borderColor: theme, backgroundColor: light }]}
                       onPress={() => setEventRecurrence(opt.key)}>
-                      <Text style={[styles.recurrenceBtnText, eventRecurrence === opt.key && styles.recurrenceBtnTextActive, eventRecurrence === opt.key && { color: theme }]}>
+                      <Text style={[styles.recurrenceBtnText, { color: textSub }, eventRecurrence === opt.key && { color: theme }]}>
                         {opt.label}
                       </Text>
                     </TouchableOpacity>
@@ -683,7 +690,7 @@ const ScheduleScreen = () => {
               {/* Recurrence end date */}
               {eventRecurrence !== 'none' && (
                 <View style={styles.formGroup}>
-                  <Text style={styles.formLabel}>תאריך סיום חזרתיות</Text>
+                  <Text style={[styles.formLabel, { color: textSub }]}>תאריך סיום חזרתיות</Text>
                   {Platform.OS === 'web' ? (
                     <View style={styles.webEndTimeRow}>
                       <WebDatePicker
@@ -700,11 +707,11 @@ const ScheduleScreen = () => {
                   ) : (
                     <View style={styles.pickerBtnWithClear}>
                       <TouchableOpacity
-                        style={[styles.input, styles.pickerBtn, styles.pickerBtnFlex]}
+                        style={[styles.input, styles.pickerBtn, styles.pickerBtnFlex, { backgroundColor: surface, borderColor: borderClr }]}
                         onPress={() => openDtPicker('recurrenceEnd')}
                         activeOpacity={0.7}
                       >
-                        <Text style={[styles.pickerBtnText, !eventRecurrenceEnd && styles.pickerBtnPlaceholder]}>
+                        <Text style={[styles.pickerBtnText, { color: textColor }, !eventRecurrenceEnd && { color: textSub }]}>
                           {eventRecurrenceEnd ? fmtDate(eventRecurrenceEnd) : 'ללא תאריך סיום'}
                         </Text>
                         <MaterialCommunityIcons
@@ -791,8 +798,8 @@ const ScheduleScreen = () => {
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFF5F7' },
-  calBlock:  { backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F5D5E0' },
+  container: { flex: 1 },
+  calBlock:  { borderBottomWidth: 1 },
 
   calHeader:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, height: CAL_TOP_H },
   navBtn:       { padding: 6 },
@@ -819,7 +826,7 @@ const styles = StyleSheet.create({
   eventsSectionTitle: { fontSize: 14, fontWeight: '700', color: '#333', marginBottom: 10, textAlign: 'right' },
   noEventsText:       { fontSize: 13, color: '#bbb', textAlign: 'center', paddingVertical: 16 },
 
-  eventItem:     { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 16, marginBottom: 10, borderRightWidth: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3, overflow: 'hidden' },
+  eventItem:     { flexDirection: 'row', alignItems: 'center', borderRadius: 16, marginBottom: 10, borderRightWidth: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3, overflow: 'hidden' },
   eventColorBar: { width: 4, alignSelf: 'stretch' },
   eventBody:     { flex: 1, paddingVertical: 10, paddingHorizontal: 12 },
   eventTitle:    { fontSize: 14, fontWeight: '700', color: '#333', marginBottom: 3, textAlign: 'right' },

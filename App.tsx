@@ -7,13 +7,15 @@ import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from './src/config/firebase';
 import LoginScreen from './LoginScreen';
 import DashboardScreen from './DashboardScreen';
+import { ThemeMode } from './src/context/ThemeContext';
 
 const Stack = createNativeStackNavigator();
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading]   = useState(true);
-  const [theme, setTheme]           = useState('#D58EAC');
+  const [accent, setAccent]         = useState('#00FFFF');
+  const [mode, setMode]             = useState<ThemeMode>('dark');
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -21,8 +23,9 @@ export default function App() {
         try {
           const snap = await getDoc(doc(db, 'users', user.uid));
           if (snap.exists()) {
-            const savedTheme = snap.data().theme;
-            if (savedTheme) setTheme(savedTheme);
+            const d = snap.data();
+            if (d.accent) setAccent(d.accent);
+            if (d.mode)   setMode(d.mode);
           }
         } catch (e) { console.log(e); }
         setIsLoggedIn(true);
@@ -49,8 +52,10 @@ export default function App() {
               {(props) => (
                 <DashboardScreen
                   {...props}
-                  theme={theme}
-                  onSetTheme={setTheme}
+                  accent={accent}
+                  mode={mode}
+                  onSetAccent={setAccent}
+                  onSetMode={setMode}
                   onLogout={() => setIsLoggedIn(false)}
                 />
               )}

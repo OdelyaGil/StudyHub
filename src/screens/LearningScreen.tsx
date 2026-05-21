@@ -32,8 +32,15 @@ interface Topic {
 }
 
 const LearningScreen = () => {
-  const theme = useTheme();
-  const light = theme + '1F';
+  const themeObj  = useTheme();
+  const theme     = themeObj.accent;
+  const bg        = themeObj.bg;
+  const surface   = themeObj.surface;
+  const tabBg     = themeObj.tabBg;
+  const textColor = themeObj.text;
+  const textSub   = themeObj.textSub;
+  const borderClr = themeObj.border;
+  const light     = theme + '22';
   const [topics, setTopics] = useState<Topic[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [topicCourse, setTopicCourse] = useState('');
@@ -104,10 +111,10 @@ const LearningScreen = () => {
   const topicsNeedReview = topics.filter(t => t.needsReview).length;
 
   const TopicItem = ({ item }: { item: Topic }) => (
-    <View style={[styles.topicItem, { borderRightColor: theme }]}>
+    <View style={[styles.topicItem, { borderRightColor: theme, backgroundColor: surface }]}>
       <View style={styles.topicInfo}>
-        <Text style={styles.topicName}>{item.name}</Text>
-        {item.course ? <Text style={styles.topicCourse}>{item.course}</Text> : null}
+        <Text style={[styles.topicName, { color: textColor }]}>{item.name}</Text>
+        {item.course ? <Text style={[styles.topicCourse, { color: textSub }]}>{item.course}</Text> : null}
       </View>
       <View style={styles.topicActions}>
         <TouchableOpacity style={[styles.actionBtn, item.known && styles.actionBtnActive]} onPress={() => handleToggleKnown(item.id)}>
@@ -124,8 +131,8 @@ const LearningScreen = () => {
   );
 
   return (
-    <View style={styles.container}>
-      <ScrollView style={styles.scrollView} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
+    <View style={[styles.container, { backgroundColor: bg }]}>
+      <ScrollView style={styles.scrollView} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme} />}>
         {topics.length > 0 && (
           <View style={styles.statsContainer}>
             <LinearGradient colors={[theme, darken(theme)]} style={styles.statCard}>
@@ -153,8 +160,8 @@ const LearningScreen = () => {
           </View>
         ) : (
           <View style={styles.emptyState}>
-            <MaterialCommunityIcons name="brain" size={60} color="#ccc" />
-            <Text style={styles.emptyStateText}>אין נושאי למידה עדיין</Text>
+            <MaterialCommunityIcons name="brain" size={60} color={textSub} />
+            <Text style={[styles.emptyStateText, { color: textSub }]}>אין נושאי למידה עדיין</Text>
           </View>
         )}
       </ScrollView>
@@ -165,21 +172,21 @@ const LearningScreen = () => {
 
       <Modal visible={modalVisible} animationType="slide" transparent={true}>
         <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, { backgroundColor: tabBg }]}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>נושא חדש</Text>
+              <Text style={[styles.modalTitle, { color: textColor }]}>נושא חדש</Text>
               <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <MaterialCommunityIcons name="close" size={24} color="#333" />
+                <MaterialCommunityIcons name="close" size={24} color={textSub} />
               </TouchableOpacity>
             </View>
             <ScrollView showsVerticalScrollIndicator={false}>
               <View style={styles.formGroup}>
-                <Text style={styles.label}>קורס (אופציונלי)</Text>
-                <TextInput style={styles.input} placeholder="שם הקורס" value={topicCourse} onChangeText={setTopicCourse} textAlign="right" />
+                <Text style={[styles.label, { color: textSub }]}>קורס (אופציונלי)</Text>
+                <TextInput style={[styles.input, { backgroundColor: surface, borderColor: borderClr, color: textColor }]} placeholder="שם הקורס" placeholderTextColor={textSub} value={topicCourse} onChangeText={setTopicCourse} textAlign="right" />
               </View>
               <View style={styles.formGroup}>
-                <Text style={styles.label}>שם הנושא</Text>
-                <TextInput style={styles.input} placeholder="למשל: פונקציות של משתנה אחד" value={topicName} onChangeText={setTopicName} textAlign="right" />
+                <Text style={[styles.label, { color: textSub }]}>שם הנושא</Text>
+                <TextInput style={[styles.input, { backgroundColor: surface, borderColor: borderClr, color: textColor }]} placeholder="למשל: פונקציות של משתנה אחד" placeholderTextColor={textSub} value={topicName} onChangeText={setTopicName} textAlign="right" />
               </View>
               <View style={[styles.infoBox, { borderRightColor: theme, backgroundColor: light }]}>
                 <Text style={[styles.infoText, { color: theme }]}>תוכל לסמן את הנושא כ"יודע" או "צריך חזרה" לאחר הוספה</Text>
@@ -197,7 +204,7 @@ const LearningScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container:      { flex: 1, backgroundColor: '#FFF5F7' },
+  container:      { flex: 1 },
   scrollView:     { flex: 1, padding: 15 },
   statsContainer: { flexDirection: 'row', gap: 12, marginBottom: 20 },
   statCard:       { flex: 1, borderRadius: 15, padding: 15, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 5, elevation: 3 },
@@ -205,7 +212,7 @@ const styles = StyleSheet.create({
   statValue:      { color: '#fff', fontSize: 24, fontWeight: '700', marginTop: 4 },
   section:        { marginBottom: 20 },
   topicItem: {
-    backgroundColor: '#fff', borderRadius: 16, padding: 15, marginBottom: 10,
+    borderRadius: 16, padding: 15, marginBottom: 10,
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     borderRightWidth: 4, borderRightColor: '#4CAFAE',
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3,
