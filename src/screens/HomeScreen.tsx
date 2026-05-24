@@ -5,183 +5,424 @@ import {
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { loadField } from '../utils/firestore';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useTheme } from '../context/ThemeContext';
-import { useNavigation } from '@react-navigation/native';
+import { auth, db } from '../config/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
+// ── Constants ─────────────────────────────────────────────────────────────────
+const STUDY_TIPS = [
+  'תלמדי בסביבה שקטה ללא הפרעות — הריכוז עולה ב-40%',
+  'שיטת פומודורו: 25 דקות לימוד, 5 דקות הפסקה',
+  'חזרה על חומר לפני השינה משפרת שינון לטווח ארוך',
+  'הסבירי את החומר בקול רם — זה מחזק הבנה עמוקה',
+  'חלקי חומר קשה למנות קטנות ובדקי את עצמך בסוף',
+  'שמרי על לחות — שתיית מים משפרת ריכוז וזיכרון',
+  'לימוד בקבוצות קטנות יכול להאיר זוויות חדשות',
+];
+
+const COURSE_COLORS = ['#667eea', '#f093fb', '#ffa94d', '#51cf66', '#ff6b6b', '#00BFFF', '#BF5FFF'];
+const HEB_DAYS    = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+const HEB_MONTHS  = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+const toISO = (d: Date) => {
+  const y   = d.getFullYear();
+  const m   = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+};
+
+const daysUntil = (iso: string) =>
+  Math.ceil((new Date(iso + 'T23:59:59').getTime() - Date.now()) / 86400000);
+
+const occursOnISO = (event: any, iso: string): boolean => {
+  if (!event?.date || iso < event.date) return false;
+  if (event.recurrenceEndDate && iso > event.recurrenceEndDate) return false;
+  switch (event.recurrence) {
+    case 'none':    return iso === event.date;
+    case 'daily':   return true;
+    case 'weekly': {
+      const diff = Math.round(
+        (new Date(iso + 'T12:00:00').getTime() - new Date(event.date + 'T12:00:00').getTime()) / 86400000
+      );
+      return diff % 7 === 0;
+    }
+    case 'monthly': return iso.slice(8) === event.date.slice(8);
+    case 'yearly':  return iso.slice(5) === event.date.slice(5);
+    default:        return false;
+  }
+};
+
+const calcWeightedAvg = (grades: any[]) => {
+  const valid = grades.filter(g => g.value > 0 && g.credits > 0);
+  if (!valid.length) return null;
+  return +(valid.reduce((s, g) => s + g.value * g.credits, 0) /
+           valid.reduce((s, g) => s + g.credits, 0)).toFixed(1);
+};
+
+// ── Component ─────────────────────────────────────────────────────────────────
 const HomeScreen = () => {
-  const theme = useTheme();
+  const theme      = useTheme();
   const navigation = useNavigation<any>();
-  const [grades, setGrades]   = useState<any[]>([]);
-  const [tasks, setTasks]     = useState<any[]>([]);
-  const [topics, setTopics]   = useState<any[]>([]);
-  const [refreshing, setRefreshing] = useState(false);
 
-  useFocusEffect(useCallback(() => { loadData(); }, []));
+  const [grades,    setGrades]    = useState<any[]>([]);
+  const [tasks,     setTasks]     = useState<any[]>([]);
+  const [events,    setEvents]    = useState<any[]>([]);
+  const [topics,    setTopics]    = useState<any[]>([]);
+  const [userName,  setUserName]  = useState('');
+  const [refreshing,setRefreshing]= useState(false);
 
-  const loadData = async () => {
+  useFocusEffect(useCallback(() => { loadAll(); }, []));
+
+  const loadAll = async () => {
     try {
-      const [g, t, tp] = await Promise.all([
+      const [g, t, e, tp] = await Promise.all([
         loadField('grades'),
         loadField('tasks'),
+        loadField('schedule'),
         loadField('topics'),
       ]);
-      setGrades(g ?? []);
-      setTasks(t  ?? []);
+      setGrades(g  ?? []);
+      setTasks(t   ?? []);
+      setEvents(e  ?? []);
       setTopics(tp ?? []);
-    } catch (e) { console.log(e); }
+      const user = auth.currentUser;
+      if (user) {
+        const snap = await getDoc(doc(db, 'users', user.uid));
+        if (snap.exists()) setUserName(snap.data().name || '');
+      }
+    } catch (err) { console.log(err); }
   };
 
-  const onRefresh = async () => { setRefreshing(true); await loadData(); setRefreshing(false); };
+  const onRefresh = async () => { setRefreshing(true); await loadAll(); setRefreshing(false); };
 
-  const avg = grades.length > 0
-    ? (grades.filter(g => g.value > 0).reduce((s: number, g: any) => s + g.value, 0) /
-       (grades.filter(g => g.value > 0).length || 1)).toFixed(1)
-    : '—';
+  // ── Derived ───────────────────────────────────────────────────────────────
+  const today     = new Date();
+  const todayISO  = toISO(today);
+  const tip       = STUDY_TIPS[today.getDay()];
+  const todayLabel= `יום ${HEB_DAYS[today.getDay()]}, ${today.getDate()} ב${HEB_MONTHS[today.getMonth()]}`;
 
-  const activeTasks  = tasks.filter(t => !t.completed).length;
-  const courseCount  = new Set(grades.map(g => g.name)).size;
-  const topicsDone   = topics.filter(t => t.known).length;
-  const topicsTotal  = topics.length;
+  const activeTasks  = tasks.filter(t => !t.completed);
+  const completedCnt = tasks.filter(t => t.completed).length;
 
-  const nextTask = tasks.filter(t => !t.completed)
-    .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())[0];
+  const urgentTasks = activeTasks
+    .filter(t => { const d = daysUntil(t.dueDate); return d >= 0 && d <= 7; })
+    .sort((a, b) => daysUntil(a.dueDate) - daysUntil(b.dueDate));
 
-  const isDark = theme.mode === 'dark';
+  const todayEvents = events
+    .filter(e => occursOnISO(e, todayISO))
+    .sort((a, b) => a.startTime.localeCompare(b.startTime));
 
-  const StatCard = ({ icon, label, value, onPress }: {
-    icon: React.ComponentProps<typeof MaterialCommunityIcons>['name'];
-    label: string;
-    value: string | number;
-    onPress?: () => void;
-  }) => (
-    <TouchableOpacity
-      style={[s.statCard, { backgroundColor: theme.surface, borderColor: theme.border }]}
-      onPress={onPress}
-      activeOpacity={onPress ? 0.7 : 1}
-    >
-      <MaterialCommunityIcons name={icon} size={22} color={theme.accent} />
-      <Text style={[s.statValue, { color: theme.accent },
-        isDark && { textShadowColor: theme.accent, textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 8 }
-      ]}>
-        {value}
-      </Text>
-      <Text style={[s.statLabel, { color: theme.textSub }]}>{label}</Text>
-    </TouchableOpacity>
-  );
+  const next7Dates = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(today); d.setDate(d.getDate() + i + 1); return toISO(d);
+  });
+  const next7Events = next7Dates.flatMap(iso => events.filter(e => occursOnISO(e, iso)));
 
+  const avg        = calcWeightedAvg(grades);
+  const avgPct     = avg ? Math.min(100, Math.round(avg)) : 0;
+  const topicsReview = topics.filter(t => t.needsReview).length;
+
+  const courseMap  = new Map<string, any>();
+  grades.forEach(g => courseMap.set(g.name, g));
+  const courses    = Array.from(courseMap.values()).slice(0, 6);
+
+  const studyRecs  = Array.from(new Set(urgentTasks.filter(t => t.course).map(t => t.course)))
+    .map(course => {
+      const nearest = urgentTasks.find(t => t.course === course)!;
+      const days    = daysUntil(nearest.dueDate);
+      const hours   = Math.max(2, Math.min(8, Math.round((8 - days) * 1.2)));
+      return { course, days, hours, taskName: nearest.name };
+    }).slice(0, 3);
+
+  const urgentDayColor = (d: number) => d === 0 ? '#ff6b6b' : d <= 2 ? '#ffa94d' : '#51cf66';
+  const urgentDayLabel = (d: number) => d === 0 ? 'היום!' : d === 1 ? 'מחר' : `${d} ימים`;
+
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <ScrollView
-      style={[s.container, { backgroundColor: theme.bg }]}
-      contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
+      style={{ flex: 1, backgroundColor: theme.bg }}
+      contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.accent} />}
     >
-      {/* Stats grid */}
-      <View style={s.statsGrid}>
-        <StatCard icon="chart-line"              label="ממוצע"    value={avg}          onPress={() => navigation.navigate('Grades')} />
-        <StatCard icon="checkbox-multiple-marked" label="מטלות"   value={activeTasks} />
-        <StatCard icon="school-outline"           label="קורסים"  value={courseCount}  onPress={() => navigation.navigate('Grades')} />
-        <StatCard icon="brain"                    label="נושאים"  value={topicsTotal} />
+
+      {/* ── 1. Header ──────────────────────────────────────────────────────── */}
+      <View style={s.headerRow}>
+        <View style={{ flex: 1 }}>
+          <Text style={[s.greeting, { color: theme.text }]}>שלום {userName || 'סטודנטית'} 👋</Text>
+          <Text style={[s.dateLabel, { color: theme.textSub }]}>{todayLabel}</Text>
+        </View>
+        <View style={[s.quickChip, { backgroundColor: theme.accent + '22', borderColor: theme.accent + '55' }]}>
+          <Text style={[s.quickChipText, { color: theme.accent }]}>{activeTasks.length} פתוחות</Text>
+        </View>
       </View>
 
-      {/* Progress bar */}
-      {topicsTotal > 0 && (
-        <View style={[s.section, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-          <Text style={[s.sectionTitle, { color: theme.text }]}>📚 התקדמות למידה</Text>
-          <View style={s.progressBarBg}>
-            <View style={[s.progressBarFill, { width: `${Math.round((topicsDone / topicsTotal) * 100)}%` as any, backgroundColor: theme.accent }]} />
+      {/* ── 2. Urgent Deadlines ───────────────────────────────────────────── */}
+      {urgentTasks.length > 0 && (
+        <View style={[s.section, { backgroundColor: theme.surface, borderColor: theme.border, borderLeftColor: '#ff6b6b' }]}>
+          <View style={s.sectionHeader}>
+            <MaterialCommunityIcons name="alert-circle" size={18} color="#ff6b6b" />
+            <Text style={[s.sectionTitle, { color: '#ff6b6b' }]}>דדליינים דחופים השבוע</Text>
           </View>
-          <Text style={[s.progressText, { color: theme.textSub }]}>
-            {topicsDone}/{topicsTotal} נושאים נלמדו ({Math.round((topicsDone / topicsTotal) * 100)}%)
-          </Text>
+          {urgentTasks.slice(0, 4).map(task => {
+            const d = daysUntil(task.dueDate);
+            return (
+              <TouchableOpacity key={task.id} style={s.urgentRow} onPress={() => navigation.navigate('Tasks')}>
+                <View style={[s.urgentDot, { backgroundColor: urgentDayColor(d) }]} />
+                <View style={{ flex: 1 }}>
+                  <Text style={[s.urgentName, { color: theme.text }]}>{task.name}</Text>
+                  {task.course ? <Text style={[s.urgentCourse, { color: theme.textSub }]}>{task.course}</Text> : null}
+                </View>
+                <Text style={[s.urgentDays, { color: urgentDayColor(d) }]}>{urgentDayLabel(d)}</Text>
+              </TouchableOpacity>
+            );
+          })}
+          {urgentTasks.length > 4 && (
+            <TouchableOpacity onPress={() => navigation.navigate('Tasks')}>
+              <Text style={[s.seeAll, { color: '#ff6b6b' }]}>עוד {urgentTasks.length - 4} מטלות →</Text>
+            </TouchableOpacity>
+          )}
         </View>
       )}
 
-      {/* Next task */}
-      {nextTask && (
-        <View style={[s.section, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-          <Text style={[s.sectionTitle, { color: theme.text }]}>📌 המטלה הקרובה</Text>
-          <View style={[s.taskRow, { borderLeftColor: theme.accent }]}>
-            <View style={{ flex: 1 }}>
-              <Text style={[s.taskName, { color: theme.text }]}>{nextTask.name}</Text>
-              {nextTask.course ? <Text style={[s.taskCourse, { color: theme.textSub }]}>{nextTask.course}</Text> : null}
-            </View>
-            <View style={[s.badge, { borderColor: theme.accent + '88', backgroundColor: theme.accent + '22' }]}>
-              <Text style={[s.badgeText, { color: theme.accent }]}>{nextTask.priority}</Text>
-            </View>
+      {/* ── 3. Today's Schedule ───────────────────────────────────────────── */}
+      {todayEvents.length > 0 && (
+        <View style={[s.section, { backgroundColor: theme.surface, borderColor: theme.border, borderLeftColor: '#667eea' }]}>
+          <View style={s.sectionHeader}>
+            <MaterialCommunityIcons name="calendar-today" size={18} color="#667eea" />
+            <Text style={[s.sectionTitle, { color: '#667eea' }]}>לוח זמנים להיום</Text>
           </View>
-          <Text style={[s.dueText, { color: '#FF6B6B' }]}>
-            ⏰ {Math.ceil((new Date(nextTask.dueDate).getTime() - Date.now()) / 86400000)} ימים עד ההגשה
-          </Text>
+          {todayEvents.map(ev => (
+            <TouchableOpacity key={ev.id} style={s.eventRow} onPress={() => navigation.navigate('Events')}>
+              <View style={[s.eventBar, { backgroundColor: ev.color || '#667eea' }]} />
+              <View style={{ flex: 1 }}>
+                <Text style={[s.eventTitle, { color: theme.text }]}>{ev.title}</Text>
+                <Text style={[s.eventTime, { color: '#667eea' }]}>
+                  {ev.startTime}{ev.endTime ? ` – ${ev.endTime}` : ''}
+                </Text>
+              </View>
+              <MaterialCommunityIcons name="chevron-left" size={16} color={theme.textSub} />
+            </TouchableOpacity>
+          ))}
         </View>
       )}
 
-      {/* Grades tease */}
-      {grades.length > 0 && (
+      {/* ── 4. Two cards side by side ─────────────────────────────────────── */}
+      <View style={s.twoCardRow}>
+        {/* Academic Performance */}
         <TouchableOpacity
-          style={[s.section, { backgroundColor: theme.surface, borderColor: theme.border }]}
+          style={[s.halfCard, { backgroundColor: theme.surface, borderColor: theme.border }]}
           onPress={() => navigation.navigate('Grades')}
-          activeOpacity={0.8}
         >
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Text style={[s.sectionTitle, { color: theme.text }]}>🎓 ציונים אחרונים</Text>
-            <MaterialCommunityIcons name="chevron-left" size={20} color={theme.accent} />
+          <Text style={[s.halfCardTitle, { color: theme.textSub }]}>ביצועים אקדמיים</Text>
+          {avg ? (
+            <>
+              <View style={[s.circle, { borderColor: theme.accent }]}>
+                <Text style={[s.circleVal, { color: theme.accent }]}>{avg}</Text>
+                <Text style={[s.circleSubLabel, { color: theme.textSub }]}>ממוצע</Text>
+              </View>
+              <View style={[s.progressBarBg, { backgroundColor: theme.accent + '22' }]}>
+                <View style={[s.progressBarFill, { width: `${avgPct}%` as any, backgroundColor: theme.accent }]} />
+              </View>
+              <Text style={[s.halfCardSub, { color: theme.textSub }]}>{avgPct}% מהמקסימום</Text>
+            </>
+          ) : (
+            <Text style={[s.halfCardEmpty, { color: theme.textSub }]}>אין ציונים עדיין</Text>
+          )}
+        </TouchableOpacity>
+
+        {/* Next 7 Days */}
+        <TouchableOpacity
+          style={[s.halfCard, { backgroundColor: theme.surface, borderColor: theme.border }]}
+          onPress={() => navigation.navigate('Tasks')}
+        >
+          <Text style={[s.halfCardTitle, { color: theme.textSub }]}>7 ימים הבאים</Text>
+          <View style={s.next7List}>
+            {[
+              { val: urgentTasks.length, label: 'מטלות',   color: '#ff6b6b', icon: 'clipboard-alert-outline' },
+              { val: next7Events.length, label: 'אירועים', color: '#667eea', icon: 'calendar-range' },
+              { val: topicsReview,       label: 'לחזרה',   color: '#ffa94d', icon: 'refresh' },
+            ].map(item => (
+              <View key={item.label} style={s.next7Row}>
+                <MaterialCommunityIcons name={item.icon as any} size={14} color={item.color} />
+                <Text style={[s.next7Val, { color: item.color }]}>{item.val}</Text>
+                <Text style={[s.next7Key, { color: theme.textSub }]}>{item.label}</Text>
+              </View>
+            ))}
           </View>
-          {grades.slice(-3).reverse().map((g: any) => (
-            <View key={g.id} style={[s.gradeRow, { borderBottomColor: theme.border }]}>
-              <Text style={[s.gradeName, { color: theme.text }]}>{g.name}</Text>
-              <Text style={[s.gradeVal, { color: theme.accent },
-                isDark && { textShadowColor: theme.accent, textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 6 }
-              ]}>
-                {g.value > 0 ? g.value : '—'}
-              </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* ── 5. Study Recommendations ──────────────────────────────────────── */}
+      {studyRecs.length > 0 && (
+        <View style={[s.section, { backgroundColor: theme.surface, borderColor: theme.border, borderLeftColor: '#ffa94d' }]}>
+          <View style={s.sectionHeader}>
+            <MaterialCommunityIcons name="book-clock-outline" size={18} color="#ffa94d" />
+            <Text style={[s.sectionTitle, { color: '#ffa94d' }]}>המלצות לימוד</Text>
+          </View>
+          {studyRecs.map((rec, i) => (
+            <View key={i} style={s.studyRow}>
+              <MaterialCommunityIcons name="clock-fast" size={16} color="#ffa94d" />
+              <View style={{ flex: 1 }}>
+                <Text style={[s.studyCourse, { color: theme.text }]}>{rec.course}</Text>
+                <Text style={[s.studySub, { color: theme.textSub }]}>
+                  {`${rec.hours} שעות מומלצות — "${rec.taskName}" בעוד ${rec.days} ימים`}
+                </Text>
+              </View>
             </View>
           ))}
-        </TouchableOpacity>
-      )}
-
-      {grades.length === 0 && tasks.length === 0 && topics.length === 0 && (
-        <View style={s.empty}>
-          <MaterialCommunityIcons name="rocket-launch-outline" size={64} color={theme.accent + '55'} />
-          <Text style={[s.emptyTitle, { color: theme.text }]}>ברוכה הבאה ל-StudyHub</Text>
-          <Text style={[s.emptyText, { color: theme.textSub }]}>התחילי בהוספת ציונים ומטלות</Text>
         </View>
       )}
+
+      {/* ── 6. Weekly Stats ───────────────────────────────────────────────── */}
+      <View style={s.statsGrid}>
+        {[
+          { label: 'הושלמו',       value: completedCnt,        icon: 'check-circle-outline',  color: '#51cf66' },
+          { label: 'ממתינות',      value: activeTasks.length,  icon: 'clock-outline',          color: '#ffa94d' },
+          { label: 'אירועים היום', value: todayEvents.length,  icon: 'calendar-check',         color: '#667eea' },
+          { label: 'לחזרה',        value: topicsReview,        icon: 'brain',                  color: '#ff6b6b' },
+        ].map(stat => (
+          <View key={stat.label} style={[s.statMini, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+            <MaterialCommunityIcons name={stat.icon as any} size={20} color={stat.color} />
+            <Text style={[s.statMiniVal, { color: stat.color }]}>{stat.value}</Text>
+            <Text style={[s.statMiniLabel, { color: theme.textSub }]}>{stat.label}</Text>
+          </View>
+        ))}
+      </View>
+
+      {/* ── 7. Courses Overview ───────────────────────────────────────────── */}
+      {courses.length > 0 && (
+        <View style={{ marginBottom: 16 }}>
+          <Text style={[s.sectionTitle, { color: theme.text, marginBottom: 12 }]}>סקירת קורסים</Text>
+          <View style={s.coursesGrid}>
+            {courses.map((g, i) => {
+              const col      = COURSE_COLORS[i % COURSE_COLORS.length];
+              const nextTask = activeTasks.find(t => t.course === g.name);
+              return (
+                <TouchableOpacity
+                  key={g.id}
+                  style={[s.courseCard, { backgroundColor: theme.surface, borderColor: theme.border, borderTopColor: col, borderTopWidth: 3 }]}
+                  onPress={() => navigation.navigate('Grades')}
+                >
+                  <Text style={[s.courseName, { color: theme.text }]} numberOfLines={2}>{g.name}</Text>
+                  <Text style={[s.courseGrade, { color: col }]}>{g.value > 0 ? g.value : '—'}</Text>
+                  {nextTask && (
+                    <Text style={[s.courseNext, { color: theme.textSub }]} numberOfLines={1}>
+                      ⏰ {nextTask.name}
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+      )}
+
+      {/* ── 8. Motivational Tip ───────────────────────────────────────────── */}
+      <View style={[s.tipCard, { backgroundColor: theme.surface, borderColor: '#51cf66' + '55' }]}>
+        <View style={s.tipHeader}>
+          <MaterialCommunityIcons name="lightbulb-on-outline" size={20} color="#51cf66" />
+          <Text style={[s.tipTitle, { color: '#51cf66' }]}>טיפ לימוד יומי</Text>
+        </View>
+        <Text style={[s.tipText, { color: theme.text }]}>{tip}</Text>
+      </View>
+
+      {/* ── 9. Quick Actions ──────────────────────────────────────────────── */}
+      <View style={s.actionsRow}>
+        <TouchableOpacity
+          style={[s.actionBtn, { backgroundColor: theme.accent }]}
+          onPress={() => navigation.navigate('Tasks')}
+          activeOpacity={0.8}
+        >
+          <MaterialCommunityIcons name="clipboard-list-outline" size={18} color={theme.bg} />
+          <Text style={[s.actionBtnText, { color: theme.bg }]}>כל הדדליינים</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[s.actionBtn, { backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.accent }]}
+          onPress={() => navigation.navigate('Library')}
+          activeOpacity={0.8}
+        >
+          <MaterialCommunityIcons name="book-open-variant" size={18} color={theme.accent} />
+          <Text style={[s.actionBtnText, { color: theme.accent }]}>ספריית לימוד</Text>
+        </TouchableOpacity>
+      </View>
 
     </ScrollView>
   );
 };
 
+// ── Styles ────────────────────────────────────────────────────────────────────
 const s = StyleSheet.create({
-  container:      { flex: 1 },
+  // Header
+  headerRow:      { flexDirection: 'row', alignItems: 'center', marginBottom: 20, gap: 12 },
+  greeting:       { fontSize: 20, fontWeight: '800', textAlign: 'right' },
+  dateLabel:      { fontSize: 12, marginTop: 2, textAlign: 'right' },
+  quickChip:      { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1 },
+  quickChipText:  { fontSize: 12, fontWeight: '700' },
+
+  // Section card
+  section:        { borderRadius: 16, padding: 16, marginBottom: 14, borderWidth: 1, borderLeftWidth: 4 },
+  sectionHeader:  { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
+  sectionTitle:   { fontSize: 14, fontWeight: '700', textAlign: 'right' },
+  seeAll:         { fontSize: 12, fontWeight: '600', textAlign: 'right', marginTop: 8 },
+
+  // Urgent rows
+  urgentRow:      { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
+  urgentDot:      { width: 10, height: 10, borderRadius: 5 },
+  urgentName:     { fontSize: 13, fontWeight: '700', textAlign: 'right' },
+  urgentCourse:   { fontSize: 11, textAlign: 'right', marginTop: 1 },
+  urgentDays:     { fontSize: 12, fontWeight: '800', minWidth: 50, textAlign: 'right' },
+
+  // Events
+  eventRow:       { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 },
+  eventBar:       { width: 4, height: 40, borderRadius: 2 },
+  eventTitle:     { fontSize: 13, fontWeight: '700', textAlign: 'right' },
+  eventTime:      { fontSize: 11, fontWeight: '600', marginTop: 2, textAlign: 'right' },
+
+  // Two cards
+  twoCardRow:     { flexDirection: 'row', gap: 12, marginBottom: 14 },
+  halfCard:       { flex: 1, borderRadius: 16, padding: 14, borderWidth: 1, alignItems: 'center', gap: 8 },
+  halfCardTitle:  { fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, textAlign: 'center' },
+  halfCardSub:    { fontSize: 10, textAlign: 'center' },
+  halfCardEmpty:  { fontSize: 12, textAlign: 'center', marginTop: 16 },
+  circle:         { width: 72, height: 72, borderRadius: 36, borderWidth: 3, justifyContent: 'center', alignItems: 'center' },
+  circleVal:      { fontSize: 20, fontWeight: '800' },
+  circleSubLabel: { fontSize: 9, fontWeight: '600' },
+  progressBarBg:  { height: 6, width: '100%', borderRadius: 3, overflow: 'hidden' },
+  progressBarFill:{ height: 6, borderRadius: 3 },
+  next7List:      { gap: 8, width: '100%' },
+  next7Row:       { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  next7Val:       { fontSize: 16, fontWeight: '800', minWidth: 24, textAlign: 'right' },
+  next7Key:       { fontSize: 12 },
+
+  // Study recs
+  studyRow:       { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 10 },
+  studyCourse:    { fontSize: 13, fontWeight: '700', textAlign: 'right' },
+  studySub:       { fontSize: 11, textAlign: 'right', marginTop: 2 },
+
+  // Stats grid
   statsGrid:      { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 16 },
-  statCard: {
-    width: '47%', borderRadius: 16, padding: 16,
-    alignItems: 'center', gap: 6,
-    borderWidth: 1,
-  },
-  statValue:      { fontSize: 26, fontWeight: '800' },
-  statLabel:      { fontSize: 11, fontWeight: '600', textAlign: 'center' },
-  section: {
-    borderRadius: 16, padding: 16, marginBottom: 14,
-    borderWidth: 1,
-  },
-  sectionTitle:   { fontSize: 14, fontWeight: '700', marginBottom: 12, textAlign: 'right' },
-  progressBarBg:  { height: 8, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 4, marginBottom: 8, overflow: 'hidden' },
-  progressBarFill:{ height: 8, borderRadius: 4 },
-  progressText:   { fontSize: 12, textAlign: 'right' },
-  taskRow:        { flexDirection: 'row', alignItems: 'center', gap: 12, borderLeftWidth: 3, paddingLeft: 12, marginBottom: 8 },
-  taskName:       { fontSize: 14, fontWeight: '700', textAlign: 'right' },
-  taskCourse:     { fontSize: 11, marginTop: 2, textAlign: 'right' },
-  badge:          { paddingVertical: 4, paddingHorizontal: 10, borderRadius: 8, borderWidth: 1 },
-  badgeText:      { fontSize: 10, fontWeight: '700' },
-  dueText:        { fontSize: 12, fontWeight: '600', textAlign: 'right' },
-  gradeRow:       { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8, borderBottomWidth: 1 },
-  gradeName:      { fontSize: 13, fontWeight: '600', textAlign: 'right' },
-  gradeVal:       { fontSize: 18, fontWeight: '800' },
-  empty:          { alignItems: 'center', paddingVertical: 60, gap: 12 },
-  emptyTitle:     { fontSize: 18, fontWeight: '700' },
-  emptyText:      { fontSize: 13 },
+  statMini:       { width: '47%', borderRadius: 14, padding: 14, alignItems: 'center', gap: 4, borderWidth: 1 },
+  statMiniVal:    { fontSize: 22, fontWeight: '800' },
+  statMiniLabel:  { fontSize: 10, fontWeight: '600', textAlign: 'center' },
+
+  // Courses
+  coursesGrid:    { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  courseCard:     { width: '47%', borderRadius: 14, padding: 12, borderWidth: 1, gap: 4 },
+  courseName:     { fontSize: 12, fontWeight: '700', textAlign: 'right' },
+  courseGrade:    { fontSize: 22, fontWeight: '800', textAlign: 'right' },
+  courseNext:     { fontSize: 10, textAlign: 'right' },
+
+  // Tip
+  tipCard:        { borderRadius: 16, padding: 16, marginBottom: 16, borderWidth: 1 },
+  tipHeader:      { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
+  tipTitle:       { fontSize: 13, fontWeight: '700' },
+  tipText:        { fontSize: 13, lineHeight: 20, textAlign: 'right' },
+
+  // Actions
+  actionsRow:     { flexDirection: 'row', gap: 12 },
+  actionBtn:      { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, borderRadius: 14 },
+  actionBtnText:  { fontSize: 13, fontWeight: '700' },
 });
 
 export default HomeScreen;
