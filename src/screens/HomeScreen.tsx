@@ -1,21 +1,21 @@
 import React, { useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView,
-  TouchableOpacity, RefreshControl, Modal,
+  TouchableOpacity, RefreshControl,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { loadField } from '../utils/firestore';
 import { useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../context/ThemeContext';
-import GradesScreen from './GradesScreen';
+import { useNavigation } from '@react-navigation/native';
 
 const HomeScreen = () => {
   const theme = useTheme();
+  const navigation = useNavigation<any>();
   const [grades, setGrades]   = useState<any[]>([]);
   const [tasks, setTasks]     = useState<any[]>([]);
   const [topics, setTopics]   = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
-  const [showGrades, setShowGrades] = useState(false);
 
   useFocusEffect(useCallback(() => { loadData(); }, []));
 
@@ -78,9 +78,9 @@ const HomeScreen = () => {
     >
       {/* Stats grid */}
       <View style={s.statsGrid}>
-        <StatCard icon="chart-line"              label="ממוצע"    value={avg}          onPress={() => setShowGrades(true)} />
+        <StatCard icon="chart-line"              label="ממוצע"    value={avg}          onPress={() => navigation.navigate('Grades')} />
         <StatCard icon="checkbox-multiple-marked" label="מטלות"   value={activeTasks} />
-        <StatCard icon="school-outline"           label="קורסים"  value={courseCount}  onPress={() => setShowGrades(true)} />
+        <StatCard icon="school-outline"           label="קורסים"  value={courseCount}  onPress={() => navigation.navigate('Grades')} />
         <StatCard icon="brain"                    label="נושאים"  value={topicsTotal} />
       </View>
 
@@ -120,7 +120,7 @@ const HomeScreen = () => {
       {grades.length > 0 && (
         <TouchableOpacity
           style={[s.section, { backgroundColor: theme.surface, borderColor: theme.border }]}
-          onPress={() => setShowGrades(true)}
+          onPress={() => navigation.navigate('Grades')}
           activeOpacity={0.8}
         >
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -148,10 +148,6 @@ const HomeScreen = () => {
         </View>
       )}
 
-      {/* Grades full modal */}
-      <Modal visible={showGrades} animationType="slide">
-        <GradesScreen onClose={() => setShowGrades(false)} />
-      </Modal>
     </ScrollView>
   );
 };

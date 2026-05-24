@@ -8,6 +8,7 @@ import HomeScreen    from './src/screens/HomeScreen';
 import ChatsScreen   from './src/screens/ChatsScreen';
 import EventsScreen  from './src/screens/EventsScreen';
 import TasksScreen   from './src/screens/TasksScreen';
+import GradesScreen  from './src/screens/GradesScreen';
 import LibraryScreen from './src/screens/LibraryScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 
@@ -27,6 +28,7 @@ const ICONS: Record<string, React.ComponentProps<typeof MaterialCommunityIcons>[
   Chats:   'chat-processing-outline',
   Events:  'calendar-month-outline',
   Tasks:   'checkbox-multiple-marked-outline',
+  Grades:  'school-outline',
   Library: 'bookshelf',
   Profile: 'account-circle-outline',
 };
@@ -76,6 +78,7 @@ const DashboardScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout }: Pro
         <Tab.Screen name="Chats"   component={ChatsScreen}   options={{ tabBarLabel: 'שיחות' }} />
         <Tab.Screen name="Events"  component={EventsScreen}  options={{ tabBarLabel: 'אירועים' }} />
         <Tab.Screen name="Tasks"   component={TasksScreen}   options={{ tabBarLabel: 'משימות' }} />
+        <Tab.Screen name="Grades"  component={GradesScreen}  options={{ tabBarLabel: 'ציונים' }} />
         <Tab.Screen name="Library" component={LibraryScreen} options={{ tabBarLabel: 'ספריה' }} />
         <Tab.Screen name="Profile" options={{ tabBarLabel: 'פרופיל' }}>
           {() => (
