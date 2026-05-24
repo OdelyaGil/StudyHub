@@ -255,6 +255,16 @@ const GradesScreen = ({ onClose }: { onClose?: () => void }) => {
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <View style={[styles.container, { backgroundColor: bg }]}>
+      {onClose && (
+        <View style={[styles.topBar, { backgroundColor: bg, borderBottomColor: borderClr }]}>
+          <TouchableOpacity onPress={onClose} style={styles.backBtn}>
+            <MaterialCommunityIcons name="chevron-right" size={26} color={theme} />
+            <Text style={[styles.backText, { color: theme }]}>חזרה</Text>
+          </TouchableOpacity>
+          <Text style={[styles.topBarTitle, { color: textColor }]}>ציונים</Text>
+          <View style={{ width: 80 }} />
+        </View>
+      )}
       <ScrollView
         style={styles.scrollView}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme} />}
@@ -438,6 +448,10 @@ const GradesScreen = ({ onClose }: { onClose?: () => void }) => {
 
 const styles = StyleSheet.create({
   container:   { flex: 1 },
+  topBar:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1 },
+  backBtn:     { flexDirection: 'row', alignItems: 'center', gap: 4, minWidth: 80 },
+  backText:    { fontSize: 14, fontWeight: '600' },
+  topBarTitle: { fontSize: 16, fontWeight: '700' },
   scrollView:  { flex: 1, padding: 15 },
   avgCard:     { borderRadius: 20, padding: 20, marginBottom: 20 },
   avgRow:      { flexDirection: 'row', alignItems: 'center', gap: 24 },
