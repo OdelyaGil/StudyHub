@@ -22,7 +22,6 @@ const STUDY_TIPS = [
   'לימוד בקבוצות קטנות יכול להאיר זוויות חדשות',
 ];
 
-const COURSE_COLORS = ['#667eea', '#f093fb', '#ffa94d', '#51cf66', '#ff6b6b', '#00BFFF', '#BF5FFF'];
 const HEB_DAYS    = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 const HEB_MONTHS  = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
 
@@ -67,12 +66,13 @@ const HomeScreen = () => {
   const theme      = useTheme();
   const navigation = useNavigation<any>();
 
-  const [grades,    setGrades]    = useState<any[]>([]);
-  const [tasks,     setTasks]     = useState<any[]>([]);
-  const [events,    setEvents]    = useState<any[]>([]);
-  const [topics,    setTopics]    = useState<any[]>([]);
-  const [userName,  setUserName]  = useState('');
-  const [refreshing,setRefreshing]= useState(false);
+  const [grades,          setGrades]         = useState<any[]>([]);
+  const [tasks,           setTasks]          = useState<any[]>([]);
+  const [events,          setEvents]         = useState<any[]>([]);
+  const [topics,          setTopics]         = useState<any[]>([]);
+  const [userName,        setUserName]       = useState('');
+  const [requiredCredits, setRequiredCredits]= useState(0);
+  const [refreshing,      setRefreshing]     = useState(false);
 
   useFocusEffect(useCallback(() => { loadAll(); }, []));
 
@@ -96,7 +96,11 @@ const HomeScreen = () => {
       const user = auth.currentUser;
       if (user) {
         const snap = await getDoc(doc(db, 'users', user.uid));
-        if (snap.exists()) setUserName(snap.data().name || '');
+        if (snap.exists()) {
+          const d = snap.data();
+          setUserName(d.name || '');
+          setRequiredCredits(+(d.requiredCredits ?? 0));
+        }
       }
     } catch (err) { console.log(err); }
   };
@@ -129,9 +133,9 @@ const HomeScreen = () => {
   const avgPct     = avg ? Math.min(100, Math.round(avg)) : 0;
   const topicsReview = topics.filter(t => t.needsReview).length;
 
-  const courseMap  = new Map<string, any>();
-  grades.forEach(g => courseMap.set(g.name, g));
-  const courses    = Array.from(courseMap.values()).slice(0, 6);
+  const earnedCredits  = grades.reduce((s: number, g: any) => s + (g.credits || 0), 0);
+  const creditsPct     = requiredCredits > 0 ? Math.min(100, Math.round((earnedCredits / requiredCredits) * 100)) : 0;
+  const creditsLeft    = requiredCredits > 0 ? Math.max(0, requiredCredits - earnedCredits) : 0;
 
   const studyRecs  = Array.from(new Set(urgentTasks.filter(t => t.course).map(t => t.course)))
     .map(course => {
@@ -296,33 +300,38 @@ const HomeScreen = () => {
         ))}
       </View>
 
-      {/* ── 7. Courses Overview ───────────────────────────────────────────── */}
-      {courses.length > 0 && (
-        <View style={{ marginBottom: 16 }}>
-          <Text style={[s.sectionTitle, { color: theme.text, marginBottom: 12 }]}>סקירת קורסים</Text>
-          <View style={s.coursesGrid}>
-            {courses.map((g, i) => {
-              const col      = COURSE_COLORS[i % COURSE_COLORS.length];
-              const nextTask = activeTasks.find(t => t.course === g.name);
-              return (
-                <TouchableOpacity
-                  key={g.id}
-                  style={[s.courseCard, { backgroundColor: theme.surface, borderColor: theme.border, borderTopColor: col, borderTopWidth: 3 }]}
-                  onPress={() => navigation.navigate('Grades')}
-                >
-                  <Text style={[s.courseName, { color: theme.text }]} numberOfLines={2}>{g.name}</Text>
-                  <Text style={[s.courseGrade, { color: col }]}>{g.value > 0 ? g.value : '—'}</Text>
-                  {nextTask && (
-                    <Text style={[s.courseNext, { color: theme.textSub }]} numberOfLines={1}>
-                      ⏰ {nextTask.name}
-                    </Text>
-                  )}
-                </TouchableOpacity>
-              );
-            })}
-          </View>
+      {/* ── 7. Credit Points Progress ─────────────────────────────────────── */}
+      <TouchableOpacity
+        style={[s.section, { backgroundColor: theme.surface, borderColor: theme.border, borderLeftColor: theme.accent, marginBottom: 16 }]}
+        onPress={() => navigation.navigate('Grades')}
+        activeOpacity={0.8}
+      >
+        <View style={s.sectionHeader}>
+          <MaterialCommunityIcons name="school-outline" size={18} color={theme.accent} />
+          <Text style={[s.sectionTitle, { color: theme.accent }]}>התקדמות נקודות זכות</Text>
         </View>
-      )}
+        <View style={s.creditsRow}>
+          <Text style={[s.creditsEarned, { color: theme.text }]}>{earnedCredits}</Text>
+          <Text style={[s.creditsSlash, { color: theme.textSub }]}>
+            {requiredCredits > 0 ? ` / ${requiredCredits} נ"ז` : ' נ"ז נצברו'}
+          </Text>
+        </View>
+        {requiredCredits > 0 ? (
+          <>
+            <View style={[s.progressBarBg, { backgroundColor: theme.accent + '22', marginVertical: 10 }]}>
+              <View style={[s.progressBarFill, { width: `${creditsPct}%` as any, backgroundColor: theme.accent }]} />
+            </View>
+            <View style={s.creditsMeta}>
+              <Text style={[s.creditsPct, { color: theme.accent }]}>{creditsPct}% הושלמו</Text>
+              {creditsLeft > 0 && (
+                <Text style={[s.creditsLeft, { color: theme.textSub }]}>עוד {creditsLeft} נ"ז לסיום</Text>
+              )}
+            </View>
+          </>
+        ) : (
+          <Text style={[s.creditsHint, { color: theme.textSub }]}>הגדר נ"ז נדרשות בפרופיל כדי לראות את ההתקדמות</Text>
+        )}
+      </TouchableOpacity>
 
       {/* ── 8. Motivational Tip ───────────────────────────────────────────── */}
       <View style={[s.tipCard, { backgroundColor: theme.surface, borderColor: '#51cf66' + '55' }]}>
@@ -412,12 +421,14 @@ const s = StyleSheet.create({
   statMiniVal:    { fontSize: 22, fontWeight: '800' },
   statMiniLabel:  { fontSize: 10, fontWeight: '600', textAlign: 'center' },
 
-  // Courses
-  coursesGrid:    { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  courseCard:     { width: '47%', borderRadius: 14, padding: 12, borderWidth: 1, gap: 4 },
-  courseName:     { fontSize: 12, fontWeight: '700', textAlign: 'right' },
-  courseGrade:    { fontSize: 22, fontWeight: '800', textAlign: 'right' },
-  courseNext:     { fontSize: 10, textAlign: 'right' },
+  // Credits progress
+  creditsRow:     { flexDirection: 'row', alignItems: 'baseline', gap: 4 },
+  creditsEarned:  { fontSize: 36, fontWeight: '900' },
+  creditsSlash:   { fontSize: 14, fontWeight: '600' },
+  creditsMeta:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  creditsPct:     { fontSize: 13, fontWeight: '800' },
+  creditsLeft:    { fontSize: 12 },
+  creditsHint:    { fontSize: 12, textAlign: 'right', marginTop: 8 },
 
   // Tip
   tipCard:        { borderRadius: 16, padding: 16, marginBottom: 16, borderWidth: 1 },

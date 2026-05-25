@@ -48,6 +48,10 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout }: Props
   const [editingName, setEditingName] = useState(false);
   const [newName, setNewName]         = useState('');
 
+  const [requiredCredits, setRequiredCredits] = useState('');
+  const [editingCredits, setEditingCredits]   = useState(false);
+  const [newCredits, setNewCredits]           = useState('');
+
   const [showPassModal, setShowPassModal] = useState(false);
   const [currentPass, setCurrentPass]     = useState('');
   const [newPass, setNewPass]             = useState('');
@@ -64,6 +68,21 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout }: Props
     setUserName(data.name || '');
     setUserEmail(data.email || user.email || '');
     setNewName(data.name || '');
+    const rc = data.requiredCredits ? String(data.requiredCredits) : '';
+    setRequiredCredits(rc);
+    setNewCredits(rc);
+  };
+
+  const handleSaveCredits = async () => {
+    const val = parseFloat(newCredits);
+    if (isNaN(val) || val <= 0) return showAlert('שגיאה', 'הזיני מספר נקודות זכות תקין');
+    const user = auth.currentUser;
+    if (!user) return;
+    try {
+      await setDoc(doc(db, 'users', user.uid), { requiredCredits: val }, { merge: true });
+      setRequiredCredits(newCredits);
+      setEditingCredits(false);
+    } catch { showAlert('שגיאה', 'שמירה נכשלה'); }
   };
 
   const handleSaveName = async () => {
@@ -237,6 +256,39 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout }: Props
                 </Text>
               </Pressable>
             ))}
+          </View>
+        </View>
+
+        {/* Academic settings */}
+        <View style={[s.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+          <Text style={[s.sectionTitle, { color: theme.accent }]}>הגדרות אקדמיות</Text>
+          <View style={s.row}>
+            <MaterialCommunityIcons name="school-outline" size={20} color={theme.textSub} />
+            {editingCredits ? (
+              <TextInput
+                style={[s.inlineInput, { color: theme.text, borderBottomColor: theme.accent }]}
+                value={newCredits}
+                onChangeText={setNewCredits}
+                keyboardType="decimal-pad"
+                autoFocus
+                placeholder="לדוגמה: 130"
+                placeholderTextColor={theme.textSub}
+                textAlign="right"
+              />
+            ) : (
+              <Text style={[s.rowValue, { color: theme.text }]}>
+                {requiredCredits ? `${requiredCredits} נ"ז לתואר` : 'הגדר נ"ז נדרשות לתואר'}
+              </Text>
+            )}
+            {editingCredits ? (
+              <Pressable onPress={handleSaveCredits}>
+                <MaterialCommunityIcons name="check" size={20} color={theme.accent} />
+              </Pressable>
+            ) : (
+              <Pressable onPress={() => setEditingCredits(true)}>
+                <MaterialCommunityIcons name="pencil" size={18} color={theme.textSub} />
+              </Pressable>
+            )}
           </View>
         </View>
 

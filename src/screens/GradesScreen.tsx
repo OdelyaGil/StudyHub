@@ -71,6 +71,14 @@ const GradesScreen = ({ onClose }: { onClose?: () => void }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [editingId, setEditingId]   = useState<number | null>(null);
 
+  // ── Simulation state ──────────────────────────────────────────────────────
+  const [simMode,    setSimMode]    = useState(false);
+  const [simCourses, setSimCourses] = useState<{id:number;name:string;credits:number;grade:number}[]>([]);
+  const [simModalVisible, setSimModalVisible] = useState(false);
+  const [simName,    setSimName]    = useState('');
+  const [simCredits, setSimCredits] = useState('');
+  const [simGrade,   setSimGrade]   = useState('');
+
   // Form fields
   const [courseName, setCourseName] = useState('');
   const [credits, setCredits]       = useState('');
@@ -109,6 +117,27 @@ const GradesScreen = ({ onClose }: { onClose?: () => void }) => {
   };
 
   const totalCredits = grades.reduce((s, g) => s + (g.credits || 0), 0);
+
+  // ── Simulation computed ───────────────────────────────────────────────────
+  const simAsGrades: Grade[] = simCourses.map((c, i) => ({
+    id: -(i + 1), name: c.name, credits: c.credits, value: c.grade,
+    semester: 'א', year: 'שנה א', criteria: [], date: '',
+  }));
+  const simAvg = simCourses.length > 0
+    ? calcWeightedAvg([...grades, ...simAsGrades])
+    : null;
+
+  const addSimCourse = () => {
+    const name    = simName.trim();
+    const credits = parseFloat(simCredits);
+    const grade   = parseFloat(simGrade);
+    if (!name)              return showAlert('שגיאה', 'הזיני שם קורס');
+    if (!credits || credits <= 0) return showAlert('שגיאה', 'הזיני נקודות זכות תקינות');
+    if (!grade || grade < 0 || grade > 100) return showAlert('שגיאה', 'הזיני ציון בין 0 ל-100');
+    setSimCourses(prev => [...prev, { id: Date.now(), name, credits, grade }]);
+    setSimName(''); setSimCredits(''); setSimGrade('');
+    setSimModalVisible(false);
+  };
 
   const pctUsed = criteria.reduce((s, c) => s + c.percentage, 0);
 
@@ -284,6 +313,61 @@ const GradesScreen = ({ onClose }: { onClose?: () => void }) => {
           </View>
         </LinearGradient>
 
+        {/* ── Simulation button ────────────────────────────────────────── */}
+        <TouchableOpacity
+          style={[styles.simToggleBtn, { borderColor: theme, backgroundColor: simMode ? theme : 'transparent' }]}
+          onPress={() => { setSimMode(v => !v); if (simMode) setSimCourses([]); }}
+          activeOpacity={0.8}
+        >
+          <MaterialCommunityIcons name="calculator-variant-outline" size={18} color={simMode ? bg : theme} />
+          <Text style={[styles.simToggleText, { color: simMode ? bg : theme }]}>
+            {simMode ? 'סגור סימולציה' : 'סימולציה — חשב ממוצע עתידי'}
+          </Text>
+        </TouchableOpacity>
+
+        {/* ── Simulation panel ─────────────────────────────────────────── */}
+        {simMode && (
+          <View style={[styles.simPanel, { backgroundColor: surface, borderColor: theme + '55' }]}>
+            <Text style={[styles.simPanelTitle, { color: textColor }]}>סימולציה</Text>
+            <Text style={[styles.simPanelSub, { color: textSub }]}>
+              הוסיפי קורסים היפותטיים וראי איך הממוצע ישתנה
+            </Text>
+
+            {/* Simulated avg result */}
+            {simAvg && (
+              <View style={[styles.simResult, { backgroundColor: theme + '22', borderColor: theme + '55' }]}>
+                <Text style={[styles.simResultLabel, { color: textSub }]}>ממוצע צפוי</Text>
+                <Text style={[styles.simResultValue, { color: theme }]}>{simAvg}</Text>
+                <Text style={[styles.simResultLabel, { color: textSub }]}>
+                  {parseFloat(simAvg) > parseFloat(calcWeightedAvg(grades) as string)
+                    ? `▲ עלייה מ-${calcWeightedAvg(grades)}`
+                    : `▼ ירידה מ-${calcWeightedAvg(grades)}`}
+                </Text>
+              </View>
+            )}
+
+            {/* Sim courses list */}
+            {simCourses.map(c => (
+              <View key={c.id} style={[styles.simCourseRow, { borderBottomColor: borderClr }]}>
+                <TouchableOpacity onPress={() => setSimCourses(prev => prev.filter(x => x.id !== c.id))}>
+                  <MaterialCommunityIcons name="close-circle-outline" size={18} color="#ff6b6b" />
+                </TouchableOpacity>
+                <Text style={[styles.simCourseName, { color: textColor }]} numberOfLines={1}>{c.name}</Text>
+                <Text style={[styles.simCourseDetail, { color: textSub }]}>{c.credits} נ"ז</Text>
+                <Text style={[styles.simCourseGrade, { color: theme }]}>{c.grade}</Text>
+              </View>
+            ))}
+
+            <TouchableOpacity
+              style={[styles.simAddBtn, { borderColor: theme, backgroundColor: theme + '15' }]}
+              onPress={() => setSimModalVisible(true)}
+            >
+              <MaterialCommunityIcons name="plus" size={18} color={theme} />
+              <Text style={[styles.simAddBtnText, { color: theme }]}>הוסף קורס לסימולציה</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         {grades.length > 0 ? (
           YEARS.map((yr) => {
             const semOrder: Record<string, number> = { 'א': 0, 'ב': 1, 'קיץ': 2 };
@@ -441,6 +525,59 @@ const GradesScreen = ({ onClose }: { onClose?: () => void }) => {
         </KeyboardAvoidingView>
       </Modal>
 
+      {/* Simulation Modal */}
+      <Modal visible={simModalVisible} animationType="slide" transparent onRequestClose={() => setSimModalVisible(false)}>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <View style={styles.modalContainer}>
+            <View style={[styles.modalContent, { backgroundColor: tabBg }]}>
+              <View style={styles.modalHeader}>
+                <TouchableOpacity onPress={() => setSimModalVisible(false)}>
+                  <MaterialCommunityIcons name="close" size={24} color={textColor} />
+                </TouchableOpacity>
+                <Text style={[styles.modalTitle, { color: textColor }]}>קורס סימולציה</Text>
+                <View style={{ width: 24 }} />
+              </View>
+
+              <Text style={[styles.label, { color: textSub }]}>שם הקורס</Text>
+              <TextInput
+                style={[styles.input, { borderColor: borderClr, backgroundColor: surface, color: textColor }]}
+                placeholder="לדוגמה: חדו״א 2"
+                placeholderTextColor={textSub}
+                value={simName}
+                onChangeText={setSimName}
+                textAlign="right"
+              />
+
+              <Text style={[styles.label, { color: textSub }]}>נקודות זכות</Text>
+              <TextInput
+                style={[styles.input, { borderColor: borderClr, backgroundColor: surface, color: textColor }]}
+                placeholder="לדוגמה: 4"
+                placeholderTextColor={textSub}
+                value={simCredits}
+                onChangeText={setSimCredits}
+                keyboardType="decimal-pad"
+                textAlign="right"
+              />
+
+              <Text style={[styles.label, { color: textSub }]}>ציון</Text>
+              <TextInput
+                style={[styles.input, { borderColor: borderClr, backgroundColor: surface, color: textColor }]}
+                placeholder="0 – 100"
+                placeholderTextColor={textSub}
+                value={simGrade}
+                onChangeText={setSimGrade}
+                keyboardType="decimal-pad"
+                textAlign="right"
+              />
+
+              <TouchableOpacity style={[styles.submitBtn, { backgroundColor: theme }]} onPress={addSimCourse}>
+                <Text style={styles.submitBtnText}>הוסף לסימולציה</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
       {alertNode}
     </View>
   );
@@ -528,6 +665,22 @@ const styles = StyleSheet.create({
   autoGradeValue:  { fontSize: 22, fontWeight: '700', color: '#CE6385' },
   submitBtn:       { backgroundColor: '#CE6385', paddingVertical: 14, borderRadius: 10, alignItems: 'center', marginTop: 4, marginBottom: 24 },
   submitBtnText:   { color: '#fff', fontSize: 15, fontWeight: '700' },
+
+  // Simulation
+  simToggleBtn:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1, borderRadius: 12, paddingVertical: 10, marginBottom: 14 },
+  simToggleText:   { fontSize: 13, fontWeight: '700' },
+  simPanel:        { borderRadius: 16, borderWidth: 1, padding: 16, marginBottom: 16, gap: 12 },
+  simPanelTitle:   { fontSize: 15, fontWeight: '800', textAlign: 'right' },
+  simPanelSub:     { fontSize: 12, textAlign: 'right' },
+  simResult:       { borderRadius: 12, borderWidth: 1, padding: 14, alignItems: 'center', gap: 4 },
+  simResultLabel:  { fontSize: 11, fontWeight: '600' },
+  simResultValue:  { fontSize: 36, fontWeight: '900' },
+  simCourseRow:    { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, borderBottomWidth: 1 },
+  simCourseName:   { flex: 1, fontSize: 13, fontWeight: '600', textAlign: 'right' },
+  simCourseDetail: { fontSize: 11 },
+  simCourseGrade:  { fontSize: 16, fontWeight: '800', minWidth: 36, textAlign: 'right' },
+  simAddBtn:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1, borderStyle: 'dashed', borderRadius: 10, paddingVertical: 10 },
+  simAddBtnText:   { fontSize: 13, fontWeight: '700' },
 });
 
 export default GradesScreen;
