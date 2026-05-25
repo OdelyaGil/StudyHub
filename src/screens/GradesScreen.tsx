@@ -73,7 +73,7 @@ const GradesScreen = ({ onClose }: { onClose?: () => void }) => {
 
   // ── Simulation state ──────────────────────────────────────────────────────
   const [simMode,    setSimMode]    = useState(false);
-  const [simCourses, setSimCourses] = useState<{id:number;name:string;credits:number;grade:number}[]>([]);
+  const [simCourses, setSimCourses] = useState<{id:number;name:string;credits:number;grade:number;included:boolean}[]>([]);
   const [simModalVisible, setSimModalVisible] = useState(false);
   const [simName,    setSimName]    = useState('');
   const [simCredits, setSimCredits] = useState('');
@@ -119,10 +119,12 @@ const GradesScreen = ({ onClose }: { onClose?: () => void }) => {
   const totalCredits = grades.reduce((s, g) => s + (g.credits || 0), 0);
 
   // ── Simulation computed ───────────────────────────────────────────────────
-  const simAsGrades: Grade[] = simCourses.map((c, i) => ({
-    id: -(i + 1), name: c.name, credits: c.credits, value: c.grade,
-    semester: 'א', year: 'שנה א', criteria: [], date: '',
-  }));
+  const simAsGrades: Grade[] = simCourses
+    .filter(c => c.included)
+    .map((c, i) => ({
+      id: -(i + 1), name: c.name, credits: c.credits, value: c.grade,
+      semester: 'א', year: 'שנה א', criteria: [], date: '',
+    }));
   const simAvg = simCourses.length > 0
     ? calcWeightedAvg([...grades, ...simAsGrades])
     : null;
@@ -134,7 +136,7 @@ const GradesScreen = ({ onClose }: { onClose?: () => void }) => {
     if (!name)              return showAlert('שגיאה', 'הזיני שם קורס');
     if (!credits || credits <= 0) return showAlert('שגיאה', 'הזיני נקודות זכות תקינות');
     if (!grade || grade < 0 || grade > 100) return showAlert('שגיאה', 'הזיני ציון בין 0 ל-100');
-    setSimCourses(prev => [...prev, { id: Date.now(), name, credits, grade }]);
+    setSimCourses(prev => [...prev, { id: Date.now(), name, credits, grade, included: true }]);
     setSimName(''); setSimCredits(''); setSimGrade('');
     setSimModalVisible(false);
   };
@@ -348,10 +350,29 @@ const GradesScreen = ({ onClose }: { onClose?: () => void }) => {
 
             {/* Sim courses list */}
             {simCourses.map(c => (
-              <View key={c.id} style={[styles.simCourseRow, { borderBottomColor: borderClr }]}>
-                <TouchableOpacity onPress={() => setSimCourses(prev => prev.filter(x => x.id !== c.id))}>
-                  <MaterialCommunityIcons name="close-circle-outline" size={18} color="#ff6b6b" />
-                </TouchableOpacity>
+              <View key={c.id} style={[styles.simCourseRow, { borderBottomColor: borderClr, opacity: c.included ? 1 : 0.45 }]}>
+                <View style={styles.simCourseActions}>
+                  <TouchableOpacity
+                    onPress={() => setSimCourses(prev => prev.map(x => x.id === c.id ? { ...x, included: true } : x))}
+                    hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                  >
+                    <MaterialCommunityIcons
+                      name="plus-circle-outline"
+                      size={18}
+                      color={c.included ? theme : textSub}
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => setSimCourses(prev => prev.map(x => x.id === c.id ? { ...x, included: false } : x))}
+                    hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                  >
+                    <MaterialCommunityIcons
+                      name="close-circle-outline"
+                      size={18}
+                      color={c.included ? '#ff6b6b' : textSub}
+                    />
+                  </TouchableOpacity>
+                </View>
                 <Text style={[styles.simCourseName, { color: textColor }]} numberOfLines={1}>{c.name}</Text>
                 <Text style={[styles.simCourseDetail, { color: textSub }]}>{c.credits} נ"ז</Text>
                 <Text style={[styles.simCourseGrade, { color: theme }]}>{c.grade}</Text>
@@ -676,6 +697,7 @@ const styles = StyleSheet.create({
   simResultLabel:  { fontSize: 11, fontWeight: '600' },
   simResultValue:  { fontSize: 36, fontWeight: '900' },
   simCourseRow:    { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, borderBottomWidth: 1 },
+  simCourseActions:{ flexDirection: 'row', gap: 4 },
   simCourseName:   { flex: 1, fontSize: 13, fontWeight: '600', textAlign: 'right' },
   simCourseDetail: { fontSize: 11 },
   simCourseGrade:  { fontSize: 16, fontWeight: '800', minWidth: 36, textAlign: 'right' },
