@@ -95,19 +95,31 @@ const HomeScreen = () => {
 
   useEffect(() => { timerLeftRef.current = timerLeft; }, [timerLeft]);
 
-  // Request web notification permission once on mount
+  // Register service worker + request notification permission (web only)
   useEffect(() => {
-    if (Platform.OS === 'web' && typeof (globalThis as any).Notification !== 'undefined') {
-      (globalThis as any).Notification.requestPermission().catch(() => {});
+    if (Platform.OS !== 'web' || typeof navigator === 'undefined') return;
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
     }
+    const N = (globalThis as any).Notification;
+    if (N && N.permission === 'default') N.requestPermission().catch(() => {});
   }, []);
 
-  // Helper: fire a web system notification regardless of tab focus
+  // Fire a desktop notification via Service Worker (shows as OS popup even in background tab)
   const fireWebNotif = () => {
-    if (Platform.OS !== 'web') return;
-    const N = (globalThis as any).Notification;
-    if (N && N.permission === 'granted') {
-      new N('⏰ טיימר הלימוד הסתיים!', { body: 'כל הכבוד! סיימת את פגישת הלימוד שלך.' });
+    if (Platform.OS !== 'web' || typeof navigator === 'undefined') return;
+    const title = '⏰ טיימר הלימוד הסתיים!';
+    const body  = 'כל הכבוד! סיימת את פגישת הלימוד שלך.';
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready
+        .then(reg => reg.showNotification(title, { body }))
+        .catch(() => {
+          const N = (globalThis as any).Notification;
+          if (N && N.permission === 'granted') new N(title, { body });
+        });
+    } else {
+      const N = (globalThis as any).Notification;
+      if (N && N.permission === 'granted') new N(title, { body });
     }
   };
 
