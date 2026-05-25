@@ -578,7 +578,7 @@ const s = StyleSheet.create({
   timerInputLabel: { fontSize: 12, fontWeight: '600' },
   timerPreset:     { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1 },
   timerPresetText: { fontSize: 12, fontWeight: '700' },
-  timerCustomInput:{ width: 52, borderWidth: 1, borderRadius: 20, paddingVertical: 6, fontSize: 12, fontWeight: '700' },
+  timerCustomInput:{ width: 52, borderWidth: 1, borderRadius: 20, paddingVertical: 6, fontSize: 12, fontWeight: '700', textAlign: 'center' },
   timerControls:   { flexDirection: 'row', gap: 10, marginTop: 14, alignItems: 'center' },
   timerStartBtn:   { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 12, borderRadius: 12 },
   timerStartText:  { fontSize: 15, fontWeight: '800' },
