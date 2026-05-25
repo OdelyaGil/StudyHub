@@ -1,7 +1,7 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   View, Text, StyleSheet, ScrollView,
-  TouchableOpacity, RefreshControl,
+  TouchableOpacity, RefreshControl, TextInput, Vibration,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { loadField } from '../utils/firestore';
@@ -10,6 +10,7 @@ import { useTheme } from '../context/ThemeContext';
 import { auth, db } from '../config/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { scheduleAllNotifications } from '../utils/notifications';
+import { useCustomAlert } from '../hooks/useCustomAlert';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const STUDY_TIPS = [
@@ -62,9 +63,16 @@ const calcWeightedAvg = (grades: any[]) => {
 };
 
 // ── Component ─────────────────────────────────────────────────────────────────
+const formatTime = (secs: number) => {
+  const m = Math.floor(secs / 60);
+  const s = secs % 60;
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+};
+
 const HomeScreen = () => {
   const theme      = useTheme();
   const navigation = useNavigation<any>();
+  const { showAlert, alertNode } = useCustomAlert(theme.accent);
 
   const [grades,          setGrades]         = useState<any[]>([]);
   const [tasks,           setTasks]          = useState<any[]>([]);
@@ -72,6 +80,59 @@ const HomeScreen = () => {
   const [topics,          setTopics]         = useState<any[]>([]);
   const [requiredCredits, setRequiredCredits]= useState(0);
   const [refreshing,      setRefreshing]     = useState(false);
+
+  // ── Timer ─────────────────────────────────────────────────────────────────
+  const [timerRunning,  setTimerRunning]  = useState(false);
+  const [timerLeft,     setTimerLeft]     = useState(0);
+  const [timerTotal,    setTimerTotal]    = useState(0);
+  const [timerDone,     setTimerDone]     = useState(false);
+  const [timerInput,    setTimerInput]    = useState('25');
+  const doneRef = useRef(false);
+
+  useEffect(() => {
+    if (!timerRunning) return;
+    doneRef.current = false;
+    const id = setInterval(() => {
+      setTimerLeft(prev => {
+        if (prev <= 1 && !doneRef.current) {
+          doneRef.current = true;
+          clearInterval(id);
+          setTimerRunning(false);
+          setTimerDone(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }, [timerRunning]);
+
+  useEffect(() => {
+    if (!timerDone) return;
+    Vibration.vibrate([0, 400, 200, 400, 200, 400]);
+    showAlert('⏰ הזמן הסתיים!', 'כל הכבוד! סיימת את פגישת הלימוד שלך.');
+  }, [timerDone]);
+
+  const handleTimerStart = () => {
+    if (timerLeft === 0) {
+      const mins  = Math.max(1, parseInt(timerInput) || 25);
+      const total = mins * 60;
+      setTimerLeft(total);
+      setTimerTotal(total);
+    }
+    setTimerDone(false);
+    setTimerRunning(true);
+  };
+
+  const handleTimerPause  = () => setTimerRunning(false);
+  const handleTimerReset  = () => {
+    setTimerRunning(false);
+    setTimerLeft(0);
+    setTimerTotal(0);
+    setTimerDone(false);
+  };
+
+  const timerPct = timerTotal > 0 ? Math.round(((timerTotal - timerLeft) / timerTotal) * 100) : 0;
 
   useFocusEffect(useCallback(() => { loadAll(); }, []));
 
@@ -253,6 +314,80 @@ const HomeScreen = () => {
         </TouchableOpacity>
       </View>
 
+      {/* ── 4.5. Study Timer ──────────────────────────────────────────────── */}
+      <View style={[s.section, { backgroundColor: theme.surface, borderColor: theme.border, borderLeftColor: theme.accent }]}>
+        <View style={s.sectionHeader}>
+          <MaterialCommunityIcons name="timer-outline" size={18} color={theme.accent} />
+          <Text style={[s.sectionTitle, { color: theme.accent }]}>טיימר לימוד עצמי</Text>
+          {timerDone && (
+            <View style={[s.timerDoneBadge, { backgroundColor: '#51cf66' + '22', borderColor: '#51cf66' }]}>
+              <Text style={s.timerDoneText}>✓ הסתיים</Text>
+            </View>
+          )}
+        </View>
+
+        {/* Time display */}
+        <Text style={[s.timerDisplay, { color: timerDone ? '#51cf66' : timerLeft > 0 && timerLeft <= 60 ? '#ff6b6b' : theme.text }]}>
+          {timerLeft > 0 ? formatTime(timerLeft) : timerDone ? formatTime(0) : formatTime((parseInt(timerInput) || 25) * 60)}
+        </Text>
+
+        {/* Status label */}
+        <Text style={[s.timerStatus, { color: theme.textSub }]}>
+          {timerRunning ? 'לומד...' : timerDone ? 'כל הכבוד!' : timerLeft > 0 ? 'בהפסקה' : 'מוכן להתחיל'}
+        </Text>
+
+        {/* Progress bar */}
+        <View style={[s.progressBarBg, { backgroundColor: theme.accent + '22', marginVertical: 12 }]}>
+          <View style={[s.progressBarFill, { width: `${timerPct}%` as any, backgroundColor: timerDone ? '#51cf66' : theme.accent }]} />
+        </View>
+
+        {/* Duration input — only when idle */}
+        {!timerRunning && timerLeft === 0 && (
+          <View style={s.timerInputRow}>
+            <Text style={[s.timerInputLabel, { color: theme.textSub }]}>משך (דקות):</Text>
+            {[15, 25, 45, 60].map(m => (
+              <TouchableOpacity
+                key={m}
+                style={[s.timerPreset, { borderColor: timerInput === String(m) ? theme.accent : theme.border, backgroundColor: timerInput === String(m) ? theme.accent + '22' : 'transparent' }]}
+                onPress={() => setTimerInput(String(m))}
+              >
+                <Text style={[s.timerPresetText, { color: timerInput === String(m) ? theme.accent : theme.textSub }]}>{m}</Text>
+              </TouchableOpacity>
+            ))}
+            <TextInput
+              style={[s.timerCustomInput, { borderColor: theme.border, backgroundColor: theme.surface, color: theme.text }]}
+              value={timerInput}
+              onChangeText={v => setTimerInput(v.replace(/[^0-9]/g, ''))}
+              keyboardType="number-pad"
+              maxLength={3}
+              textAlign="center"
+              placeholderTextColor={theme.textSub}
+              placeholder="25"
+            />
+          </View>
+        )}
+
+        {/* Controls */}
+        <View style={s.timerControls}>
+          {!timerRunning ? (
+            <TouchableOpacity style={[s.timerStartBtn, { backgroundColor: theme.accent }]} onPress={handleTimerStart}>
+              <MaterialCommunityIcons name={timerLeft > 0 ? 'play' : 'play'} size={18} color={theme.bg} />
+              <Text style={[s.timerStartText, { color: theme.bg }]}>{timerLeft > 0 ? 'המשך' : 'התחל'}</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity style={[s.timerPauseBtn, { borderColor: theme.accent }]} onPress={handleTimerPause}>
+              <MaterialCommunityIcons name="pause" size={18} color={theme.accent} />
+              <Text style={[s.timerPauseText, { color: theme.accent }]}>השהה</Text>
+            </TouchableOpacity>
+          )}
+          {(timerLeft > 0 || timerDone) && (
+            <TouchableOpacity style={[s.timerResetBtn, { borderColor: theme.border }]} onPress={handleTimerReset}>
+              <MaterialCommunityIcons name="restart" size={18} color={theme.textSub} />
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+
       {/* ── 5. Study Recommendations ──────────────────────────────────────── */}
       {studyRecs.length > 0 && (
         <View style={[s.section, { backgroundColor: theme.surface, borderColor: theme.border, borderLeftColor: '#ffa94d' }]}>
@@ -353,6 +488,7 @@ const HomeScreen = () => {
       </View>
 
     </ScrollView>
+    {alertNode}
   );
 };
 
@@ -430,6 +566,23 @@ const s = StyleSheet.create({
   actionsRow:     { flexDirection: 'row', gap: 12 },
   actionBtn:      { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, borderRadius: 14 },
   actionBtnText:  { fontSize: 13, fontWeight: '700' },
+
+  // Timer
+  timerDisplay:    { fontSize: 52, fontWeight: '900', textAlign: 'center', letterSpacing: 2, marginTop: 4 },
+  timerStatus:     { fontSize: 12, fontWeight: '600', textAlign: 'center', marginTop: 2, textTransform: 'uppercase', letterSpacing: 1 },
+  timerDoneBadge:  { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10, borderWidth: 1, marginLeft: 8 },
+  timerDoneText:   { fontSize: 11, fontWeight: '700', color: '#51cf66' },
+  timerInputRow:   { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 4 },
+  timerInputLabel: { fontSize: 12, fontWeight: '600' },
+  timerPreset:     { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1 },
+  timerPresetText: { fontSize: 12, fontWeight: '700' },
+  timerCustomInput:{ width: 52, borderWidth: 1, borderRadius: 20, paddingVertical: 6, fontSize: 12, fontWeight: '700' },
+  timerControls:   { flexDirection: 'row', gap: 10, marginTop: 14, alignItems: 'center' },
+  timerStartBtn:   { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 12, borderRadius: 12 },
+  timerStartText:  { fontSize: 15, fontWeight: '800' },
+  timerPauseBtn:   { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 12, borderRadius: 12, borderWidth: 1.5 },
+  timerPauseText:  { fontSize: 15, fontWeight: '800' },
+  timerResetBtn:   { width: 44, height: 44, borderRadius: 22, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
 });
 
 export default HomeScreen;
