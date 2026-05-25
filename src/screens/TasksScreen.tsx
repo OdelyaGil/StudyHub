@@ -615,50 +615,6 @@ const TasksScreen = () => {
                 )}
               </View>
 
-              {/* Suggested free slots */}
-              {isValidDate(taskDueDate) && (
-                <View style={styles.formGroup}>
-                  <Text style={[styles.label, { color: textSub }]}>זמנים פנויים לביצוע</Text>
-                  {loadingSlots ? (
-                    <ActivityIndicator color={theme} size="small" style={{ marginTop: 6 }} />
-                  ) : suggestedSlots.length === 0 ? (
-                    <Text style={[styles.noSlotsText, { color: textSub }]}>לא נמצאו זמנים פנויים בלוח הזמנים</Text>
-                  ) : (
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.slotsScroll}>
-                      {suggestedSlots.map((slot, i) => {
-                        const key     = slot.iso + slot.startMin;
-                        const added   = addedSlotKeys.has(key);
-                        const d       = new Date(slot.iso + 'T12:00:00');
-                        const dayName = HEBREW_DAYS[d.getDay()];
-                        const dateFmt = slot.iso.split('-').reverse().join('/');
-                        return (
-                          <TouchableOpacity
-                            key={i}
-                            onPress={() => addSlotToSchedule(slot)}
-                            activeOpacity={added ? 1 : 0.7}
-                            style={[
-                              styles.slotChip,
-                              added
-                                ? { backgroundColor: theme + '33', borderColor: theme, borderStyle: 'solid' }
-                                : { backgroundColor: light, borderColor: theme },
-                            ]}
-                          >
-                            {added && (
-                              <MaterialCommunityIcons name="check-circle" size={14} color={theme} style={{ marginBottom: 2 }} />
-                            )}
-                            <Text style={[styles.slotChipDay, { color: theme, opacity: added ? 0.7 : 1 }]}>{dayName}</Text>
-                            <Text style={[styles.slotChipDate, { color: textSub }]}>{dateFmt}</Text>
-                            <Text style={[styles.slotChipTime, { color: textColor, opacity: added ? 0.6 : 1 }]}>
-                              {minToTime(slot.startMin)}–{minToTime(slot.endMin)}
-                            </Text>
-                          </TouchableOpacity>
-                        );
-                      })}
-                    </ScrollView>
-                  )}
-                </View>
-              )}
-
               {/* Priority */}
               <View style={styles.formGroup}>
                 <Text style={[styles.label, { color: textSub }]}>עדיפות</Text>
@@ -708,6 +664,55 @@ const TasksScreen = () => {
                   </View>
                 </View>
               </View>
+
+              {/* Suggested free slots */}
+              {isValidDate(taskDueDate) && (() => {
+                const estimateMins  = taskEstimateHours * 60 + taskEstimateMinutes;
+                const minDuration   = Math.max(30, estimateMins);
+                const visibleSlots  = suggestedSlots.filter(s => s.endMin - s.startMin >= minDuration);
+                return (
+                  <View style={styles.formGroup}>
+                    <Text style={[styles.label, { color: textSub }]}>זמנים פנויים לביצוע</Text>
+                    {loadingSlots ? (
+                      <ActivityIndicator color={theme} size="small" style={{ marginTop: 6 }} />
+                    ) : visibleSlots.length === 0 ? (
+                      <Text style={[styles.noSlotsText, { color: textSub }]}>לא נמצאו זמנים פנויים מתאימים בלוח הזמנים</Text>
+                    ) : (
+                      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.slotsScroll}>
+                        {visibleSlots.map((slot, i) => {
+                          const key     = slot.iso + slot.startMin;
+                          const added   = addedSlotKeys.has(key);
+                          const d       = new Date(slot.iso + 'T12:00:00');
+                          const dayName = HEBREW_DAYS[d.getDay()];
+                          const dateFmt = slot.iso.split('-').reverse().join('/');
+                          return (
+                            <TouchableOpacity
+                              key={i}
+                              onPress={() => addSlotToSchedule(slot)}
+                              activeOpacity={added ? 1 : 0.7}
+                              style={[
+                                styles.slotChip,
+                                added
+                                  ? { backgroundColor: theme + '33', borderColor: theme }
+                                  : { backgroundColor: light, borderColor: theme },
+                              ]}
+                            >
+                              {added && (
+                                <MaterialCommunityIcons name="check-circle" size={14} color={theme} style={{ marginBottom: 2 }} />
+                              )}
+                              <Text style={[styles.slotChipDay, { color: theme, opacity: added ? 0.7 : 1 }]}>{dayName}</Text>
+                              <Text style={[styles.slotChipDate, { color: textSub }]}>{dateFmt}</Text>
+                              <Text style={[styles.slotChipTime, { color: textColor, opacity: added ? 0.6 : 1 }]}>
+                                {minToTime(slot.startMin)}–{minToTime(slot.endMin)}
+                              </Text>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </ScrollView>
+                    )}
+                  </View>
+                );
+              })()}
 
               {/* Files */}
               <View style={styles.formGroup}>
