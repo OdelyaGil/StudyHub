@@ -282,6 +282,8 @@ const TasksScreen = () => {
   const [suggestedSlots, setSuggestedSlots] = useState<FreeSlot[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [addedSlotKeys, setAddedSlotKeys] = useState<Set<string>>(new Set());
+  const [pickerSlot, setPickerSlot] = useState<FreeSlot | null>(null);
+  const [pickerStartMin, setPickerStartMin] = useState(0);
 
   useEffect(() => { loadTasks(); }, []);
 
@@ -331,28 +333,35 @@ const TasksScreen = () => {
     }
   };
 
-  const addSlotToSchedule = async (slot: FreeSlot) => {
-    const key = slot.iso + slot.startMin;
-    if (addedSlotKeys.has(key)) return;
+  const openSlotPicker = (slot: FreeSlot) => {
+    setPickerSlot(slot);
+    setPickerStartMin(slot.startMin);
+  };
+
+  const confirmAddSlot = async () => {
+    if (!pickerSlot) return;
+    const key = pickerSlot.iso + pickerSlot.startMin;
     try {
       const estimateMins = taskEstimateHours * 60 + taskEstimateMinutes;
-      const duration = estimateMins > 0 ? estimateMins : 60;
-      const endMin   = Math.min(slot.startMin + duration, slot.endMin);
+      const duration     = estimateMins > 0 ? estimateMins : 60;
+      const endMin       = Math.min(pickerStartMin + duration, pickerSlot.endMin);
       const schedule: any[] = (await loadField('schedule')) ?? [];
       const newEvent = {
         id:         Date.now(),
         title:      taskName.trim() || 'עבודה על מטלה',
-        date:       slot.iso,
-        startTime:  minToTime(slot.startMin),
+        date:       pickerSlot.iso,
+        startTime:  minToTime(pickerStartMin),
         endTime:    minToTime(endMin),
         color:      '#4CAFAE',
         recurrence: 'none',
       };
       await saveField('schedule', [...schedule, newEvent]);
       setAddedSlotKeys(prev => new Set(prev).add(key));
+      setPickerSlot(null);
       showAlert('נוסף ללוח הזמנים', `${newEvent.title}\n${newEvent.date.split('-').reverse().join('/')}  ${newEvent.startTime}–${newEvent.endTime}`);
     } catch (_) {
       showAlert('שגיאה', 'לא ניתן להוסיף את האירוע ללוח הזמנים');
+      setPickerSlot(null);
     }
   };
 
@@ -688,7 +697,7 @@ const TasksScreen = () => {
                           return (
                             <TouchableOpacity
                               key={i}
-                              onPress={() => addSlotToSchedule(slot)}
+                              onPress={() => !added && openSlotPicker(slot)}
                               activeOpacity={added ? 1 : 0.7}
                               style={[
                                 styles.slotChip,
@@ -750,6 +759,63 @@ const TasksScreen = () => {
         </View>
         </KeyboardAvoidingView>
       </Modal>
+      {/* Slot time-picker modal */}
+      {pickerSlot && (() => {
+        const estimateMins = taskEstimateHours * 60 + taskEstimateMinutes || 60;
+        const d            = new Date(pickerSlot.iso + 'T12:00:00');
+        const dayName      = HEBREW_DAYS[d.getDay()];
+        const dateFmt      = pickerSlot.iso.split('-').reverse().join('/');
+        const endPreview   = Math.min(pickerStartMin + estimateMins, pickerSlot.endMin);
+        // 30-min steps that leave room for the full duration
+        const options: number[] = [];
+        for (let t = pickerSlot.startMin; t + estimateMins <= pickerSlot.endMin; t += 30) {
+          options.push(t);
+        }
+        if (options.length === 0) options.push(pickerSlot.startMin);
+        return (
+          <Modal visible animationType="fade" transparent onRequestClose={() => setPickerSlot(null)}>
+            <View style={styles.slotPickerOverlay}>
+              <View style={[styles.slotPickerPanel, { backgroundColor: tabBg, borderColor: theme + '55' }]}>
+                <Text style={[styles.slotPickerTitle, { color: textColor }]}>{dayName}, {dateFmt}</Text>
+                <Text style={[styles.slotPickerSub, { color: textSub }]}>
+                  חלון פנוי: {minToTime(pickerSlot.startMin)}–{minToTime(pickerSlot.endMin)}
+                </Text>
+
+                <Text style={[styles.slotPickerLabel, { color: textSub }]}>בחרי שעת התחלה:</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.timeOptionsScroll}>
+                  {options.map(t => {
+                    const selected = pickerStartMin === t;
+                    return (
+                      <TouchableOpacity
+                        key={t}
+                        onPress={() => setPickerStartMin(t)}
+                        style={[styles.timeOptionBtn, { borderColor: theme }, selected && { backgroundColor: theme }]}
+                      >
+                        <Text style={[styles.timeOptionText, { color: selected ? '#fff' : theme }]}>{minToTime(t)}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+
+                <Text style={[styles.slotPickerEndPreview, { color: textSub }]}>
+                  סיום משוער: <Text style={{ color: textColor, fontWeight: '700' }}>{minToTime(endPreview)}</Text>
+                </Text>
+
+                <View style={styles.slotPickerActions}>
+                  <TouchableOpacity onPress={() => setPickerSlot(null)} style={[styles.slotPickerCancelBtn, { borderColor: borderClr }]}>
+                    <Text style={[styles.slotPickerCancelText, { color: textSub }]}>ביטול</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={confirmAddSlot} style={[styles.slotPickerConfirmBtn, { backgroundColor: theme }]}>
+                    <MaterialCommunityIcons name="calendar-plus" size={16} color="#fff" />
+                    <Text style={styles.slotPickerConfirmText}>הוסף ליומן</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
+        );
+      })()}
+
       {/* iOS DateTimePicker bottom sheet */}
       {dtPickerOpen && Platform.OS === 'ios' && (
         <Modal visible animationType="slide" transparent>
@@ -949,6 +1015,22 @@ const styles = StyleSheet.create({
   slotChipDate:   { fontSize: 11, textAlign: 'center', marginTop: 2 },
   slotChipTime:   { fontSize: 12, fontWeight: '600', textAlign: 'center', marginTop: 4 },
   noSlotsText:    { fontSize: 13, textAlign: 'right', marginTop: 4 },
+
+  // Slot time-picker panel
+  slotPickerOverlay:     { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'center', alignItems: 'center', padding: 24 },
+  slotPickerPanel:       { width: '100%', borderRadius: 18, padding: 20, borderWidth: 1 },
+  slotPickerTitle:       { fontSize: 17, fontWeight: '700', textAlign: 'center', marginBottom: 4 },
+  slotPickerSub:         { fontSize: 12, textAlign: 'center', marginBottom: 16 },
+  slotPickerLabel:       { fontSize: 12, fontWeight: '600', textAlign: 'right', marginBottom: 10, textTransform: 'uppercase' },
+  timeOptionsScroll:     { flexDirection: 'row', marginBottom: 16 },
+  timeOptionBtn:         { borderWidth: 1.5, borderRadius: 8, paddingVertical: 8, paddingHorizontal: 14, marginRight: 8 },
+  timeOptionText:        { fontSize: 14, fontWeight: '700' },
+  slotPickerEndPreview:  { fontSize: 13, textAlign: 'center', marginBottom: 20 },
+  slotPickerActions:     { flexDirection: 'row', gap: 10 },
+  slotPickerCancelBtn:   { flex: 1, borderWidth: 1, borderRadius: 10, paddingVertical: 12, alignItems: 'center' },
+  slotPickerCancelText:  { fontSize: 14, fontWeight: '600' },
+  slotPickerConfirmBtn:  { flex: 2, borderRadius: 10, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
+  slotPickerConfirmText: { color: '#fff', fontSize: 14, fontWeight: '700' },
 });
 
 export default TasksScreen;
