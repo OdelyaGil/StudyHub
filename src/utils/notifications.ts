@@ -61,6 +61,24 @@ const occursOnISO = (event: any, iso: string): boolean => {
   }
 };
 
+// ── Timer notification ────────────────────────────────────────────────────────
+export const scheduleTimerNotification = async (seconds: number): Promise<string | null> => {
+  try {
+    const permitted = await requestNotificationPermission();
+    if (!permitted) return null;
+    const fireAt = new Date(Date.now() + seconds * 1000);
+    const id = await Notifications.scheduleNotificationAsync({
+      content: { title: '⏰ טיימר הלימוד הסתיים!', body: 'כל הכבוד! סיימת את פגישת הלימוד שלך.', sound: true },
+      trigger: { date: fireAt } as any,
+    });
+    return id;
+  } catch (_) { return null; }
+};
+
+export const cancelTimerNotification = async (id: string): Promise<void> => {
+  try { await Notifications.cancelScheduledNotificationAsync(id); } catch (_) {}
+};
+
 const scheduleAt = async (date: Date, title: string, body: string) => {
   try {
     if (date <= new Date()) return;

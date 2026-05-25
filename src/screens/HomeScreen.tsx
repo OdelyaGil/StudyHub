@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   View, Text, StyleSheet, ScrollView,
-  TouchableOpacity, RefreshControl, TextInput, Vibration,
+  TouchableOpacity, RefreshControl, TextInput, Vibration, Platform,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { loadField } from '../utils/firestore';
@@ -9,7 +9,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useTheme } from '../context/ThemeContext';
 import { auth, db } from '../config/firebase';
 import { doc, getDoc } from 'firebase/firestore';
-import { scheduleAllNotifications } from '../utils/notifications';
+import { scheduleAllNotifications, scheduleTimerNotification, cancelTimerNotification } from '../utils/notifications';
 import { useCustomAlert } from '../hooks/useCustomAlert';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -87,8 +87,21 @@ const HomeScreen = () => {
   const [timerTotal,    setTimerTotal]    = useState(0);
   const [timerDone,     setTimerDone]     = useState(false);
   const [timerInput,    setTimerInput]    = useState('25');
-  const doneRef = useRef(false);
+  const doneRef       = useRef(false);
+  const timerNotifId  = useRef<string | null>(null);
+  const timerLeftRef  = useRef(0);
 
+  // Keep ref in sync so handlers always see the latest value
+  useEffect(() => { timerLeftRef.current = timerLeft; }, [timerLeft]);
+
+  // Request web notification permission once on mount
+  useEffect(() => {
+    if (Platform.OS === 'web' && typeof (globalThis as any).Notification !== 'undefined') {
+      (globalThis as any).Notification.requestPermission().catch(() => {});
+    }
+  }, []);
+
+  // Countdown tick
   useEffect(() => {
     if (!timerRunning) return;
     doneRef.current = false;
@@ -107,29 +120,52 @@ const HomeScreen = () => {
     return () => clearInterval(id);
   }, [timerRunning]);
 
+  // On done: vibrate + in-app alert + web browser notification
   useEffect(() => {
     if (!timerDone) return;
+    timerNotifId.current = null;
     Vibration.vibrate([0, 400, 200, 400, 200, 400]);
     showAlert('⏰ הזמן הסתיים!', 'כל הכבוד! סיימת את פגישת הלימוד שלך.');
+    if (Platform.OS === 'web') {
+      const N = (globalThis as any).Notification;
+      if (N && N.permission === 'granted') {
+        new N('⏰ טיימר הלימוד הסתיים!', { body: 'כל הכבוד! סיימת את פגישת הלימוד שלך.' });
+      }
+    }
   }, [timerDone]);
 
-  const handleTimerStart = () => {
+  const handleTimerStart = async () => {
+    const secs = timerLeft > 0
+      ? timerLeftRef.current
+      : Math.max(1, parseInt(timerInput) || 25) * 60;
     if (timerLeft === 0) {
-      const mins  = Math.max(1, parseInt(timerInput) || 25);
-      const total = mins * 60;
-      setTimerLeft(total);
-      setTimerTotal(total);
+      setTimerLeft(secs);
+      setTimerTotal(secs);
     }
     setTimerDone(false);
     setTimerRunning(true);
+    // Schedule native push notification (fires even when app is backgrounded / screen locked)
+    const id = await scheduleTimerNotification(secs);
+    if (id) timerNotifId.current = id;
   };
 
-  const handleTimerPause  = () => setTimerRunning(false);
-  const handleTimerReset  = () => {
+  const handleTimerPause = () => {
+    setTimerRunning(false);
+    if (timerNotifId.current) {
+      cancelTimerNotification(timerNotifId.current);
+      timerNotifId.current = null;
+    }
+  };
+
+  const handleTimerReset = () => {
     setTimerRunning(false);
     setTimerLeft(0);
     setTimerTotal(0);
     setTimerDone(false);
+    if (timerNotifId.current) {
+      cancelTimerNotification(timerNotifId.current);
+      timerNotifId.current = null;
+    }
   };
 
   const timerPct = timerTotal > 0 ? Math.round(((timerTotal - timerLeft) / timerTotal) * 100) : 0;
