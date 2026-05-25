@@ -12,6 +12,7 @@ import {
   Platform,
   Linking,
   KeyboardAvoidingView,
+  ActivityIndicator,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { loadField, saveField } from '../utils/firestore';
@@ -23,6 +24,7 @@ import { useTheme } from '../context/ThemeContext';
 
 // ── Date helpers ─────────────────────────────────────────────────────────────
 const HEBREW_MONTHS = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+const HEBREW_DAYS   = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
 const THIS_YEAR = new Date().getFullYear();
 const YEAR_OPTIONS = Array.from({ length: 16 }, (_, i) => THIS_YEAR - 5 + i);
 
@@ -63,6 +65,32 @@ const getDaysLeft = (dueDate: string) => {
   return Math.ceil((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 };
 
+// ── Schedule scanning helpers ─────────────────────────────────────────────────
+const timeToMin = (t: string) => {
+  const [h, m] = t.split(':').map(Number);
+  return h * 60 + (m || 0);
+};
+const minToTime = (m: number) =>
+  `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+
+const occursOnISO = (event: any, iso: string): boolean => {
+  if (!event?.date || iso < event.date) return false;
+  if (event.recurrenceEndDate && iso > event.recurrenceEndDate) return false;
+  switch (event.recurrence) {
+    case 'none':    return iso === event.date;
+    case 'daily':   return true;
+    case 'weekly': {
+      const diff = Math.round(
+        (new Date(iso + 'T12:00:00').getTime() - new Date(event.date + 'T12:00:00').getTime()) / 86400000,
+      );
+      return diff % 7 === 0;
+    }
+    case 'monthly': return iso.slice(8) === event.date.slice(8);
+    case 'yearly':  return iso.slice(5) === event.date.slice(5);
+    default:        return false;
+  }
+};
+
 // ── Types ────────────────────────────────────────────────────────────────────
 interface TaskFile {
   name: string;
@@ -81,6 +109,8 @@ interface Task {
   files: TaskFile[];
   completed: boolean;
 }
+
+interface FreeSlot { iso: string; startMin: number; endMin: number; }
 
 // ── WebDatePicker ─────────────────────────────────────────────────────────────
 const WebDatePicker = ({ iso, onChange }: { iso: string; onChange: (v: string) => void }) => {
@@ -249,8 +279,64 @@ const TasksScreen = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [dtPickerOpen, setDtPickerOpen] = useState(false);
   const [dtPickerTemp, setDtPickerTemp] = useState(new Date());
+  const [suggestedSlots, setSuggestedSlots] = useState<FreeSlot[]>([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
 
   useEffect(() => { loadTasks(); }, []);
+
+  const scanFreeSlots = async (dueISO: string) => {
+    if (!isValidDate(dueISO)) { setSuggestedSlots([]); return; }
+    setLoadingSlots(true);
+    try {
+      const events: any[] = (await loadField('events')) ?? [];
+      const slots: FreeSlot[] = [];
+      const now  = new Date();
+      const due  = new Date(dueISO + 'T23:59:59');
+      const DAY_START = 8 * 60;
+      const DAY_END   = 22 * 60;
+      const MIN_GAP   = 30;
+
+      const cur = new Date(now);
+      while (cur <= due && slots.length < 10) {
+        const iso = buildDateISO(cur.getDate(), cur.getMonth() + 1, cur.getFullYear());
+        const busy = events
+          .filter(e => occursOnISO(e, iso) && e.startTime)
+          .map(e => ({
+            start: timeToMin(e.startTime),
+            end:   e.endTime ? timeToMin(e.endTime) : timeToMin(e.startTime) + 60,
+          }))
+          .sort((a, b) => a.start - b.start);
+
+        let cursor = iso === todayISO
+          ? Math.max(DAY_START, now.getHours() * 60 + now.getMinutes() + 15)
+          : DAY_START;
+
+        for (const ev of busy) {
+          if (ev.start > cursor && ev.start - cursor >= MIN_GAP) {
+            slots.push({ iso, startMin: cursor, endMin: Math.min(ev.start, DAY_END) });
+          }
+          cursor = Math.max(cursor, ev.end);
+        }
+        if (cursor < DAY_END && DAY_END - cursor >= MIN_GAP) {
+          slots.push({ iso, startMin: cursor, endMin: DAY_END });
+        }
+        cur.setDate(cur.getDate() + 1);
+      }
+      setSuggestedSlots(slots.slice(0, 8));
+    } catch (_) {
+      setSuggestedSlots([]);
+    } finally {
+      setLoadingSlots(false);
+    }
+  };
+
+  useEffect(() => {
+    if (modalVisible && isValidDate(taskDueDate)) {
+      scanFreeSlots(taskDueDate);
+    } else {
+      setSuggestedSlots([]);
+    }
+  }, [taskDueDate, modalVisible]);
 
   const loadTasks = async () => {
     try {
@@ -500,6 +586,35 @@ const TasksScreen = () => {
                   </TouchableOpacity>
                 )}
               </View>
+
+              {/* Suggested free slots */}
+              {isValidDate(taskDueDate) && (
+                <View style={styles.formGroup}>
+                  <Text style={[styles.label, { color: textSub }]}>זמנים פנויים לביצוע</Text>
+                  {loadingSlots ? (
+                    <ActivityIndicator color={theme} size="small" style={{ marginTop: 6 }} />
+                  ) : suggestedSlots.length === 0 ? (
+                    <Text style={[styles.noSlotsText, { color: textSub }]}>לא נמצאו זמנים פנויים בלוח הזמנים</Text>
+                  ) : (
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.slotsScroll}>
+                      {suggestedSlots.map((slot, i) => {
+                        const d = new Date(slot.iso + 'T12:00:00');
+                        const dayName = HEBREW_DAYS[d.getDay()];
+                        const dateFmt = slot.iso.split('-').reverse().join('/');
+                        return (
+                          <View key={i} style={[styles.slotChip, { backgroundColor: light, borderColor: theme }]}>
+                            <Text style={[styles.slotChipDay, { color: theme }]}>{dayName}</Text>
+                            <Text style={[styles.slotChipDate, { color: textSub }]}>{dateFmt}</Text>
+                            <Text style={[styles.slotChipTime, { color: textColor }]}>
+                              {minToTime(slot.startMin)}–{minToTime(slot.endMin)}
+                            </Text>
+                          </View>
+                        );
+                      })}
+                    </ScrollView>
+                  )}
+                </View>
+              )}
 
               {/* Priority */}
               <View style={styles.formGroup}>
@@ -778,6 +893,14 @@ const styles = StyleSheet.create({
   fileChipText:      { flex: 1, fontSize: 13, color: '#333' },
   fileChipSize:      { fontSize: 11, color: '#aaa' },
   fileChipRemove:    { padding: 2 },
+
+  // Free slot suggestions
+  slotsScroll:    { flexDirection: 'row', marginTop: 4 },
+  slotChip:       { borderWidth: 1, borderRadius: 10, paddingVertical: 8, paddingHorizontal: 12, marginRight: 8, alignItems: 'center', minWidth: 105 },
+  slotChipDay:    { fontSize: 13, fontWeight: '700', textAlign: 'center' },
+  slotChipDate:   { fontSize: 11, textAlign: 'center', marginTop: 2 },
+  slotChipTime:   { fontSize: 12, fontWeight: '600', textAlign: 'center', marginTop: 4 },
+  noSlotsText:    { fontSize: 13, textAlign: 'right', marginTop: 4 },
 });
 
 export default TasksScreen;
