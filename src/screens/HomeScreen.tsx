@@ -209,8 +209,9 @@ const HomeScreen = () => {
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
+    <View style={{ flex: 1, backgroundColor: theme.bg }}>
     <ScrollView
-      style={{ flex: 1, backgroundColor: theme.bg }}
+      style={{ flex: 1 }}
       contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.accent} />}
     >
@@ -489,6 +490,7 @@ const HomeScreen = () => {
 
     </ScrollView>
     {alertNode}
+    </View>
   );
 };
 
