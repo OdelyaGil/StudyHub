@@ -70,7 +70,6 @@ const HomeScreen = () => {
   const [tasks,           setTasks]          = useState<any[]>([]);
   const [events,          setEvents]         = useState<any[]>([]);
   const [topics,          setTopics]         = useState<any[]>([]);
-  const [userName,        setUserName]       = useState('');
   const [requiredCredits, setRequiredCredits]= useState(0);
   const [refreshing,      setRefreshing]     = useState(false);
 
@@ -98,7 +97,6 @@ const HomeScreen = () => {
         const snap = await getDoc(doc(db, 'users', user.uid));
         if (snap.exists()) {
           const d = snap.data();
-          setUserName(d.name || '');
           setRequiredCredits(+(d.requiredCredits ?? 0));
         }
       }
@@ -157,15 +155,7 @@ const HomeScreen = () => {
     >
 
       {/* ── 1. Header ──────────────────────────────────────────────────────── */}
-      <View style={s.headerRow}>
-        <View style={{ flex: 1 }}>
-          <Text style={[s.greeting, { color: theme.text }]}>שלום {userName || 'סטודנטית'} 👋</Text>
-          <Text style={[s.dateLabel, { color: theme.textSub }]}>{todayLabel}</Text>
-        </View>
-        <View style={[s.quickChip, { backgroundColor: theme.accent + '22', borderColor: theme.accent + '55' }]}>
-          <Text style={[s.quickChipText, { color: theme.accent }]}>{activeTasks.length} פתוחות</Text>
-        </View>
-      </View>
+      <Text style={[s.dateLabel, { color: theme.textSub, marginBottom: 20 }]}>{todayLabel}</Text>
 
       {/* ── 2. Urgent Deadlines ───────────────────────────────────────────── */}
       {urgentTasks.length > 0 && (
