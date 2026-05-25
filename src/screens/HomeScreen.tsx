@@ -9,6 +9,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useTheme } from '../context/ThemeContext';
 import { auth, db } from '../config/firebase';
 import { doc, getDoc } from 'firebase/firestore';
+import { scheduleAllNotifications } from '../utils/notifications';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const STUDY_TIPS = [
@@ -83,10 +84,15 @@ const HomeScreen = () => {
         loadField('schedule'),
         loadField('topics'),
       ]);
-      setGrades(g  ?? []);
-      setTasks(t   ?? []);
-      setEvents(e  ?? []);
-      setTopics(tp ?? []);
+      const gr = g  ?? [];
+      const tk = t  ?? [];
+      const ev = e  ?? [];
+      const tp2 = tp ?? [];
+      setGrades(gr);
+      setTasks(tk);
+      setEvents(ev);
+      setTopics(tp2);
+      scheduleAllNotifications(tk, ev);
       const user = auth.currentUser;
       if (user) {
         const snap = await getDoc(doc(db, 'users', user.uid));

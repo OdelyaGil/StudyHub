@@ -8,6 +8,7 @@ import { auth, db } from './src/config/firebase';
 import LoginScreen from './LoginScreen';
 import DashboardScreen from './DashboardScreen';
 import { ThemeMode } from './src/context/ThemeContext';
+import { requestNotificationPermission } from './src/utils/notifications';
 
 const Stack = createNativeStackNavigator();
 
@@ -28,6 +29,7 @@ export default function App() {
             if (d.mode)   setMode(d.mode);
           }
         } catch (e) { console.log(e); }
+        requestNotificationPermission();
         setIsLoggedIn(true);
       } else {
         setIsLoggedIn(false);
