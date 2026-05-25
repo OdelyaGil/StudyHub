@@ -21,8 +21,15 @@ import { doc, setDoc } from 'firebase/firestore';
 import { auth, db } from './src/config/firebase';
 import { useCustomAlert } from './src/hooks/useCustomAlert';
 
+const BG      = '#0A0A1A';
+const SURFACE = '#111128';
+const BORDER  = 'rgba(0,255,255,0.25)';
+const ACCENT  = '#00FFFF';
+const TEXT    = '#FFFFFF';
+const SUB     = 'rgba(255,255,255,0.5)';
+
 const LoginScreen = ({ onLogin }: { navigation: any; onLogin: () => void }) => {
-  const { showAlert, alertNode } = useCustomAlert();
+  const { showAlert, alertNode } = useCustomAlert(ACCENT);
   const [email, setEmail]               = useState('');
   const [password, setPassword]         = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -35,9 +42,9 @@ const LoginScreen = ({ onLogin }: { navigation: any; onLogin: () => void }) => {
   const [regConfirm, setRegConfirm]     = useState('');
   const [regLoading, setRegLoading]     = useState(false);
 
-  const [showForgot, setShowForgot]         = useState(false);
-  const [forgotEmail, setForgotEmail]       = useState('');
-  const [forgotLoading, setForgotLoading]   = useState(false);
+  const [showForgot, setShowForgot]       = useState(false);
+  const [forgotEmail, setForgotEmail]     = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
 
   const validateEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 
@@ -60,9 +67,9 @@ const LoginScreen = ({ onLogin }: { navigation: any; onLogin: () => void }) => {
   };
 
   const handleRegister = async () => {
-    if (!regName.trim())           return showAlert('שגיאה', 'אנא הזן שם מלא');
-    if (!validateEmail(regEmail))  return showAlert('שגיאה', 'אנא הזן כתובת דוא"ל תקנית');
-    if (regPassword.length < 6)    return showAlert('שגיאה', 'הסיסמה חייבת להכיל לפחות 6 תווים');
+    if (!regName.trim())            return showAlert('שגיאה', 'אנא הזן שם מלא');
+    if (!validateEmail(regEmail))   return showAlert('שגיאה', 'אנא הזן כתובת דוא"ל תקנית');
+    if (regPassword.length < 6)     return showAlert('שגיאה', 'הסיסמה חייבת להכיל לפחות 6 תווים');
     if (regPassword !== regConfirm) return showAlert('שגיאה', 'הסיסמאות אינן תואמות');
     setRegLoading(true);
     try {
@@ -71,7 +78,7 @@ const LoginScreen = ({ onLogin }: { navigation: any; onLogin: () => void }) => {
         name: regName.trim(),
         email: regEmail.toLowerCase(),
         userType: 'student',
-        theme: '#D58EAC',
+        theme: '#00FFFF',
         grades: [],
         tasks: [],
         schedule: [],
@@ -106,22 +113,25 @@ const LoginScreen = ({ onLogin }: { navigation: any; onLogin: () => void }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={s.container}>
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={s.scrollContent}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.capContainer}>
-          <Text style={styles.capEmoji}>🎓</Text>
+        {/* Logo */}
+        <View style={s.logoWrap}>
+          <Text style={s.logoEmoji}>🎓</Text>
         </View>
+        <Text style={s.appName}>StudyHub</Text>
+        <Text style={s.subtitle}>ברוך הבא! כנס/י כדי להמשיך</Text>
 
-        <Text style={styles.title}>Student Login</Text>
-
+        {/* Email */}
+        <Text style={s.label}>דוא"ל</Text>
         <TextInput
-          style={styles.input}
-          placeholder="Email"
-          placeholderTextColor="#aaa"
+          style={s.input}
+          placeholder="student@university.ac.il"
+          placeholderTextColor={SUB}
           value={email}
           onChangeText={setEmail}
           keyboardType="email-address"
@@ -129,118 +139,132 @@ const LoginScreen = ({ onLogin }: { navigation: any; onLogin: () => void }) => {
           editable={!loading}
         />
 
-        <View style={styles.passwordContainer}>
+        {/* Password */}
+        <Text style={s.label}>סיסמה</Text>
+        <View style={s.passwordContainer}>
           <TextInput
-            style={styles.passwordInput}
-            placeholder="Password"
-            placeholderTextColor="#aaa"
+            style={s.passwordInput}
+            placeholder="לפחות 6 תווים"
+            placeholderTextColor={SUB}
             value={password}
             onChangeText={setPassword}
             secureTextEntry={!showPassword}
             editable={!loading}
           />
-          <Pressable onPress={() => setShowPassword(!showPassword)} style={styles.eyeBtn}>
-            <MaterialCommunityIcons name={showPassword ? 'eye' : 'eye-off'} size={20} color="#aaa" />
+          <Pressable onPress={() => setShowPassword(!showPassword)} style={s.eyeBtn}>
+            <MaterialCommunityIcons name={showPassword ? 'eye' : 'eye-off'} size={20} color={SUB} />
           </Pressable>
         </View>
 
+        {/* Login button */}
         <Pressable
-          style={[styles.loginBtn, loading && styles.loginBtnDisabled]}
+          style={[s.loginBtn, loading && { opacity: 0.7 }]}
           onPress={handleLogin}
           disabled={loading}
         >
           {loading
-            ? <ActivityIndicator color="#fff" />
-            : <Text style={styles.loginBtnText}>Log In</Text>
+            ? <ActivityIndicator color={BG} />
+            : <Text style={s.loginBtnText}>התחבר/י</Text>
           }
         </Pressable>
 
-        <Pressable style={styles.forgotContainer} onPress={() => setShowForgot(true)}>
-          <Text style={styles.forgotText}>Forgot Password?</Text>
+        {/* Forgot */}
+        <Pressable style={s.forgotContainer} onPress={() => setShowForgot(true)}>
+          <Text style={s.forgotText}>שכחת סיסמה?</Text>
         </Pressable>
 
-        <View style={styles.divider} />
+        <View style={s.divider} />
 
-        <View style={styles.signupContainer}>
-          <Text style={styles.signupText}>עדיין אין לך חשבון? </Text>
+        {/* Register — correct RTL order: link on LEFT so it reads last in RTL */}
+        <View style={s.signupContainer}>
           <Pressable onPress={() => setShowRegister(true)}>
-            <Text style={styles.signupLink}>הרשם כאן</Text>
+            <Text style={s.signupLink}>הרשם כאן</Text>
           </Pressable>
+          <Text style={s.signupText}>עדיין אין לך חשבון? </Text>
         </View>
       </ScrollView>
 
       {/* Register Modal */}
       <Modal visible={showRegister} animationType="slide" transparent>
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>הרשמה</Text>
-              <Pressable onPress={() => setShowRegister(false)}>
-                <MaterialCommunityIcons name="close" size={24} color="#333" />
-              </Pressable>
+          <View style={s.modalOverlay}>
+            <View style={s.modalCard}>
+              <View style={s.modalHeader}>
+                <Text style={s.modalTitle}>הרשמה</Text>
+                <Pressable onPress={() => setShowRegister(false)}>
+                  <MaterialCommunityIcons name="close" size={24} color={SUB} />
+                </Pressable>
+              </View>
+              <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                {[
+                  { label: 'שם מלא',      ph: 'שם פרטי ומשפחה',            val: regName,     set: setRegName,     kb: 'default' as const, sec: false },
+                  { label: 'דוא"ל',       ph: 'student@university.ac.il',  val: regEmail,    set: setRegEmail,    kb: 'email-address' as const, sec: false },
+                  { label: 'סיסמה',       ph: 'לפחות 6 תווים',             val: regPassword, set: setRegPassword, kb: 'default' as const, sec: true  },
+                  { label: 'אימות סיסמה', ph: 'הזיני סיסמה שנית',          val: regConfirm,  set: setRegConfirm,  kb: 'default' as const, sec: true  },
+                ].map(f => (
+                  <View key={f.label}>
+                    <Text style={s.regLabel}>{f.label}</Text>
+                    <TextInput
+                      style={s.regInput}
+                      placeholder={f.ph}
+                      placeholderTextColor={SUB}
+                      value={f.val}
+                      onChangeText={f.set}
+                      keyboardType={f.kb}
+                      autoCapitalize="none"
+                      secureTextEntry={f.sec}
+                    />
+                  </View>
+                ))}
+                <Pressable
+                  style={[s.loginBtn, { marginTop: 8 }, regLoading && { opacity: 0.7 }]}
+                  onPress={handleRegister}
+                  disabled={regLoading}
+                >
+                  {regLoading ? <ActivityIndicator color={BG} /> : <Text style={s.loginBtnText}>צור חשבון</Text>}
+                </Pressable>
+              </ScrollView>
             </View>
-            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-              <Text style={styles.regLabel}>שם מלא</Text>
-              <TextInput style={styles.regInput} placeholder="שם פרטי ומשפחה" placeholderTextColor="#bbb"
-                value={regName} onChangeText={setRegName} />
-              <Text style={styles.regLabel}>דוא"ל</Text>
-              <TextInput style={styles.regInput} placeholder="student@university.ac.il" placeholderTextColor="#bbb"
-                value={regEmail} onChangeText={setRegEmail} keyboardType="email-address" autoCapitalize="none" />
-              <Text style={styles.regLabel}>סיסמה</Text>
-              <TextInput style={styles.regInput} placeholder="לפחות 6 תווים" placeholderTextColor="#bbb"
-                value={regPassword} onChangeText={setRegPassword} secureTextEntry />
-              <Text style={styles.regLabel}>אימות סיסמה</Text>
-              <TextInput style={styles.regInput} placeholder="הזן סיסמה שנית" placeholderTextColor="#bbb"
-                value={regConfirm} onChangeText={setRegConfirm} secureTextEntry />
-              <Pressable
-                style={[styles.loginBtn, { marginTop: 10 }, regLoading && styles.loginBtnDisabled]}
-                onPress={handleRegister} disabled={regLoading}
-              >
-                {regLoading ? <ActivityIndicator color="#fff" /> : <Text style={styles.loginBtnText}>צור חשבון</Text>}
-              </Pressable>
-            </ScrollView>
           </View>
-        </View>
         </KeyboardAvoidingView>
       </Modal>
 
       {/* Forgot Password Modal */}
       <Modal visible={showForgot} animationType="slide" transparent>
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>שחזור סיסמה</Text>
-              <Pressable onPress={() => { setShowForgot(false); setForgotEmail(''); }}>
-                <MaterialCommunityIcons name="close" size={24} color="#333" />
+          <View style={s.modalOverlay}>
+            <View style={s.modalCard}>
+              <View style={s.modalHeader}>
+                <Text style={s.modalTitle}>שחזור סיסמה</Text>
+                <Pressable onPress={() => { setShowForgot(false); setForgotEmail(''); }}>
+                  <MaterialCommunityIcons name="close" size={24} color={SUB} />
+                </Pressable>
+              </View>
+              <Text style={s.forgotHint}>
+                הזיני את כתובת המייל שלך ונשלח לך קישור לאיפוס הסיסמה.
+              </Text>
+              <Text style={s.regLabel}>כתובת דוא"ל</Text>
+              <TextInput
+                style={s.regInput}
+                placeholder="student@university.ac.il"
+                placeholderTextColor={SUB}
+                value={forgotEmail}
+                onChangeText={setForgotEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+              <Pressable
+                style={[s.loginBtn, forgotLoading && { opacity: 0.7 }]}
+                onPress={handleSendResetEmail}
+                disabled={forgotLoading}
+              >
+                {forgotLoading
+                  ? <ActivityIndicator color={BG} />
+                  : <Text style={s.loginBtnText}>שלח קישור לאיפוס</Text>
+                }
               </Pressable>
             </View>
-            <Text style={styles.forgotHint}>
-              הזן את כתובת המייל שלך ונשלח לך קישור לאיפוס הסיסמה.
-            </Text>
-            <Text style={styles.regLabel}>כתובת דוא"ל</Text>
-            <TextInput
-              style={styles.regInput}
-              placeholder="student@university.ac.il"
-              placeholderTextColor="#bbb"
-              value={forgotEmail}
-              onChangeText={setForgotEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-            <Pressable
-              style={[styles.loginBtn, forgotLoading && styles.loginBtnDisabled]}
-              onPress={handleSendResetEmail}
-              disabled={forgotLoading}
-            >
-              {forgotLoading
-                ? <ActivityIndicator color="#fff" />
-                : <Text style={styles.loginBtnText}>שלח קישור לאיפוס</Text>
-              }
-            </Pressable>
           </View>
-        </View>
         </KeyboardAvoidingView>
       </Modal>
 
@@ -249,51 +273,65 @@ const LoginScreen = ({ onLogin }: { navigation: any; onLogin: () => void }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFF5F7' },
-  scrollContent: {
-    flexGrow: 1, alignItems: 'center',
-    paddingHorizontal: 32, paddingTop: 80, paddingBottom: 40,
+const s = StyleSheet.create({
+  container:     { flex: 1, backgroundColor: BG },
+  scrollContent: { flexGrow: 1, alignItems: 'center', paddingHorizontal: 32, paddingTop: 72, paddingBottom: 40 },
+
+  // Logo
+  logoWrap:  {
+    width: 96, height: 96, borderRadius: 48,
+    backgroundColor: ACCENT + '18', borderWidth: 1.5, borderColor: ACCENT + '44',
+    justifyContent: 'center', alignItems: 'center', marginBottom: 16,
+    shadowColor: ACCENT, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.5, shadowRadius: 20, elevation: 10,
   },
-  capContainer: { marginBottom: 24 },
-  capEmoji:    { fontSize: 90 },
-  title:       { fontSize: 26, fontWeight: '700', color: '#222', marginBottom: 32, textAlign: 'center' },
+  logoEmoji: { fontSize: 48 },
+  appName:   { fontSize: 28, fontWeight: '800', color: ACCENT, marginBottom: 6, letterSpacing: 1 },
+  subtitle:  { fontSize: 13, color: SUB, marginBottom: 36, textAlign: 'center' },
+
+  // Form
+  label: { alignSelf: 'flex-end', fontSize: 12, fontWeight: '700', color: SUB, marginBottom: 6, letterSpacing: 0.5, textTransform: 'uppercase' },
   input: {
-    width: '100%', backgroundColor: '#fff', borderRadius: 10,
-    borderWidth: 1, borderColor: '#e0e0e0',
+    width: '100%', backgroundColor: SURFACE, borderRadius: 12,
+    borderWidth: 1, borderColor: BORDER,
     paddingHorizontal: 18, paddingVertical: 14,
-    fontSize: 15, color: '#333', marginBottom: 14, textAlign: 'right',
+    fontSize: 14, color: TEXT, marginBottom: 18, textAlign: 'right',
   },
   passwordContainer: {
     width: '100%', flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#fff', borderRadius: 10,
-    borderWidth: 1, borderColor: '#e0e0e0', marginBottom: 24,
+    backgroundColor: SURFACE, borderRadius: 12,
+    borderWidth: 1, borderColor: BORDER, marginBottom: 28,
   },
-  passwordInput: { flex: 1, paddingHorizontal: 18, paddingVertical: 14, fontSize: 15, color: '#333', textAlign: 'right' },
+  passwordInput: { flex: 1, paddingHorizontal: 18, paddingVertical: 14, fontSize: 14, color: TEXT, textAlign: 'right' },
   eyeBtn:        { paddingHorizontal: 14, paddingVertical: 14 },
+
   loginBtn: {
-    width: '100%', backgroundColor: '#CE6385', borderRadius: 14,
+    width: '100%', backgroundColor: ACCENT, borderRadius: 14,
     paddingVertical: 15, alignItems: 'center', justifyContent: 'center',
+    shadowColor: ACCENT, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.4, shadowRadius: 12, elevation: 6,
   },
-  loginBtnDisabled: { opacity: 0.7 },
-  loginBtnText: { color: '#fff', fontSize: 16, fontWeight: '700', letterSpacing: 0.5 },
-  forgotContainer: { marginTop: 14, marginBottom: 30 },
-  forgotText:      { fontSize: 13, color: '#CE6385', fontWeight: '500' },
-  divider:         { width: '100%', height: 1, backgroundColor: '#e0e0e0', marginBottom: 24 },
-  signupContainer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
-  signupText:      { fontSize: 13, color: '#666' },
-  signupLink:      { fontSize: 13, color: '#CE6385', fontWeight: '700' },
-  modalOverlay:    { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 },
-  modalCard:       { backgroundColor: '#fff', borderRadius: 20, padding: 24, maxHeight: '90%' },
-  modalHeader:     { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
-  modalTitle:      { fontSize: 20, fontWeight: '700', color: '#333' },
-  regLabel:        { fontSize: 13, fontWeight: '600', color: '#333', marginBottom: 6, textAlign: 'right' },
+  loginBtnText: { color: BG, fontSize: 16, fontWeight: '800', letterSpacing: 0.5 },
+
+  forgotContainer: { marginTop: 16, marginBottom: 28 },
+  forgotText:      { fontSize: 13, color: ACCENT, fontWeight: '500' },
+
+  divider: { width: '100%', height: 1, backgroundColor: 'rgba(255,255,255,0.08)', marginBottom: 24 },
+
+  signupContainer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 4 },
+  signupText:      { fontSize: 13, color: SUB },
+  signupLink:      { fontSize: 13, color: ACCENT, fontWeight: '700' },
+
+  // Modals
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', padding: 20 },
+  modalCard:    { backgroundColor: SURFACE, borderRadius: 24, padding: 24, maxHeight: '90%', borderWidth: 1, borderColor: BORDER },
+  modalHeader:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
+  modalTitle:   { fontSize: 20, fontWeight: '800', color: TEXT },
+  regLabel:     { fontSize: 12, fontWeight: '700', color: SUB, marginBottom: 6, textAlign: 'right', textTransform: 'uppercase', letterSpacing: 0.5 },
   regInput: {
-    borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 10,
-    paddingHorizontal: 15, paddingVertical: 12,
-    fontSize: 14, backgroundColor: '#f5f5f5', marginBottom: 16, color: '#333', textAlign: 'right',
+    borderWidth: 1, borderColor: BORDER, borderRadius: 12,
+    paddingHorizontal: 15, paddingVertical: 13,
+    fontSize: 14, backgroundColor: BG, marginBottom: 18, color: TEXT, textAlign: 'right',
   },
-  forgotHint:  { fontSize: 13, color: '#666', marginBottom: 20, lineHeight: 20 },
+  forgotHint: { fontSize: 13, color: SUB, marginBottom: 20, lineHeight: 20, textAlign: 'right' },
 });
 
 export default LoginScreen;
