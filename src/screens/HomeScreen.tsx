@@ -87,11 +87,12 @@ const HomeScreen = () => {
   const [timerTotal,    setTimerTotal]    = useState(0);
   const [timerDone,     setTimerDone]     = useState(false);
   const [timerInput,    setTimerInput]    = useState('25');
-  const doneRef       = useRef(false);
-  const timerNotifId  = useRef<string | null>(null);
-  const timerLeftRef  = useRef(0);
+  const doneRef        = useRef(false);
+  const timerNotifId   = useRef<string | null>(null);
+  const timerLeftRef   = useRef(0);
+  const timerEndTime   = useRef<number | null>(null);   // exact ms timestamp when timer should finish
+  const webTimeout     = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Keep ref in sync so handlers always see the latest value
   useEffect(() => { timerLeftRef.current = timerLeft; }, [timerLeft]);
 
   // Request web notification permission once on mount
@@ -101,37 +102,66 @@ const HomeScreen = () => {
     }
   }, []);
 
-  // Countdown tick
+  // Helper: fire a web system notification regardless of tab focus
+  const fireWebNotif = () => {
+    if (Platform.OS !== 'web') return;
+    const N = (globalThis as any).Notification;
+    if (N && N.permission === 'granted') {
+      new N('⏰ טיימר הלימוד הסתיים!', { body: 'כל הכבוד! סיימת את פגישת הלימוד שלך.' });
+    }
+  };
+
+  // visibilitychange: catch "timer ended while tab was hidden" when user returns
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    const handler = () => {
+      if ((document as any).visibilityState !== 'visible') return;
+      if (!timerEndTime.current || doneRef.current) return;
+      if (Date.now() >= timerEndTime.current) {
+        doneRef.current    = true;
+        timerEndTime.current = null;
+        if (webTimeout.current) { clearTimeout(webTimeout.current); webTimeout.current = null; }
+        setTimerRunning(false);
+        setTimerLeft(0);
+        setTimerDone(true);
+      } else {
+        // Sync display with real elapsed time (setInterval may have drifted)
+        setTimerLeft(Math.ceil((timerEndTime.current - Date.now()) / 1000));
+      }
+    };
+    (document as any).addEventListener('visibilitychange', handler);
+    return () => (document as any).removeEventListener('visibilitychange', handler);
+  }, []);
+
+  // Countdown tick — clock-based so it stays accurate even when throttled in bg
   useEffect(() => {
     if (!timerRunning) return;
     doneRef.current = false;
     const id = setInterval(() => {
-      setTimerLeft(prev => {
-        if (prev <= 1 && !doneRef.current) {
-          doneRef.current = true;
-          clearInterval(id);
-          setTimerRunning(false);
-          setTimerDone(true);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+      if (!timerEndTime.current) return;
+      const remaining = Math.ceil((timerEndTime.current - Date.now()) / 1000);
+      if (remaining <= 0 && !doneRef.current) {
+        doneRef.current = true;
+        clearInterval(id);
+        timerEndTime.current = null;
+        setTimerRunning(false);
+        setTimerLeft(0);
+        setTimerDone(true);
+      } else if (remaining > 0) {
+        setTimerLeft(remaining);
+      }
+    }, 500);
     return () => clearInterval(id);
   }, [timerRunning]);
 
-  // On done: vibrate + in-app alert + web browser notification
+  // On done: vibrate + in-app alert (web notification already scheduled via setTimeout)
   useEffect(() => {
     if (!timerDone) return;
     timerNotifId.current = null;
     Vibration.vibrate([0, 400, 200, 400, 200, 400]);
     showAlert('⏰ הזמן הסתיים!', 'כל הכבוד! סיימת את פגישת הלימוד שלך.');
-    if (Platform.OS === 'web') {
-      const N = (globalThis as any).Notification;
-      if (N && N.permission === 'granted') {
-        new N('⏰ טיימר הלימוד הסתיים!', { body: 'כל הכבוד! סיימת את פגישת הלימוד שלך.' });
-      }
-    }
+    // Fallback web notification in case setTimeout didn't fire
+    fireWebNotif();
   }, [timerDone]);
 
   const handleTimerStart = async () => {
@@ -142,18 +172,30 @@ const HomeScreen = () => {
       setTimerLeft(secs);
       setTimerTotal(secs);
     }
+    timerEndTime.current = Date.now() + secs * 1000;
     setTimerDone(false);
     setTimerRunning(true);
-    // Schedule native push notification (fires even when app is backgrounded / screen locked)
+
+    // Mobile: schedule native push (works even when app is closed / screen locked)
     const id = await scheduleTimerNotification(secs);
     if (id) timerNotifId.current = id;
+
+    // Web: schedule setTimeout — fires in background tab at approximately the right time
+    if (Platform.OS === 'web') {
+      if (webTimeout.current) clearTimeout(webTimeout.current);
+      webTimeout.current = setTimeout(() => { fireWebNotif(); }, secs * 1000);
+    }
   };
 
   const handleTimerPause = () => {
     setTimerRunning(false);
-    if (timerNotifId.current) {
-      cancelTimerNotification(timerNotifId.current);
-      timerNotifId.current = null;
+    if (timerNotifId.current) { cancelTimerNotification(timerNotifId.current); timerNotifId.current = null; }
+    if (webTimeout.current)   { clearTimeout(webTimeout.current); webTimeout.current = null; }
+    // Keep timerEndTime so resume knows exactly how much is left
+    if (timerEndTime.current) {
+      timerLeftRef.current  = Math.max(0, Math.ceil((timerEndTime.current - Date.now()) / 1000));
+      setTimerLeft(timerLeftRef.current);
+      timerEndTime.current  = null;
     }
   };
 
@@ -162,10 +204,9 @@ const HomeScreen = () => {
     setTimerLeft(0);
     setTimerTotal(0);
     setTimerDone(false);
-    if (timerNotifId.current) {
-      cancelTimerNotification(timerNotifId.current);
-      timerNotifId.current = null;
-    }
+    timerEndTime.current = null;
+    if (timerNotifId.current) { cancelTimerNotification(timerNotifId.current); timerNotifId.current = null; }
+    if (webTimeout.current)   { clearTimeout(webTimeout.current); webTimeout.current = null; }
   };
 
   const timerPct = timerTotal > 0 ? Math.round(((timerTotal - timerLeft) / timerTotal) * 100) : 0;
