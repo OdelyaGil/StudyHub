@@ -487,6 +487,7 @@ const GradesScreen = ({ onClose }: { onClose?: () => void }) => {
                     <TextInput
                       style={[styles.criterionGradeInput, { borderColor: borderClr, backgroundColor: tabBg, color: textColor }]}
                       placeholder="ציון"
+                      placeholderTextColor={textSub}
                       value={c.grade}
                       onChangeText={(v) => updateCritGrade(c.id, v)}
                       keyboardType="decimal-pad"

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   Modal,
   KeyboardAvoidingView,
   Platform,
+  type TextInput as TextInputType,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import {
@@ -46,7 +47,16 @@ const LoginScreen = ({ onLogin }: { navigation: any; onLogin: () => void }) => {
   const [forgotEmail, setForgotEmail]     = useState('');
   const [forgotLoading, setForgotLoading] = useState(false);
 
+  const passwordRef = useRef<TextInputType>(null);
+
   const validateEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+
+  const validatePassword = (p: string): string | null => {
+    if (p.length < 8)                                       return 'הסיסמה חייבת להכיל לפחות 8 תווים';
+    if (!/[A-Z]/.test(p))                                   return 'הסיסמה חייבת להכיל לפחות אות גדולה אחת (A–Z)';
+    if (/[֐-׿יִ-ﭏ]/.test(p))             return 'הסיסמה יכולה להכיל תווים לועזיים בלבד';
+    return null;
+  };
 
   const handleLogin = async () => {
     if (!validateEmail(email)) return showAlert('שגיאה', 'אנא הזן כתובת דוא"ל תקנית');
@@ -69,7 +79,8 @@ const LoginScreen = ({ onLogin }: { navigation: any; onLogin: () => void }) => {
   const handleRegister = async () => {
     if (!regName.trim())            return showAlert('שגיאה', 'אנא הזן שם מלא');
     if (!validateEmail(regEmail))   return showAlert('שגיאה', 'אנא הזן כתובת דוא"ל תקנית');
-    if (regPassword.length < 6)     return showAlert('שגיאה', 'הסיסמה חייבת להכיל לפחות 6 תווים');
+    const pwErr = validatePassword(regPassword);
+    if (pwErr)                      return showAlert('סיסמה חלשה', pwErr);
     if (regPassword !== regConfirm) return showAlert('שגיאה', 'הסיסמאות אינן תואמות');
     setRegLoading(true);
     try {
@@ -136,6 +147,9 @@ const LoginScreen = ({ onLogin }: { navigation: any; onLogin: () => void }) => {
           onChangeText={setEmail}
           keyboardType="email-address"
           autoCapitalize="none"
+          returnKeyType="next"
+          onSubmitEditing={() => passwordRef.current?.focus()}
+          blurOnSubmit={false}
           editable={!loading}
         />
 
@@ -143,12 +157,15 @@ const LoginScreen = ({ onLogin }: { navigation: any; onLogin: () => void }) => {
         <Text style={s.label}>סיסמה</Text>
         <View style={s.passwordContainer}>
           <TextInput
+            ref={passwordRef}
             style={s.passwordInput}
-            placeholder="לפחות 6 תווים"
+            placeholder="לפחות 8 תווים"
             placeholderTextColor={SUB}
             value={password}
             onChangeText={setPassword}
             secureTextEntry={!showPassword}
+            returnKeyType="go"
+            onSubmitEditing={handleLogin}
             editable={!loading}
           />
           <Pressable onPress={() => setShowPassword(!showPassword)} style={s.eyeBtn}>
@@ -199,7 +216,7 @@ const LoginScreen = ({ onLogin }: { navigation: any; onLogin: () => void }) => {
                 {[
                   { label: 'שם מלא',      ph: 'שם פרטי ומשפחה',            val: regName,     set: setRegName,     kb: 'default' as const, sec: false },
                   { label: 'דוא"ל',       ph: 'student@university.ac.il',  val: regEmail,    set: setRegEmail,    kb: 'email-address' as const, sec: false },
-                  { label: 'סיסמה',       ph: 'לפחות 6 תווים',             val: regPassword, set: setRegPassword, kb: 'default' as const, sec: true  },
+                  { label: 'סיסמה',       ph: 'לפחות 8 תווים, אות גדולה',  val: regPassword, set: setRegPassword, kb: 'default' as const, sec: true  },
                   { label: 'אימות סיסמה', ph: 'הזיני סיסמה שנית',          val: regConfirm,  set: setRegConfirm,  kb: 'default' as const, sec: true  },
                 ].map(f => (
                   <View key={f.label}>
