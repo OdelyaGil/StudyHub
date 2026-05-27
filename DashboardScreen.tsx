@@ -25,7 +25,7 @@ type Props = {
 
 const ICONS: Record<string, React.ComponentProps<typeof MaterialCommunityIcons>['name']> = {
   Home:    'home-variant',
-  Chats:   'chat-processing-outline',
+  Chats:   'folder-multiple-outline',
   Events:  'calendar-month-outline',
   Tasks:   'checkbox-multiple-marked-outline',
   Grades:  'school-outline',
@@ -75,7 +75,7 @@ const DashboardScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout }: Pro
         })}
       >
         <Tab.Screen name="Home"    component={HomeScreen}    options={{ tabBarLabel: 'ראשי' }} />
-        <Tab.Screen name="Chats"   component={ChatsScreen}   options={{ tabBarLabel: 'שיחות' }} />
+        <Tab.Screen name="Chats"   component={ChatsScreen}   options={{ tabBarLabel: 'קבצים' }} />
         <Tab.Screen name="Events"  component={EventsScreen}  options={{ tabBarLabel: 'אירועים' }} />
         <Tab.Screen name="Tasks"   component={TasksScreen}   options={{ tabBarLabel: 'משימות' }} />
         <Tab.Screen name="Grades"  component={GradesScreen}  options={{ tabBarLabel: 'ציונים' }} />

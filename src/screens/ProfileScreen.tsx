@@ -16,21 +16,21 @@ import { useTheme } from '../context/ThemeContext';
 import { ThemeMode } from '../context/ThemeContext';
 
 const DARK_ACCENTS = [
-  { name: 'ורוד',   color: '#B35A8A' },
-  { name: 'סלמון', color: '#F6B7C7' },
-  { name: 'לבנדר', color: '#B6A5CE' },
-  { name: 'סגול',  color: '#523F77' },
-  { name: 'כחול',  color: '#7880AE' },
-  { name: 'תכלת',  color: '#A3BBD7' },
+  { name: 'ציאן',    color: '#00FFFF' },
+  { name: 'ירוק',    color: '#00FF88' },
+  { name: 'סגול',    color: '#BF5FFF' },
+  { name: 'ורוד',    color: '#FF2D78' },
+  { name: 'כתום',    color: '#FF8C00' },
+
 ];
 
 const LIGHT_ACCENTS = [
-  { name: 'ורוד',     color: '#B35A8A' },
-  { name: 'סלמון',   color: '#F6B7C7' },
-  { name: 'לבנדר',   color: '#B6A5CE' },
-  { name: 'סגול',    color: '#523F77' },
-  { name: 'כחול',    color: '#7880AE' },
-  { name: 'תכלת',    color: '#A3BBD7' },
+  { name: 'ציאן',    color: '#00FFFF' },
+  { name: 'ירוק',    color: '#00FF88' },
+  { name: 'סגול',    color: '#BF5FFF' },
+  { name: 'ורוד',    color: '#FF2D78' },
+  { name: 'כתום',    color: '#FF8C00' },
+
 ];
 
 type Props = {
