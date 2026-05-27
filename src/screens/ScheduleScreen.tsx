@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from 'react';
 import {
   View,
@@ -22,9 +23,11 @@ import { useTheme } from '../context/ThemeContext';
 interface CalendarEvent {
   id: number;
   title: string;
-  date: string;             // YYYY-MM-DD  base date
-  startTime: string;        // HH:MM
-  endTime: string;          // HH:MM
+  date: string;              // YYYY-MM-DD  start date
+  endDate?: string;          // YYYY-MM-DD  end date (multi-day, optional)
+  allDay?: boolean;          // true = all-day, no specific time
+  startTime: string;         // HH:MM (ignored when allDay)
+  endTime: string;           // HH:MM (ignored when allDay)
   color: string;
   recurrence: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
   recurrenceEndDate?: string; // YYYY-MM-DD inclusive
@@ -78,6 +81,8 @@ const daysBetween = (iso1: string, iso2: string): number =>
   Math.round((localDate(iso2).getTime() - localDate(iso1).getTime()) / 86_400_000);
 
 const occursOn = (event: CalendarEvent, iso: string): boolean => {
+  // Multi-day span: show on every day from date to endDate
+  if (event.endDate && iso >= event.date && iso <= event.endDate) return true;
   if (iso < event.date) return false;
   if (event.recurrenceEndDate && iso > event.recurrenceEndDate) return false;
   switch (event.recurrence) {
@@ -91,7 +96,7 @@ const occursOn = (event: CalendarEvent, iso: string): boolean => {
 };
 
 // ── Picker helpers ────────────────────────────────────────────────────────────
-type PickerTarget = 'date' | 'startTime' | 'endTime' | 'recurrenceEnd';
+type PickerTarget = 'date' | 'endDate' | 'startTime' | 'endTime' | 'recurrenceEnd';
 
 const timeStringToDate = (s: string): Date => {
   const parts = s ? s.split(':').map(Number) : [];
@@ -172,6 +177,8 @@ const ScheduleScreen = () => {
   const [editingId,           setEditingId]           = useState<number | null>(null);
   const [eventTitle,          setEventTitle]          = useState('');
   const [eventDate,           setEventDate]           = useState(todayISO);
+  const [eventEndDate,        setEventEndDate]        = useState('');
+  const [eventAllDay,         setEventAllDay]         = useState(false);
   const [eventStartTime,      setEventStartTime]      = useState('09:00');
   const [eventEndTime,        setEventEndTime]        = useState('10:00');
   const [eventColor,          setEventColor]          = useState(EVENT_COLORS[0]);
@@ -243,6 +250,7 @@ const ScheduleScreen = () => {
   const resetForm = () => {
     setEditingId(null);
     setEventTitle(''); setEventDate(selectedDate);
+    setEventEndDate(''); setEventAllDay(false);
     setEventStartTime('09:00'); setEventEndTime('10:00');
     setEventColor(EVENT_COLORS[0]); setEventRecurrence('none');
     setEventRecurrenceEnd('');
@@ -254,8 +262,10 @@ const ScheduleScreen = () => {
     setEditingId(ev.id);
     setEventTitle(ev.title);
     setEventDate(ev.date);
-    setEventStartTime(ev.startTime);
-    setEventEndTime(ev.endTime || addOneHour(ev.startTime));
+    setEventEndDate(ev.endDate ?? '');
+    setEventAllDay(ev.allDay ?? false);
+    setEventStartTime(ev.startTime || '09:00');
+    setEventEndTime(ev.endTime || addOneHour(ev.startTime || '09:00'));
     setEventColor(ev.color);
     setEventRecurrence(ev.recurrence);
     setEventRecurrenceEnd(ev.recurrenceEndDate ?? '');
@@ -266,6 +276,9 @@ const ScheduleScreen = () => {
   const getPickerInitialDate = (target: PickerTarget): Date => {
     switch (target) {
       case 'date':
+        return isValidDate(eventDate) ? localDate(eventDate) : new Date();
+      case 'endDate':
+        if (isValidDate(eventEndDate)) return localDate(eventEndDate);
         return isValidDate(eventDate) ? localDate(eventDate) : new Date();
       case 'startTime':
         return timeStringToDate(eventStartTime || '09:00');
@@ -290,6 +303,7 @@ const ScheduleScreen = () => {
   const applyPickerValue = (target: PickerTarget, date: Date) => {
     switch (target) {
       case 'date':          setEventDate(toISO(date));             break;
+      case 'endDate':       setEventEndDate(toISO(date));          break;
       case 'startTime':     handleStartTimeChange(dateToTimeString(date)); break;
       case 'endTime':       setEventEndTime(dateToTimeString(date));   break;
       case 'recurrenceEnd': setEventRecurrenceEnd(toISO(date));    break;
@@ -313,7 +327,7 @@ const ScheduleScreen = () => {
   const cancelDtPicker = () => setDtPickerTarget(null);
 
   const dtPickerMode   = (t: PickerTarget): 'date' | 'time' => t === 'startTime' || t === 'endTime' ? 'time' : 'date';
-  const dtPickerTitle  = (t: PickerTarget) => ({ date: 'בחר תאריך', startTime: 'שעת התחלה', endTime: 'שעת סיום', recurrenceEnd: 'תאריך סיום חזרתיות' }[t]);
+  const dtPickerTitle  = (t: PickerTarget) => ({ date: 'תאריך התחלה', endDate: 'תאריך סיום', startTime: 'שעת התחלה', endTime: 'שעת סיום', recurrenceEnd: 'תאריך סיום חזרתיות' }[t]);
 
   // ── Web Picker helpers ────────────────────────────────────────────────────
   const WebDatePicker = ({ iso, onChange, minISO }: { iso: string; onChange: (v: string) => void; minISO?: string }) => {
@@ -405,7 +419,10 @@ const ScheduleScreen = () => {
     if (!isValidDate(eventDate)) {
       showAlert('שגיאה', 'תאריך לא תקין'); return;
     }
-    if (eventEndTime <= eventStartTime) {
+    if (eventEndDate && isValidDate(eventEndDate) && eventEndDate < eventDate) {
+      showAlert('שגיאה', 'תאריך הסיום לא יכול להיות לפני תאריך ההתחלה'); return;
+    }
+    if (!eventAllDay && eventEndTime <= eventStartTime) {
       showAlert('שגיאה', 'שעת הסיום חייבת להיות אחרי שעת ההתחלה'); return;
     }
     if (eventRecurrenceEnd && isValidDate(eventRecurrenceEnd) && eventRecurrenceEnd < eventDate) {
@@ -416,8 +433,10 @@ const ScheduleScreen = () => {
       id: editingId ?? Date.now(),
       title: eventTitle.trim(),
       date:  eventDate,
-      startTime: eventStartTime,
-      endTime:   eventEndTime,
+      ...(eventEndDate && isValidDate(eventEndDate) ? { endDate: eventEndDate } : {}),
+      allDay:    eventAllDay,
+      startTime: eventAllDay ? '' : eventStartTime,
+      endTime:   eventAllDay ? '' : eventEndTime,
       color:     eventColor,
       recurrence: eventRecurrence,
       ...(eventRecurrence !== 'none' && eventRecurrenceEnd
@@ -506,13 +525,19 @@ const ScheduleScreen = () => {
         ) : (
           selectedEvts.map(ev => {
             const recurLabel = RECURRENCE_OPTIONS.find(r => r.key === ev.recurrence)?.label;
-            const timeRange  = ev.endTime ? `${ev.startTime} – ${ev.endTime}` : ev.startTime;
+            const timeRange  = ev.allDay
+              ? 'כל היום'
+              : ev.endTime ? `${ev.startTime} – ${ev.endTime}` : ev.startTime;
+            const dateRange  = ev.endDate
+              ? `${ev.date.split('-').reverse().join('/')} – ${ev.endDate.split('-').reverse().join('/')}`
+              : null;
             return (
               <View key={ev.id} style={[styles.eventItem, { borderRightColor: ev.color, backgroundColor: surface }]}>
                 <View style={styles.eventBody}>
                   <Text style={[styles.eventTitle, { color: textColor }]}>{ev.title}</Text>
                   <View style={styles.eventMeta}>
                     <Text style={[styles.eventTime, { color: theme }]}>{timeRange}</Text>
+                    {dateRange && <Text style={[styles.eventRecur, { color: textSub }]}>📅 {dateRange}</Text>}
                     {ev.recurrence !== 'none' && (
                       <Text style={styles.eventRecur}>
                         🔁 {recurLabel}{ev.recurrenceEndDate ? ` עד ${ev.recurrenceEndDate.split('-').reverse().join('/')}` : ''}
@@ -588,9 +613,28 @@ const ScheduleScreen = () => {
                   value={eventTitle} onChangeText={setEventTitle} />
               </View>
 
-              {/* ── Date ───────────────────────────────────────────────── */}
+              {/* ── All-day toggle ──────────────────────────────────────── */}
               <View style={styles.formGroup}>
-                <Text style={[styles.formLabel, { color: textSub }]}>תאריך</Text>
+                <Text style={[styles.formLabel, { color: textSub }]}>יום שלם</Text>
+                <TouchableOpacity
+                  style={[styles.allDayBtn, { borderColor: eventAllDay ? theme : borderClr, backgroundColor: eventAllDay ? light : surface }]}
+                  onPress={() => setEventAllDay(v => !v)}
+                  activeOpacity={0.8}
+                >
+                  <MaterialCommunityIcons
+                    name={eventAllDay ? 'toggle-switch' : 'toggle-switch-off-outline'}
+                    size={28}
+                    color={eventAllDay ? theme : textSub}
+                  />
+                  <Text style={[styles.allDayText, { color: eventAllDay ? theme : textSub }]}>
+                    {eventAllDay ? 'אירוע יום שלם' : 'בחר טווח שעות'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* ── Start date ─────────────────────────────────────────── */}
+              <View style={styles.formGroup}>
+                <Text style={[styles.formLabel, { color: textSub }]}>תאריך התחלה</Text>
                 {Platform.OS === 'web' ? (
                   <WebDatePicker iso={eventDate} onChange={setEventDate} />
                 ) : (
@@ -605,20 +649,54 @@ const ScheduleScreen = () => {
                 )}
               </View>
 
-              {/* ── Time range ─────────────────────────────────────────── */}
+              {/* ── End date ───────────────────────────────────────────── */}
+              <View style={styles.formGroup}>
+                <Text style={[styles.formLabel, { color: textSub }]}>תאריך סיום (אופציונלי)</Text>
+                {Platform.OS === 'web' ? (
+                  <View style={styles.webEndTimeRow}>
+                    <WebDatePicker
+                      iso={eventEndDate || eventDate}
+                      onChange={setEventEndDate}
+                      minISO={eventDate}
+                    />
+                    {!!eventEndDate && (
+                      <TouchableOpacity onPress={() => setEventEndDate('')} style={styles.clearBtn}>
+                        <MaterialCommunityIcons name="close-circle" size={18} color="#ccc" />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                ) : (
+                  <View style={styles.pickerBtnWithClear}>
+                    <TouchableOpacity
+                      style={[styles.input, styles.pickerBtn, styles.pickerBtnFlex, { backgroundColor: surface, borderColor: borderClr }]}
+                      onPress={() => openDtPicker('endDate')}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={[styles.pickerBtnText, { color: eventEndDate ? textColor : textSub }]}>
+                        {eventEndDate ? fmtDate(eventEndDate) : 'ללא תאריך סיום'}
+                      </Text>
+                      <MaterialCommunityIcons name="calendar" size={18} color={eventEndDate ? theme : '#ccc'} />
+                    </TouchableOpacity>
+                    {!!eventEndDate && (
+                      <TouchableOpacity onPress={() => setEventEndDate('')} style={styles.clearBtn}>
+                        <MaterialCommunityIcons name="close-circle" size={18} color="#ccc" />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                )}
+              </View>
+
+              {/* ── Time range (hidden when all-day) ───────────────────── */}
+              {!eventAllDay && (
               <View style={styles.formGroup}>
                 <Text style={[styles.formLabel, { color: textSub }]}>שעות</Text>
                 {Platform.OS === 'web' ? (
                   <View style={styles.webTimeRow}>
-                    {/* Start time */}
                     <View style={styles.webTimeGroup}>
                       <WebTimePicker time={eventStartTime} onChange={handleStartTimeChange} />
                       <Text style={styles.webTimeLabel}>התחלה</Text>
                     </View>
-
                     <View style={styles.webTimeDivider} />
-
-                    {/* End time */}
                     <View style={styles.webTimeGroup}>
                       <WebTimePicker time={eventEndTime} onChange={setEventEndTime} />
                       <Text style={styles.webTimeLabel}>סיום</Text>
@@ -626,7 +704,6 @@ const ScheduleScreen = () => {
                   </View>
                 ) : (
                   <View style={styles.timeRow}>
-                    {/* Start time */}
                     <View style={styles.timeCol}>
                       <Text style={[styles.timeSubLabel, { color: textSub }]}>התחלה</Text>
                       <TouchableOpacity
@@ -638,12 +715,9 @@ const ScheduleScreen = () => {
                         <MaterialCommunityIcons name="clock-outline" size={18} color={theme} />
                       </TouchableOpacity>
                     </View>
-
                     <View style={styles.timeSep}>
                       <Text style={[styles.timeSepText, { color: textSub }]}>—</Text>
                     </View>
-
-                    {/* End time */}
                     <View style={styles.timeCol}>
                       <Text style={[styles.timeSubLabel, { color: textSub }]}>סיום</Text>
                       <TouchableOpacity
@@ -658,6 +732,7 @@ const ScheduleScreen = () => {
                   </View>
                 )}
               </View>
+              )}
 
               {/* Color */}
               <View style={styles.formGroup}>
@@ -749,7 +824,7 @@ const ScheduleScreen = () => {
           display="default"
           onChange={onDtPickerChange}
           minimumDate={
-            dtPickerTarget === 'recurrenceEnd' && isValidDate(eventDate)
+            (dtPickerTarget === 'recurrenceEnd' || dtPickerTarget === 'endDate') && isValidDate(eventDate)
               ? localDate(eventDate)
               : undefined
           }
@@ -780,7 +855,7 @@ const ScheduleScreen = () => {
                 display="spinner"
                 onChange={onDtPickerChange}
                 minimumDate={
-                  dtPickerTarget === 'recurrenceEnd' && isValidDate(eventDate)
+                  (dtPickerTarget === 'recurrenceEnd' || dtPickerTarget === 'endDate') && isValidDate(eventDate)
                     ? localDate(eventDate)
                     : undefined
                 }
@@ -903,6 +978,10 @@ const styles = StyleSheet.create({
   webTimeLabel:    { fontSize: 11, color: '#aaa', fontWeight: '600', flexShrink: 0 },
   webTimeDivider:  { width: 1, backgroundColor: '#e0e0e0', height: 44, marginHorizontal: 12 },
   webTimeClearBtn: { padding: 2 },
+
+  // All-day toggle
+  allDayBtn:  { flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10 },
+  allDayText: { fontSize: 14, fontWeight: '600' },
 
   // iOS picker bottom sheet
   dtPickerOverlay:    { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
