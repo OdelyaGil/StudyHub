@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, Modal, Alert, KeyboardAvoidingView, Platform,
+  TextInput, Modal, KeyboardAvoidingView, Platform,
   NativeSyntheticEvent, TextInputSelectionChangeEventData,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -40,6 +40,25 @@ const TOOLBAR: ToolbarItem[] = [
   { icon: 'minus',                   action: 'insert',     value: '\n---\n' },
 ];
 
+// MIME types that can be read as text
+const TEXT_MIMES = [
+  'text/', 'application/json', 'application/xml', 'application/csv',
+  'application/x-markdown', 'application/rtf',
+];
+
+// MIME types we reject (can't be a summary)
+const REJECT_MIMES = ['audio/', 'video/', 'image/'];
+
+const isReadableAsText = (mime?: string) => {
+  if (!mime) return false;
+  return TEXT_MIMES.some(t => mime.startsWith(t));
+};
+
+const isRejected = (mime?: string) => {
+  if (!mime) return false;
+  return REJECT_MIMES.some(t => mime.startsWith(t));
+};
+
 const formatDate = (ts: number) => {
   const d = new Date(ts);
   return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
@@ -47,15 +66,17 @@ const formatDate = (ts: number) => {
 
 const SummariesScreen = () => {
   const theme = useTheme();
-  const [summaries, setSummaries]   = useState<Summary[]>([]);
-  const [editModal, setEditModal]   = useState(false);
-  const [editing, setEditing]       = useState<Summary | null>(null);
-  const [editTitle, setEditTitle]   = useState('');
+  const [summaries, setSummaries]     = useState<Summary[]>([]);
+  const [editModal, setEditModal]     = useState(false);
+  const [editing, setEditing]         = useState<Summary | null>(null);
+  const [editTitle, setEditTitle]     = useState('');
   const [editContent, setEditContent] = useState('');
-  const [fabOpen, setFabOpen]       = useState(false);
-  const [sel, setSel]               = useState<Sel>({ start: 0, end: 0 });
+  const [fabOpen, setFabOpen]         = useState(false);
+  const [sel, setSel]                 = useState<Sel>({ start: 0, end: 0 });
+  const [confirmModal, setConfirmModal] = useState(false);
+  const [confirmId, setConfirmId]       = useState<string | null>(null);
+  const [importError, setImportError]   = useState('');
 
-  // keep a ref so toolbar callbacks always see latest content
   const contentRef = useRef('');
   useEffect(() => { contentRef.current = editContent; }, [editContent]);
 
@@ -66,7 +87,6 @@ const SummariesScreen = () => {
 
   useEffect(() => { load(); }, [load]);
 
-  // Always uses functional-update to avoid stale-closure bugs
   const persistDelete = (id: string) => {
     setSummaries(prev => {
       const next = prev.filter(s => s.id !== id);
@@ -78,12 +98,26 @@ const SummariesScreen = () => {
   const persistUpsert = (sum: Summary) => {
     setSummaries(prev => {
       const exists = prev.some(s => s.id === sum.id);
-      const next = exists ? prev.map(s => s.id === sum.id ? sum : s) : [...prev, sum];
+      const next   = exists ? prev.map(s => s.id === sum.id ? sum : s) : [...prev, sum];
       saveField('summaries', next);
       return next;
     });
   };
 
+  // ── Delete flow (custom modal instead of Alert) ──────────────────────────
+  const askDelete = (id: string) => {
+    setConfirmId(id);
+    setConfirmModal(true);
+    setEditModal(false);
+  };
+
+  const doDelete = () => {
+    if (confirmId) persistDelete(confirmId);
+    setConfirmModal(false);
+    setConfirmId(null);
+  };
+
+  // ── Editor open helpers ──────────────────────────────────────────────────
   const openNew = (title = '', content = '') => {
     setFabOpen(false);
     setEditing(null);
@@ -99,7 +133,7 @@ const SummariesScreen = () => {
     setEditModal(true);
   };
 
-  const save = async () => {
+  const save = () => {
     const title   = editTitle.trim();
     const content = editContent.trim();
     if (!title) return;
@@ -111,58 +145,51 @@ const SummariesScreen = () => {
     setEditModal(false);
   };
 
-  const confirmDelete = (id: string) => {
-    Alert.alert('מחיקה', 'למחוק את הסיכום?', [
-      { text: 'ביטול', style: 'cancel' },
-      {
-        text: 'מחק', style: 'destructive',
-        onPress: () => {
-          persistDelete(id);
-          setEditModal(false);
-        },
-      },
-    ]);
-  };
-
-  // ── File import ─────────────────────────────────────────────────────────────
+  // ── File import ──────────────────────────────────────────────────────────
   const importFile = async () => {
     setFabOpen(false);
+    setImportError('');
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: ['text/plain', 'text/*'],
+        type: '*/*',
         copyToCacheDirectory: true,
       });
       if (result.canceled || !result.assets?.length) return;
       const asset = result.assets[0];
-      const text  = await fetch(asset.uri).then(r => r.text());
+      const mime  = asset.mimeType ?? '';
       const name  = asset.name.replace(/\.[^/.]+$/, '');
-      openNew(name, text);
+
+      if (isRejected(mime)) {
+        setImportError('לא ניתן לייבא קבצי אודיו, וידאו או תמונות');
+        return;
+      }
+
+      let content = '';
+      if (isReadableAsText(mime) || mime === '') {
+        try { content = await fetch(asset.uri).then(r => r.text()); } catch {}
+      }
+      // For binary docs (PDF, Word, etc.) we just open editor with name; user edits manually
+      openNew(name, content);
     } catch {
-      Alert.alert('שגיאה', 'לא ניתן לקרוא את הקובץ');
+      setImportError('לא ניתן לקרוא את הקובץ');
     }
   };
 
-  // ── Toolbar ─────────────────────────────────────────────────────────────────
+  // ── Toolbar ──────────────────────────────────────────────────────────────
   const applyToolbar = (item: ToolbarItem) => {
-    const content  = contentRef.current;
+    const content        = contentRef.current;
     const { start, end } = sel;
 
     if (item.action === 'wrap') {
       const prefix = item.value;
       const suffix = item.suffix ?? item.value;
       const inner  = start < end ? content.slice(start, end) : 'טקסט';
-      setEditContent(
-        content.slice(0, start) + prefix + inner + suffix + content.slice(end),
-      );
+      setEditContent(content.slice(0, start) + prefix + inner + suffix + content.slice(end));
     } else if (item.action === 'linePrefix') {
       const lineStart = content.lastIndexOf('\n', start - 1) + 1;
-      setEditContent(
-        content.slice(0, lineStart) + item.value + content.slice(lineStart),
-      );
+      setEditContent(content.slice(0, lineStart) + item.value + content.slice(lineStart));
     } else if (item.action === 'insert') {
-      setEditContent(
-        content.slice(0, start) + item.value + content.slice(end),
-      );
+      setEditContent(content.slice(0, start) + item.value + content.slice(end));
     }
   };
 
@@ -170,7 +197,7 @@ const SummariesScreen = () => {
     setSel(e.nativeEvent.selection);
   };
 
-  // ── List view ────────────────────────────────────────────────────────────────
+  // ── Render ───────────────────────────────────────────────────────────────
   return (
     <View style={[s.container, { backgroundColor: theme.bg }]}>
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 100 }}>
@@ -181,6 +208,17 @@ const SummariesScreen = () => {
             <Text style={[s.emptyHint, { color: theme.textSub + '88' }]}>לחץ + ליצירת סיכום או ייבוא קובץ</Text>
           </View>
         )}
+
+        {importError !== '' && (
+          <View style={[s.errorBanner, { backgroundColor: '#FF444422', borderColor: '#FF4444' }]}>
+            <MaterialCommunityIcons name="alert-circle-outline" size={16} color="#FF4444" />
+            <Text style={{ color: '#FF4444', fontSize: 13, flex: 1, textAlign: 'right' }}>{importError}</Text>
+            <TouchableOpacity onPress={() => setImportError('')}>
+              <MaterialCommunityIcons name="close" size={16} color="#FF4444" />
+            </TouchableOpacity>
+          </View>
+        )}
+
         {summaries
           .slice()
           .sort((a, b) => b.updatedAt - a.updatedAt)
@@ -189,7 +227,7 @@ const SummariesScreen = () => {
               key={sum.id}
               style={[s.card, { backgroundColor: theme.surface, borderColor: theme.border }]}
               onPress={() => openEdit(sum)}
-              onLongPress={() => confirmDelete(sum.id)}
+              onLongPress={() => askDelete(sum.id)}
               activeOpacity={0.75}
             >
               <View style={s.cardHeader}>
@@ -225,7 +263,7 @@ const SummariesScreen = () => {
             onPress={importFile}
           >
             <MaterialCommunityIcons name="file-import-outline" size={20} color={theme.accent} />
-            <Text style={[s.fabMenuLabel, { color: theme.text }]}>ייבא קובץ טקסט</Text>
+            <Text style={[s.fabMenuLabel, { color: theme.text }]}>ייבא קובץ</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -242,14 +280,35 @@ const SummariesScreen = () => {
         />
       </TouchableOpacity>
 
-      {/* Full-screen editor */}
+      {/* ── Delete confirmation modal ── */}
+      <Modal visible={confirmModal} transparent animationType="fade">
+        <View style={s.overlay}>
+          <View style={[s.confirmPanel, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+            <MaterialCommunityIcons name="trash-can-outline" size={36} color="#FF4444" />
+            <Text style={[s.confirmTitle, { color: theme.text }]}>מחיקת סיכום</Text>
+            <Text style={[s.confirmMsg, { color: theme.textSub }]}>האם למחוק את הסיכום לצמיתות?</Text>
+            <View style={s.confirmBtns}>
+              <TouchableOpacity
+                style={[s.confirmCancel, { borderColor: theme.border }]}
+                onPress={() => setConfirmModal(false)}
+              >
+                <Text style={{ color: theme.textSub, fontWeight: '600', fontSize: 15 }}>ביטול</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={s.confirmDelete} onPress={doDelete}>
+                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>מחק</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── Full-screen editor ── */}
       <Modal visible={editModal} animationType="slide">
         <KeyboardAvoidingView
           style={[s.editorContainer, { backgroundColor: theme.bg }]}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={0}
         >
-          {/* Editor top bar */}
+          {/* Top bar */}
           <View style={[s.editorBar, { borderBottomColor: theme.border }]}>
             <TouchableOpacity onPress={() => setEditModal(false)} style={s.editorBack}>
               <MaterialCommunityIcons name="chevron-right" size={24} color={theme.accent} />
@@ -257,10 +316,7 @@ const SummariesScreen = () => {
             </TouchableOpacity>
             <View style={s.editorActions}>
               {editing && (
-                <TouchableOpacity
-                  onPress={() => confirmDelete(editing.id)}
-                  style={s.editorDeleteBtn}
-                >
+                <TouchableOpacity onPress={() => askDelete(editing.id)} style={s.editorDeleteBtn}>
                   <MaterialCommunityIcons name="trash-can-outline" size={20} color="#FF4444" />
                 </TouchableOpacity>
               )}
@@ -270,6 +326,7 @@ const SummariesScreen = () => {
             </View>
           </View>
 
+          {/* Scrollable content */}
           <ScrollView
             style={{ flex: 1 }}
             contentContainerStyle={{ padding: 20 }}
@@ -327,9 +384,12 @@ const s = StyleSheet.create({
   emptyText: { fontSize: 15, fontWeight: '600' },
   emptyHint: { fontSize: 12 },
 
-  card: {
-    borderRadius: 14, borderWidth: 1, padding: 14, marginBottom: 10, gap: 6,
+  errorBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    borderRadius: 10, borderWidth: 1, padding: 12, marginBottom: 12,
   },
+
+  card: { borderRadius: 14, borderWidth: 1, padding: 14, marginBottom: 10, gap: 6 },
   cardHeader:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   cardTitle:   { fontSize: 15, fontWeight: '700', textAlign: 'right', flex: 1 },
   cardDate:    { fontSize: 11, marginLeft: 8 },
@@ -338,8 +398,7 @@ const s = StyleSheet.create({
   fabMenu: { position: 'absolute', bottom: 90, right: 16, gap: 8, zIndex: 10 },
   fabMenuItem: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
-    paddingHorizontal: 16, paddingVertical: 12,
-    borderRadius: 12, borderWidth: 1,
+    paddingHorizontal: 16, paddingVertical: 12, borderRadius: 12, borderWidth: 1,
   },
   fabMenuLabel: { fontSize: 14, fontWeight: '600' },
   fab: {
@@ -349,6 +408,23 @@ const s = StyleSheet.create({
     elevation: 4, zIndex: 11,
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3, shadowRadius: 4,
+  },
+
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 24 },
+  confirmPanel: {
+    width: '100%', borderRadius: 20, borderWidth: 1,
+    padding: 28, alignItems: 'center', gap: 10,
+  },
+  confirmTitle: { fontSize: 19, fontWeight: '800' },
+  confirmMsg:   { fontSize: 14, textAlign: 'center' },
+  confirmBtns:  { flexDirection: 'row', gap: 12, marginTop: 8, width: '100%' },
+  confirmCancel: {
+    flex: 1, paddingVertical: 14, borderRadius: 12, borderWidth: 1,
+    alignItems: 'center',
+  },
+  confirmDelete: {
+    flex: 1, paddingVertical: 14, borderRadius: 12,
+    alignItems: 'center', backgroundColor: '#FF4444',
   },
 
   editorContainer: { flex: 1 },
@@ -362,10 +438,7 @@ const s = StyleSheet.create({
   editorDeleteBtn: { padding: 6 },
   saveBtn:         { paddingHorizontal: 18, paddingVertical: 8, borderRadius: 10 },
 
-  titleInput: {
-    borderBottomWidth: 1, paddingBottom: 12, marginBottom: 16,
-    fontSize: 20, fontWeight: '700',
-  },
+  titleInput:   { borderBottomWidth: 1, paddingBottom: 12, marginBottom: 16, fontSize: 20, fontWeight: '700' },
   contentInput: { minHeight: 300, lineHeight: 24, fontSize: 15 },
 
   toolbar:        { borderTopWidth: 1, paddingVertical: 6 },
