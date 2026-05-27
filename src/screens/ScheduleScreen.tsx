@@ -38,7 +38,7 @@ const HEBREW_MONTHS = [
   'יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר',
 ];
 const DAY_LABELS = ['א׳','ב׳','ג׳','ד׳','ה׳','ו׳','ש׳'];
-const EVENT_COLORS = ['#CE6385','#4CAFAE','#EB98B4','#FCCE90','#9E3F65','#2A8F8E','#F5A623','#E65C7A'];
+const EVENT_COLORS = ['#B35A8A','#F6B7C7','#B6A5CE','#523F77','#7880AE','#A3BBD7'];
 const RECURRENCE_OPTIONS: { key: CalendarEvent['recurrence']; label: string }[] = [
   { key: 'none',    label: 'ללא' },
   { key: 'daily',   label: 'יומי' },
