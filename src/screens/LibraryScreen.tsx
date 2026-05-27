@@ -5,20 +5,38 @@ import {
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
-import LearningScreen from './LearningScreen';
+import LearningScreen    from './LearningScreen';
+import FlashcardsScreen  from './FlashcardsScreen';
+import LinksScreen       from './LinksScreen';
+import SummariesScreen   from './SummariesScreen';
 
 const CATEGORIES = [
-  { key: 'topics',   icon: 'brain',            label: 'נושאי לימוד' },
-  { key: 'code',     icon: 'code-braces',       label: 'קטעי קוד' },
-  { key: 'videos',   icon: 'play-circle-outline', label: 'סרטוני הסבר' },
-  { key: 'docs',     icon: 'file-document-outline', label: 'מסמכים' },
-  { key: 'steg',     icon: 'eye-off-outline',   label: 'סטגנוגרפיה' },
-  { key: 'algo',     icon: 'graph-outline',     label: 'אלגוריתמים' },
+  { key: 'topics',     icon: 'brain',                label: 'נושאי לימוד',      active: true  },
+  { key: 'code',       icon: 'code-braces',           label: 'קטעי קוד',         active: false },
+  { key: 'videos',     icon: 'play-circle-outline',   label: 'סרטוני הסבר',      active: false },
+  { key: 'summaries',  icon: 'note-text-outline',     label: 'סיכומים',          active: true  },
+  { key: 'flashcards', icon: 'cards-outline',         label: 'כרטיסיות',         active: true  },
+  { key: 'links',      icon: 'link-variant',          label: 'קישורים שימושיים', active: true  },
 ];
+
+type ActiveModal = 'topics' | 'summaries' | 'flashcards' | 'links' | null;
+
+const MODAL_TITLE: Record<string, string> = {
+  topics:     'נושאי לימוד',
+  summaries:  'סיכומים',
+  flashcards: 'כרטיסיות',
+  links:      'קישורים שימושיים',
+};
 
 const LibraryScreen = () => {
   const theme = useTheme();
-  const [showTopics, setShowTopics] = useState(false);
+  const [modal, setModal] = useState<ActiveModal>(null);
+
+  const openModal = (key: string) => {
+    if (['topics', 'summaries', 'flashcards', 'links'].includes(key)) {
+      setModal(key as ActiveModal);
+    }
+  };
 
   return (
     <View style={[s.container, { backgroundColor: theme.bg }]}>
@@ -27,14 +45,13 @@ const LibraryScreen = () => {
         <Text style={[s.pageTitle, { color: theme.text }]}>ספריית משאבים</Text>
         <Text style={[s.pageSubtitle, { color: theme.textSub }]}>כל החומרים שלך במקום אחד</Text>
 
-        {/* Categories grid */}
         <View style={s.grid}>
           {CATEGORIES.map(cat => (
             <TouchableOpacity
               key={cat.key}
               style={[s.catCard, { backgroundColor: theme.surface, borderColor: theme.border }]}
-              onPress={() => cat.key === 'topics' ? setShowTopics(true) : null}
-              activeOpacity={0.75}
+              onPress={() => openModal(cat.key)}
+              activeOpacity={cat.active ? 0.75 : 1}
             >
               <View style={[s.catIcon, { backgroundColor: theme.accent + '22' }]}>
                 <MaterialCommunityIcons
@@ -44,7 +61,7 @@ const LibraryScreen = () => {
                 />
               </View>
               <Text style={[s.catLabel, { color: theme.text }]}>{cat.label}</Text>
-              {cat.key === 'topics' ? (
+              {cat.active ? (
                 <Text style={[s.catSub, { color: theme.accent }]}>פעיל</Text>
               ) : (
                 <Text style={[s.catSub, { color: theme.textSub }]}>בקרוב</Text>
@@ -53,27 +70,32 @@ const LibraryScreen = () => {
           ))}
         </View>
 
-        {/* Quick tips */}
         <View style={[s.tipCard, { backgroundColor: theme.surface, borderColor: theme.accent + '44' }]}>
           <MaterialCommunityIcons name="lightbulb-outline" size={20} color={theme.accent} />
           <Text style={[s.tipText, { color: theme.textSub }]}>
-            לחצי על "נושאי לימוד" לניהול הנושאים שלך — סמני אילו ידועים ואילו צריכים חזרה.
+            לחצי על "כרטיסיות" לחזרה לפני בחינות, "סיכומים" לניהול חומר הלמידה ו"קישורים" לשמירת משאבים שימושיים.
           </Text>
         </View>
       </ScrollView>
 
-      {/* Topics modal */}
-      <Modal visible={showTopics} animationType="slide">
+      {/* Shared full-screen modal for all active categories */}
+      <Modal visible={modal !== null} animationType="slide">
         <View style={{ flex: 1 }}>
           <View style={[s.modalBar, { backgroundColor: theme.bg, borderBottomColor: theme.border }]}>
-            <TouchableOpacity onPress={() => setShowTopics(false)} style={s.backBtn}>
+            <TouchableOpacity onPress={() => setModal(null)} style={s.backBtn}>
               <MaterialCommunityIcons name="chevron-right" size={24} color={theme.accent} />
               <Text style={[s.backText, { color: theme.accent }]}>ספריה</Text>
             </TouchableOpacity>
-            <Text style={[s.modalTitle, { color: theme.text }]}>נושאי לימוד</Text>
+            <Text style={[s.modalTitle, { color: theme.text }]}>
+              {modal ? MODAL_TITLE[modal] : ''}
+            </Text>
             <View style={{ width: 80 }} />
           </View>
-          <LearningScreen />
+
+          {modal === 'topics'     && <LearningScreen />}
+          {modal === 'flashcards' && <FlashcardsScreen />}
+          {modal === 'links'      && <LinksScreen />}
+          {modal === 'summaries'  && <SummariesScreen />}
         </View>
       </Modal>
     </View>
@@ -94,8 +116,7 @@ const s = StyleSheet.create({
   catSub:   { fontSize: 10, fontWeight: '600' },
   tipCard: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 10,
-    borderRadius: 14, borderWidth: 1,
-    padding: 14,
+    borderRadius: 14, borderWidth: 1, padding: 14,
   },
   tipText:    { flex: 1, fontSize: 12, lineHeight: 18, textAlign: 'right' },
   modalBar: {
