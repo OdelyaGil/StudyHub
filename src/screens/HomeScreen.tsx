@@ -499,22 +499,6 @@ const HomeScreen = () => {
         </View>
       )}
 
-      {/* ── 6. Weekly Stats ───────────────────────────────────────────────── */}
-      <View style={s.statsGrid}>
-        {[
-          { label: 'הושלמו',       value: completedCnt,        icon: 'check-circle-outline',  color: '#51cf66' },
-          { label: 'ממתינות',      value: activeTasks.length,  icon: 'clock-outline',          color: '#ffa94d' },
-          { label: 'אירועים היום', value: todayEvents.length,  icon: 'calendar-check',         color: '#667eea' },
-          { label: 'לחזרה',        value: topicsReview,        icon: 'brain',                  color: '#ff6b6b' },
-        ].map(stat => (
-          <View key={stat.label} style={[s.statMini, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-            <MaterialCommunityIcons name={stat.icon as any} size={20} color={stat.color} />
-            <Text style={[s.statMiniVal, { color: stat.color }]}>{stat.value}</Text>
-            <Text style={[s.statMiniLabel, { color: theme.textSub }]}>{stat.label}</Text>
-          </View>
-        ))}
-      </View>
-
       {/* ── 7. Credit Points Progress ─────────────────────────────────────── */}
       <TouchableOpacity
         style={[s.section, { backgroundColor: theme.surface, borderColor: theme.border, borderLeftColor: theme.accent, marginBottom: 16 }]}
@@ -555,26 +539,6 @@ const HomeScreen = () => {
           <Text style={[s.tipTitle, { color: '#51cf66' }]}>טיפ לימוד יומי</Text>
         </View>
         <Text style={[s.tipText, { color: theme.text }]}>{tip}</Text>
-      </View>
-
-      {/* ── 9. Quick Actions ──────────────────────────────────────────────── */}
-      <View style={s.actionsRow}>
-        <TouchableOpacity
-          style={[s.actionBtn, { backgroundColor: theme.accent }]}
-          onPress={() => navigation.navigate('Tasks')}
-          activeOpacity={0.8}
-        >
-          <MaterialCommunityIcons name="clipboard-list-outline" size={18} color={theme.bg} />
-          <Text style={[s.actionBtnText, { color: theme.bg }]}>כל הדדליינים</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[s.actionBtn, { backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.accent }]}
-          onPress={() => navigation.navigate('Library')}
-          activeOpacity={0.8}
-        >
-          <MaterialCommunityIcons name="book-open-variant" size={18} color={theme.accent} />
-          <Text style={[s.actionBtnText, { color: theme.accent }]}>ספריית לימוד</Text>
-        </TouchableOpacity>
       </View>
 
     </ScrollView>
