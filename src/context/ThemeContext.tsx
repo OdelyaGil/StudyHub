@@ -14,16 +14,15 @@ export interface AppTheme {
 }
 
 export const buildTheme = (mode: ThemeMode, accent: string): AppTheme => {
-  const dark = mode === 'dark';
   return {
     mode,
     accent,
-    bg:      dark ? '#0A0A0F' : '#F4F4F8',
-    surface: dark ? 'rgba(255,255,255,0.06)' : '#FFFFFF',
-    border:  dark ? accent + '55' : '#E0E0E0',
-    text:    dark ? '#FFFFFF' : '#1A1A2E',
-    textSub: dark ? '#7A7A9A' : '#666680',
-    tabBg:   dark ? '#0D0D1A' : '#FFFFFF',
+    bg:      '#0A0A0F',
+    surface: 'rgba(255,255,255,0.06)',
+    border:  accent + '55',
+    text:    '#FFFFFF',
+    textSub: '#7A7A9A',
+    tabBg:   '#0D0D1A',
   };
 };
 
