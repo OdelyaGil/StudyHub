@@ -24,11 +24,12 @@ const DARK_ACCENTS = [
 ];
 
 const LIGHT_ACCENTS = [
-  { name: 'ורוד',     color: '#D58EAC' },
-  { name: 'סלמון',   color: '#E395A3' },
-  { name: 'כחול ים', color: '#80A9AF' },
-  { name: 'תכלת',    color: '#89D4E3' },
-  { name: 'טורקיז',  color: '#46C0C1' },
+  { name: 'ורוד',     color: '#B35A8A' },
+  { name: 'סלמון',   color: '#F6B7C7' },
+  { name: 'לבנדר',   color: '#B6A5CE' },
+  { name: 'סגול',    color: '#523F77' },
+  { name: 'כחול',    color: '#7880AE' },
+  { name: 'תכלת',    color: '#A3BBD7' },
 ];
 
 type Props = {
