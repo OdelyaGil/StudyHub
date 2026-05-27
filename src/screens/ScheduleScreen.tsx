@@ -348,7 +348,7 @@ const ScheduleScreen = () => {
               .map(yr => <Picker.Item key={yr} label={String(yr)} value={yr} />)}
           </Picker>
         </View>
-        <View style={[styles.webPickerCol, { flex: 1 }]}>
+        <View style={styles.webPickerCol}>
           <Text style={styles.webPickerSubLabel}>חודש</Text>
           <Picker
             selectedValue={m}
@@ -959,12 +959,12 @@ const styles = StyleSheet.create({
   submitBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
 
   // Web Picker dropdowns (rendered as <select> on web)
-  webPickerRow:      { flexDirection: 'row', alignItems: 'flex-end', gap: 8, justifyContent: 'flex-end' },
+  webPickerRow:      { flexDirection: 'row', alignItems: 'flex-end', gap: 8, justifyContent: 'flex-end', alignSelf: 'flex-end' },
   webPickerCol:      { flexDirection: 'column' },
   webPickerSubLabel: { fontSize: 11, color: '#aaa', fontWeight: '600', marginBottom: 5 },
   webPickerBase:     { backgroundColor: '#f5f5f5', borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 10, height: 44, fontSize: 14, color: '#333' },
   webPickerDay:      { width: 72 },
-  webPickerMonth:    { minWidth: 100 },
+  webPickerMonth:    { width: 110 },
   webPickerYear:     { width: 92 },
   webPickerHour:     { width: 80 },
   webPickerMinute:   { width: 80 },
