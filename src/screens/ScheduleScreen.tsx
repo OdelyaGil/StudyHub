@@ -422,7 +422,8 @@ const ScheduleScreen = () => {
     if (eventEndDate && isValidDate(eventEndDate) && eventEndDate < eventDate) {
       showAlert('שגיאה', 'תאריך הסיום לא יכול להיות לפני תאריך ההתחלה'); return;
     }
-    if (!eventAllDay && eventEndTime <= eventStartTime) {
+    const multiDay = eventEndDate && isValidDate(eventEndDate) && eventEndDate > eventDate;
+    if (!eventAllDay && !multiDay && eventEndTime <= eventStartTime) {
       showAlert('שגיאה', 'שעת הסיום חייבת להיות אחרי שעת ההתחלה'); return;
     }
     if (eventRecurrenceEnd && isValidDate(eventRecurrenceEnd) && eventRecurrenceEnd < eventDate) {
@@ -970,17 +971,17 @@ const styles = StyleSheet.create({
   webPickerMinute:   { width: 80 },
   webPickerColonWrap:{ paddingBottom: 11 },
   webPickerColon:    { fontSize: 20, fontWeight: '700', color: '#CE6385' },
-  webEndTimeRow:     { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  webEndTimeRow:     { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-end' },
 
   // Web time section layout
-  webTimeRow:      { flexDirection: 'row-reverse', alignItems: 'center', gap: 0 },
-  webTimeGroup:    { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  webTimeRow:      { flexDirection: 'row-reverse', alignItems: 'center', gap: 0, alignSelf: 'flex-end' },
+  webTimeGroup:    { flexDirection: 'row', alignItems: 'center', gap: 8 },
   webTimeLabel:    { fontSize: 11, color: '#aaa', fontWeight: '600', flexShrink: 0 },
   webTimeDivider:  { width: 1, backgroundColor: '#e0e0e0', height: 44, marginHorizontal: 12 },
   webTimeClearBtn: { padding: 2 },
 
   // All-day toggle
-  allDayBtn:  { flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10 },
+  allDayBtn:  { flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, alignSelf: 'flex-end' },
   allDayText: { fontSize: 14, fontWeight: '600' },
 
   // iOS picker bottom sheet
