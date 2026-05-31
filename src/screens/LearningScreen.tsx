@@ -82,13 +82,21 @@ const LearningScreen = () => {
   };
 
   const handleToggleKnown = async (id: number) => {
-    const updatedTopics = topics.map(t => t.id === id ? { ...t, known: !t.known } : t);
+    const updatedTopics = topics.map(t => {
+      if (t.id !== id) return t;
+      const newKnown = !t.known;
+      return { ...t, known: newKnown, needsReview: newKnown ? false : t.needsReview };
+    });
     setTopics(updatedTopics);
     try { await saveField('topics', updatedTopics); } catch (e) { console.log(e); }
   };
 
   const handleToggleReview = async (id: number) => {
-    const updatedTopics = topics.map(t => t.id === id ? { ...t, needsReview: !t.needsReview } : t);
+    const updatedTopics = topics.map(t => {
+      if (t.id !== id) return t;
+      const newReview = !t.needsReview;
+      return { ...t, needsReview: newReview, known: newReview ? false : t.known };
+    });
     setTopics(updatedTopics);
     try { await saveField('topics', updatedTopics); } catch (e) { console.log(e); }
   };
