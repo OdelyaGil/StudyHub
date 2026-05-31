@@ -34,9 +34,7 @@ interface Summary {
   updatedAt: number;
 }
 
-const TEXT_MIMES = ['text/', 'application/json', 'application/xml', 'application/csv', 'application/x-markdown', 'application/rtf'];
 const REJECT_MIMES = ['audio/', 'video/', 'image/'];
-const isTextMime  = (m?: string) => !!m && TEXT_MIMES.some(t => m.startsWith(t));
 const isRejected  = (m?: string) => !!m && REJECT_MIMES.some(t => m.startsWith(t));
 
 const formatDate = (ts: number) => {
@@ -113,8 +111,9 @@ const SummariesScreen = () => {
   const [summaries, setSummaries] = useState<Summary[]>([]);
   const [folders,   setFolders]   = useState<Folder[]>([]);
   const [selFolder, setSelFolder] = useState<string | null>(null);
-  const [importError, setImportError] = useState('');
-  const [fabOpen, setFabOpen] = useState(false);
+  const [importError,    setImportError]    = useState('');
+  const [importing,      setImporting]      = useState(false);
+  const [fabOpen,        setFabOpen]        = useState(false);
 
   // Text editor
   const [editModal,   setEditModal]   = useState(false);
@@ -153,8 +152,7 @@ const SummariesScreen = () => {
 
   useEffect(() => { load(); }, [load]);
 
-  const saveSummaries = (next: Summary[]) => { setSummaries(next); saveField('summaries', next); };
-  const saveFolders   = (next: Folder[])   => { setFolders(next);   saveField('summaryFolders', next); };
+  const saveFolders = (next: Folder[]) => { setFolders(next); saveField('summaryFolders', next); };
 
   const upsertSummary = (sum: Summary) => {
     setSummaries(prev => {
@@ -228,64 +226,102 @@ const SummariesScreen = () => {
 
   // ── File import ───────────────────────────────────────────────────────────
 
+  // Read a Blob/File as a base-64 data URL
+  const readAsDataURL = (blob: Blob): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload  = e => resolve((e.target?.result as string) ?? '');
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+
+  // On web: open browser's native file dialog directly (expo-document-picker
+  // sometimes resolves {canceled:true} on web even after a file is chosen)
+  const pickFileWeb = (): Promise<File | null> =>
+    new Promise(resolve => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.onchange = () => resolve(input.files?.[0] ?? null);
+      // If dialog is dismissed without selection, nothing calls onchange — that's fine.
+      input.click();
+    });
+
   const importFile = async () => {
     setFabOpen(false);
     setImportError('');
+
+    let fileName: string;
+    let mimeType: string;
+    let blob: Blob;
+
     try {
-      const result = await DocumentPicker.getDocumentAsync({ type: '*/*', copyToCacheDirectory: true });
-      if (result.canceled || !result.assets?.length) return;
-      const asset  = result.assets[0];
-      const mime   = asset.mimeType ?? '';
-      const base   = asset.name.replace(/\.[^/.]+$/, '');
-
-      if (isRejected(mime)) {
-        setImportError('לא ניתן לייבא קבצי אודיו, וידאו או תמונות'); return;
-      }
-
-      if (isTextMime(mime) || mime === '') {
-        let content = '';
-        try {
-          const webFile = (asset as any).file as File | undefined;
-          if (Platform.OS === 'web' && webFile && typeof FileReader !== 'undefined') {
-            content = await new Promise<string>((resolve, reject) => {
-              const reader = new FileReader();
-              reader.onload  = e => resolve((e.target?.result as string) ?? '');
-              reader.onerror = reject;
-              reader.readAsText(webFile);
-            });
-          } else {
-            content = await fetch(asset.uri).then(r => r.text());
-          }
-        } catch { /* open with empty content */ }
-        openNew(base, content);
-        return;
-      }
-
-      // Binary → Firebase Storage
-      const uid = auth.currentUser?.uid;
-      if (!uid) { setImportError('יש להתחבר כדי לייבא קבצים'); return; }
-
-      const fileId  = Date.now().toString();
-      const webFile = (asset as any).file as File | undefined;
-      let fileData: Blob;
-      if (Platform.OS === 'web' && webFile) {
-        fileData = webFile;
+      if (Platform.OS === 'web') {
+        const file = await pickFileWeb();
+        if (!file) return;
+        fileName = file.name;
+        mimeType = file.type ?? '';
+        blob = file;
       } else {
-        fileData = await fetch(asset.uri).then(r => r.blob());
+        const result = await DocumentPicker.getDocumentAsync({ type: '*/*', copyToCacheDirectory: true });
+        if (result.canceled || !result.assets?.length) return;
+        const asset = result.assets[0];
+        fileName = asset.name;
+        mimeType = asset.mimeType ?? '';
+        blob = await fetch(asset.uri).then(r => r.blob());
+      }
+    } catch {
+      setImportError('לא ניתן לפתוח את חלון בחירת הקובץ');
+      return;
+    }
+
+    if (isRejected(mimeType)) {
+      setImportError('לא ניתן לייבא קבצי אודיו, וידאו או תמונות');
+      return;
+    }
+
+    setImporting(true);
+    try {
+      const uid = auth.currentUser?.uid;
+      const fileId = Date.now().toString();
+      let downloadURL: string;
+
+      if (uid) {
+        // Upload to Firebase Storage
+        const storageRef = ref(storage, `users/${uid}/summaries/${fileId}_${fileName}`);
+        await uploadBytes(storageRef, blob, { contentType: mimeType || 'application/octet-stream' });
+        downloadURL = await getDownloadURL(storageRef);
+      } else {
+        // No auth — store as data URL (works for files up to ~700 KB)
+        if (blob.size > 700 * 1024) {
+          setImportError(`הקובץ גדול מדי (${Math.round(blob.size / 1024)} KB). כדי להעלות קבצים גדולים יש להתחבר לחשבון.`);
+          return;
+        }
+        downloadURL = await readAsDataURL(blob);
       }
 
-      const storageRef  = ref(storage, `users/${uid}/summaries/${fileId}`);
-      await uploadBytes(storageRef, fileData, { contentType: mime || 'application/octet-stream' });
-      const downloadURL = await getDownloadURL(storageRef);
-
-      const now = Date.now();
       upsertSummary({
-        id: fileId, title: asset.name, type: 'file', content: '',
+        id: fileId,
+        title: fileName,
+        type: 'file',
+        content: '',
         folderId: selFolder ?? undefined,
-        fileName: asset.name, mimeType: mime, downloadURL, createdAt: now, updatedAt: now,
+        fileName,
+        mimeType,
+        downloadURL,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
       });
-    } catch {
-      setImportError('לא ניתן לייבא את הקובץ');
+    } catch (err: any) {
+      const code: string = err?.code ?? '';
+      if (code.includes('unauthorized') || code.includes('permission')) {
+        setImportError('אין הרשאה להעלות קבצים. בדוק את הגדרות Firebase Storage.');
+      } else if (code.includes('storage')) {
+        setImportError('Firebase Storage לא מוגדר. הפעל Storage בפרויקט Firebase.');
+      } else {
+        setImportError(`שגיאה בהעלאה: ${err?.message ?? 'שגיאה לא ידועה'}`);
+      }
+    } finally {
+      setImporting(false);
     }
   };
 
@@ -368,17 +404,25 @@ const SummariesScreen = () => {
         </TouchableOpacity>
       </ScrollView>
 
+      {/* Import status — always visible, outside scroll */}
+      {importing && (
+        <View style={[s.statusBanner, { backgroundColor: theme.accent + '22', borderColor: theme.accent }]}>
+          <MaterialCommunityIcons name="cloud-upload-outline" size={16} color={theme.accent} />
+          <Text style={{ color: theme.accent, fontSize: 13, flex: 1, textAlign: 'right' }}>מעלה קובץ...</Text>
+        </View>
+      )}
+      {!importing && importError !== '' && (
+        <View style={[s.statusBanner, { backgroundColor: '#FF444422', borderColor: '#FF4444' }]}>
+          <MaterialCommunityIcons name="alert-circle-outline" size={16} color="#FF4444" />
+          <Text style={{ color: '#FF4444', fontSize: 13, flex: 1, textAlign: 'right' }}>{importError}</Text>
+          <TouchableOpacity onPress={() => setImportError('')}>
+            <MaterialCommunityIcons name="close" size={16} color="#FF4444" />
+          </TouchableOpacity>
+        </View>
+      )}
+
       {/* Summary list */}
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 100 }}>
-        {importError !== '' && (
-          <View style={[s.errorBanner, { backgroundColor: '#FF444422', borderColor: '#FF4444' }]}>
-            <MaterialCommunityIcons name="alert-circle-outline" size={16} color="#FF4444" />
-            <Text style={{ color: '#FF4444', fontSize: 13, flex: 1, textAlign: 'right' }}>{importError}</Text>
-            <TouchableOpacity onPress={() => setImportError('')}>
-              <MaterialCommunityIcons name="close" size={16} color="#FF4444" />
-            </TouchableOpacity>
-          </View>
-        )}
 
         {filtered.length === 0 && (
           <View style={s.empty}>
@@ -665,6 +709,11 @@ const SummariesScreen = () => {
 
 const s = StyleSheet.create({
   container: { flex: 1 },
+
+  statusBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    borderWidth: 1, borderRadius: 10, padding: 12, margin: 12, marginBottom: 0,
+  },
 
   folderBar:   { borderBottomWidth: 1, flexGrow: 0 },
   folderChips: { padding: 10, gap: 8, flexDirection: 'row', alignItems: 'center' },
