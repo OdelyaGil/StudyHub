@@ -24,6 +24,7 @@ const DARK_ACCENTS = [
 
 ];
 
+
 const LIGHT_ACCENTS = [
   { name: 'ציאן',    color: '#00FFFF' },
   { name: 'ירוק',    color: '#00FF88' },
