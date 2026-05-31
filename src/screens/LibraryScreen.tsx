@@ -70,12 +70,6 @@ const LibraryScreen = () => {
           ))}
         </View>
 
-        <View style={[s.tipCard, { backgroundColor: theme.surface, borderColor: theme.accent + '44' }]}>
-          <MaterialCommunityIcons name="lightbulb-outline" size={20} color={theme.accent} />
-          <Text style={[s.tipText, { color: theme.textSub }]}>
-            לחצי על "כרטיסיות" לחזרה לפני בחינות, "סיכומים" לניהול חומר הלמידה ו"קישורים" לשמירת משאבים שימושיים.
-          </Text>
-        </View>
       </ScrollView>
 
       {/* Shared full-screen modal for all active categories */}
