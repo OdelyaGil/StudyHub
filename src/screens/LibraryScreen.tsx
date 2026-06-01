@@ -5,44 +5,48 @@ import {
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
-import LearningScreen    from './LearningScreen';
-import FlashcardsScreen  from './FlashcardsScreen';
-import LinksScreen       from './LinksScreen';
-import SummariesScreen   from './SummariesScreen';
+import LearningScreen   from './LearningScreen';
+import FlashcardsScreen from './FlashcardsScreen';
+import LinksScreen      from './LinksScreen';
+import SummariesScreen  from './SummariesScreen';
+import QuizBankScreen   from './QuizBankScreen';
+import GlossaryScreen   from './GlossaryScreen';
 
 const CATEGORIES = [
-  { key: 'topics',     icon: 'brain',                label: 'נושאי לימוד',      active: true  },
-  { key: 'code',       icon: 'code-braces',           label: 'קטעי קוד',         active: false },
-  { key: 'videos',     icon: 'play-circle-outline',   label: 'סרטוני הסבר',      active: false },
-  { key: 'summaries',  icon: 'note-text-outline',     label: 'סיכומים',          active: true  },
-  { key: 'flashcards', icon: 'cards-outline',         label: 'כרטיסיות',         active: true  },
-  { key: 'links',      icon: 'link-variant',          label: 'קישורים שימושיים', active: true  },
+  { key: 'topics',     icon: 'brain',              label: 'נושאי לימוד',      active: true  },
+  { key: 'quizbank',   icon: 'help-circle-outline', label: 'בנק שאלות',        active: true  },
+  { key: 'glossary',   icon: 'book-alphabet',       label: 'מילון מונחים',     active: true  },
+  { key: 'summaries',  icon: 'note-text-outline',   label: 'סיכומים',          active: true  },
+  { key: 'flashcards', icon: 'cards-outline',       label: 'כרטיסיות',         active: true  },
+  { key: 'links',      icon: 'link-variant',        label: 'קישורים שימושיים', active: true  },
 ];
 
-type ActiveModal = 'topics' | 'summaries' | 'flashcards' | 'links' | null;
+type ActiveModal = 'topics' | 'summaries' | 'flashcards' | 'links' | 'quizbank' | 'glossary' | null;
 
 const MODAL_TITLE: Record<string, string> = {
   topics:     'נושאי לימוד',
   summaries:  'סיכומים',
   flashcards: 'כרטיסיות',
   links:      'קישורים שימושיים',
+  quizbank:   'בנק שאלות',
+  glossary:   'מילון מונחים',
 };
+
+const ACTIVE_KEYS: ActiveModal[] = ['topics', 'summaries', 'flashcards', 'links', 'quizbank', 'glossary'];
 
 const LibraryScreen = () => {
   const theme = useTheme();
   const [modal, setModal] = useState<ActiveModal>(null);
 
   const openModal = (key: string) => {
-    if (['topics', 'summaries', 'flashcards', 'links'].includes(key)) {
-      setModal(key as ActiveModal);
-    }
+    if ((ACTIVE_KEYS as string[]).includes(key)) setModal(key as ActiveModal);
   };
 
   return (
     <View style={[s.container, { backgroundColor: theme.bg }]}>
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 32 }}>
 
-        <Text style={[s.pageTitle, { color: theme.text }]}>ספריית משאבים</Text>
+        <Text style={[s.pageTitle,    { color: theme.text }]}>ספריית משאבים</Text>
         <Text style={[s.pageSubtitle, { color: theme.textSub }]}>כל החומרים שלך במקום אחד</Text>
 
         <View style={s.grid}>
@@ -51,28 +55,20 @@ const LibraryScreen = () => {
               key={cat.key}
               style={[s.catCard, { backgroundColor: theme.surface, borderColor: theme.border }]}
               onPress={() => openModal(cat.key)}
-              activeOpacity={cat.active ? 0.75 : 1}
+              activeOpacity={0.75}
             >
               <View style={[s.catIcon, { backgroundColor: theme.accent + '22' }]}>
-                <MaterialCommunityIcons
-                  name={cat.icon as any}
-                  size={28}
-                  color={theme.accent}
-                />
+                <MaterialCommunityIcons name={cat.icon as any} size={28} color={theme.accent} />
               </View>
               <Text style={[s.catLabel, { color: theme.text }]}>{cat.label}</Text>
-              {cat.active ? (
-                <Text style={[s.catSub, { color: theme.accent }]}>פעיל</Text>
-              ) : (
-                <Text style={[s.catSub, { color: theme.textSub }]}>בקרוב</Text>
-              )}
+              <Text style={[s.catSub, { color: theme.accent }]}>פעיל</Text>
             </TouchableOpacity>
           ))}
         </View>
 
       </ScrollView>
 
-      {/* Shared full-screen modal for all active categories */}
+      {/* Full-screen modal shared by all categories */}
       <Modal visible={modal !== null} animationType="slide">
         <View style={{ flex: 1 }}>
           <View style={[s.modalBar, { backgroundColor: theme.bg, borderBottomColor: theme.border }]}>
@@ -90,6 +86,8 @@ const LibraryScreen = () => {
           {modal === 'flashcards' && <FlashcardsScreen />}
           {modal === 'links'      && <LinksScreen />}
           {modal === 'summaries'  && <SummariesScreen />}
+          {modal === 'quizbank'   && <QuizBankScreen />}
+          {modal === 'glossary'   && <GlossaryScreen />}
         </View>
       </Modal>
     </View>
@@ -108,11 +106,6 @@ const s = StyleSheet.create({
   catIcon:  { width: 52, height: 52, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
   catLabel: { fontSize: 13, fontWeight: '700', textAlign: 'center' },
   catSub:   { fontSize: 10, fontWeight: '600' },
-  tipCard: {
-    flexDirection: 'row', alignItems: 'flex-start', gap: 10,
-    borderRadius: 14, borderWidth: 1, padding: 14,
-  },
-  tipText:    { flex: 1, fontSize: 12, lineHeight: 18, textAlign: 'right' },
   modalBar: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1,
