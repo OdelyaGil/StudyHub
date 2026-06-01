@@ -5,8 +5,8 @@ import {
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { auth, storage } from '../config/firebase';
+import { collection, getDocs, setDoc, deleteDoc, doc as fsDoc } from 'firebase/firestore';
+import { auth, db } from '../config/firebase';
 import { loadField, saveField } from '../utils/firestore';
 import { useTheme } from '../context/ThemeContext';
 import { AppTheme } from '../context/ThemeContext';
@@ -36,6 +36,29 @@ interface Summary {
 
 const REJECT_MIMES = ['audio/', 'video/', 'image/'];
 const isRejected  = (m?: string) => !!m && REJECT_MIMES.some(t => m.startsWith(t));
+
+const FILE_COLL = (uid: string) => collection(db, 'users', uid, 'fileSummaries');
+
+const loadFileSummaries = async (): Promise<Summary[]> => {
+  const uid = auth.currentUser?.uid;
+  if (!uid) return [];
+  try {
+    const snap = await getDocs(FILE_COLL(uid));
+    return snap.docs.map(d => d.data() as Summary);
+  } catch { return []; }
+};
+
+const saveFileSummaryDoc = async (sum: Summary) => {
+  const uid = auth.currentUser?.uid;
+  if (!uid) return;
+  await setDoc(fsDoc(FILE_COLL(uid), sum.id), sum);
+};
+
+const delFileSummaryDoc = async (id: string) => {
+  const uid = auth.currentUser?.uid;
+  if (!uid) return;
+  await deleteDoc(fsDoc(FILE_COLL(uid), id));
+};
 
 const formatDate = (ts: number) => {
   const d = new Date(ts);
@@ -142,11 +165,13 @@ const SummariesScreen = () => {
   const [delFolderModal,   setDelFolderModal]   = useState(false);
 
   const load = useCallback(async () => {
-    const [sumData, folData] = await Promise.all([
+    const [sumData, folData, fileSums] = await Promise.all([
       loadField('summaries'),
       loadField('summaryFolders'),
+      loadFileSummaries(),
     ]);
-    setSummaries(Array.isArray(sumData) ? sumData : []);
+    const textSums = (Array.isArray(sumData) ? sumData : []).filter((s: any) => s.type !== 'file');
+    setSummaries([...textSums, ...fileSums]);
     setFolders(Array.isArray(folData) ? folData : []);
   }, []);
 
@@ -154,22 +179,23 @@ const SummariesScreen = () => {
 
   const saveFolders = (next: Folder[]) => { setFolders(next); saveField('summaryFolders', next); };
 
-  const upsertSummary = (sum: Summary) => {
-    setSummaries(prev => {
-      const next = prev.some(s => s.id === sum.id)
-        ? prev.map(s => s.id === sum.id ? sum : s)
-        : [...prev, sum];
-      saveField('summaries', next);
-      return next;
-    });
-  };
-
-  const deleteSummary = (id: string) => {
-    setSummaries(prev => {
-      const next = prev.filter(s => s.id !== id);
-      saveField('summaries', next);
-      return next;
-    });
+  const upsertSummary = async (sum: Summary) => {
+    if (sum.type === 'file') {
+      await saveFileSummaryDoc(sum);
+      setSummaries(prev =>
+        prev.some(s => s.id === sum.id)
+          ? prev.map(s => s.id === sum.id ? sum : s)
+          : [...prev, sum],
+      );
+    } else {
+      setSummaries(prev => {
+        const next = prev.some(s => s.id === sum.id)
+          ? prev.map(s => s.id === sum.id ? sum : s)
+          : [...prev, sum];
+        saveField('summaries', next.filter(s => s.type !== 'file'));
+        return next;
+      });
+    }
   };
 
   // ── Summary editor ────────────────────────────────────────────────────────
@@ -207,9 +233,9 @@ const SummariesScreen = () => {
     setEditModal(false);
   };
 
-  const saveFileNotes = () => {
+  const saveFileNotes = async () => {
     if (!viewingFile) return;
-    upsertSummary({ ...viewingFile, content: fileNotes, updatedAt: Date.now() });
+    await upsertSummary({ ...viewingFile, content: fileNotes, updatedAt: Date.now() });
     setFileModal(false);
   };
 
@@ -219,9 +245,19 @@ const SummariesScreen = () => {
     setConfirmId(id); setEditModal(false); setFileModal(false); setConfirmModal(true);
   };
 
-  const doDelete = () => {
-    if (confirmId) deleteSummary(confirmId);
-    setConfirmModal(false); setConfirmId(null);
+  const doDelete = async () => {
+    if (!confirmId) { setConfirmModal(false); return; }
+    const sum = summaries.find(s => s.id === confirmId);
+    if (sum?.type === 'file') {
+      try { await delFileSummaryDoc(confirmId); } catch {}
+    }
+    setSummaries(prev => {
+      const next = prev.filter(s => s.id !== confirmId);
+      saveField('summaries', next.filter(s => s.type !== 'file'));
+      return next;
+    });
+    setConfirmModal(false);
+    setConfirmId(null);
   };
 
   // ── File import ───────────────────────────────────────────────────────────
@@ -279,27 +315,18 @@ const SummariesScreen = () => {
       return;
     }
 
+    // 600 KB raw → ~800 KB base64 → safely under Firestore's 1 MB doc limit
+    if (blob.size > 600 * 1024) {
+      setImportError(`הקובץ גדול מדי (${Math.round(blob.size / 1024)} KB). גודל מקסימלי: 600KB.`);
+      return;
+    }
+
     setImporting(true);
     try {
-      const uid = auth.currentUser?.uid;
+      const downloadURL = await readAsDataURL(blob);
       const fileId = Date.now().toString();
-      let downloadURL: string;
-
-      if (uid) {
-        // Upload to Firebase Storage
-        const storageRef = ref(storage, `users/${uid}/summaries/${fileId}_${fileName}`);
-        await uploadBytes(storageRef, blob, { contentType: mimeType || 'application/octet-stream' });
-        downloadURL = await getDownloadURL(storageRef);
-      } else {
-        // No auth — store as data URL (works for files up to ~700 KB)
-        if (blob.size > 700 * 1024) {
-          setImportError(`הקובץ גדול מדי (${Math.round(blob.size / 1024)} KB). כדי להעלות קבצים גדולים יש להתחבר לחשבון.`);
-          return;
-        }
-        downloadURL = await readAsDataURL(blob);
-      }
-
-      upsertSummary({
+      const now    = Date.now();
+      const sum: Summary = {
         id: fileId,
         title: fileName,
         type: 'file',
@@ -308,18 +335,13 @@ const SummariesScreen = () => {
         fileName,
         mimeType,
         downloadURL,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-      });
+        createdAt: now,
+        updatedAt: now,
+      };
+      await saveFileSummaryDoc(sum);
+      setSummaries(prev => [...prev, sum]);
     } catch (err: any) {
-      const code: string = err?.code ?? '';
-      if (code.includes('unauthorized') || code.includes('permission')) {
-        setImportError('אין הרשאה להעלות קבצים. בדוק את הגדרות Firebase Storage.');
-      } else if (code.includes('storage')) {
-        setImportError('Firebase Storage לא מוגדר. הפעל Storage בפרויקט Firebase.');
-      } else {
-        setImportError(`שגיאה בהעלאה: ${err?.message ?? 'שגיאה לא ידועה'}`);
-      }
+      setImportError(`שגיאה בייבוא: ${err?.message ?? 'שגיאה לא ידועה'}`);
     } finally {
       setImporting(false);
     }
