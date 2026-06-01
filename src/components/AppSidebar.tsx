@@ -89,12 +89,6 @@ const AppSidebar = ({ state, navigation, userName, onLogout, isWide, isOpen, onO
 
       <View style={{ flex: 1 }} />
 
-      {/* Bottom card */}
-      <View style={styles.bottomCard}>
-        <Text style={styles.bottomCardTitle}>StudyHub Pro</Text>
-        <Text style={styles.bottomCardSub}>שדרג לגישה מלאה</Text>
-      </View>
-
       {/* Logout */}
       <TouchableOpacity style={styles.logoutRow} onPress={onLogout}>
         <MaterialCommunityIcons name="logout" size={18} color={SUB} />
@@ -182,13 +176,6 @@ const styles = StyleSheet.create({
     position: 'absolute', right: 0, top: 8, bottom: 8,
     width: 3, borderRadius: 2, backgroundColor: DOT,
   },
-
-  bottomCard: {
-    marginHorizontal: 12, marginBottom: 12,
-    backgroundColor: BG2, borderRadius: 12, padding: 14,
-  },
-  bottomCardTitle: { fontSize: 13, fontWeight: '700', color: TEXT, marginBottom: 4 },
-  bottomCardSub:   { fontSize: 11, color: SUB },
 
   logoutRow: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
