@@ -7,8 +7,15 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { loadField, saveField } from '../utils/firestore';
 import { useTheme } from '../context/ThemeContext';
 
+interface Folder {
+  id: string;
+  name: string;
+  createdAt: number;
+}
+
 interface Question {
   id: string;
+  folderId?: string;
   question: string;
   answer: string;
   course?: string;
@@ -18,39 +25,51 @@ interface Question {
 const QuizBankScreen = () => {
   const theme = useTheme();
   const [questions, setQuestions] = useState<Question[]>([]);
+  const [folders,   setFolders]   = useState<Folder[]>([]);
+  const [selFolder, setSelFolder] = useState<string | null>(null);
   const [revealed,  setRevealed]  = useState<Set<string>>(new Set());
 
-  // Add
+  // ── Add question ──
   const [addModal,  setAddModal]  = useState(false);
   const [newQ,      setNewQ]      = useState('');
   const [newA,      setNewA]      = useState('');
   const [newCourse, setNewCourse] = useState('');
+  const [newFolder, setNewFolder] = useState<string | undefined>();
 
-  // Menu
-  const [menuModal,  setMenuModal]  = useState(false);
-  const [menuTarget, setMenuTarget] = useState<Question | null>(null);
+  // ── Question menu / edit / delete ──
+  const [menuModal,    setMenuModal]    = useState(false);
+  const [menuTarget,   setMenuTarget]   = useState<Question | null>(null);
+  const [editModal,    setEditModal]    = useState(false);
+  const [editQ,        setEditQ]        = useState('');
+  const [editA,        setEditA]        = useState('');
+  const [editCourse,   setEditCourse]   = useState('');
+  const [editFolderId, setEditFolderId] = useState<string | undefined>();
+  const [deleteModal,  setDeleteModal]  = useState(false);
 
-  // Edit
-  const [editModal,  setEditModal]  = useState(false);
-  const [editQ,      setEditQ]      = useState('');
-  const [editA,      setEditA]      = useState('');
-  const [editCourse, setEditCourse] = useState('');
-
-  // Delete
-  const [deleteModal, setDeleteModal] = useState(false);
+  // ── Folder modals ──
+  const [newFolderModal,    setNewFolderModal]    = useState(false);
+  const [newFolderName,     setNewFolderName]     = useState('');
+  const [folderMenuModal,   setFolderMenuModal]   = useState(false);
+  const [folderMenuTarget,  setFolderMenuTarget]  = useState<Folder | null>(null);
+  const [renameFolderModal, setRenameFolderModal] = useState(false);
+  const [renameFolderVal,   setRenameFolderVal]   = useState('');
+  const [delFolderModal,    setDelFolderModal]    = useState(false);
 
   const load = useCallback(async () => {
-    const data = await loadField('quizBank');
-    setQuestions(Array.isArray(data) ? data : []);
+    const [qData, fData] = await Promise.all([
+      loadField('quizBank'),
+      loadField('quizBankFolders'),
+    ]);
+    setQuestions(Array.isArray(qData) ? qData : []);
+    setFolders(Array.isArray(fData) ? fData : []);
   }, []);
 
   useEffect(() => { load(); }, [load]);
 
-  const persist = (next: Question[]) => {
-    setQuestions(next);
-    saveField('quizBank', next);
-  };
+  const persistQ = (next: Question[]) => { setQuestions(next); saveField('quizBank', next); };
+  const persistF = (next: Folder[])   => { setFolders(next);   saveField('quizBankFolders', next); };
 
+  // ── Reveal toggle ─────────────────────────────────────────────────────────────
   const toggleReveal = (id: string) => {
     setRevealed(prev => {
       const next = new Set(prev);
@@ -59,19 +78,24 @@ const QuizBankScreen = () => {
     });
   };
 
-  // ── Add ──────────────────────────────────────────────────────────────────────
+  // ── Question CRUD ─────────────────────────────────────────────────────────────
+  const openAdd = () => {
+    setNewQ(''); setNewA(''); setNewCourse('');
+    setNewFolder(selFolder ?? undefined);
+    setAddModal(true);
+  };
+
   const addQuestion = () => {
     const q = newQ.trim(), a = newA.trim();
     if (!q || !a) return;
-    persist([...questions, {
-      id: Date.now().toString(), question: q, answer: a,
+    persistQ([...questions, {
+      id: Date.now().toString(), folderId: newFolder,
+      question: q, answer: a,
       course: newCourse.trim() || undefined, createdAt: Date.now(),
     }]);
-    setNewQ(''); setNewA(''); setNewCourse('');
     setAddModal(false);
   };
 
-  // ── Menu ──────────────────────────────────────────────────────────────────────
   const openMenu = (q: Question) => { setMenuTarget(q); setMenuModal(true); };
 
   const openEdit = () => {
@@ -79,15 +103,16 @@ const QuizBankScreen = () => {
     setEditQ(menuTarget.question);
     setEditA(menuTarget.answer);
     setEditCourse(menuTarget.course ?? '');
+    setEditFolderId(menuTarget.folderId);
     setMenuModal(false); setEditModal(true);
   };
 
   const saveEdit = () => {
     const q = editQ.trim(), a = editA.trim();
     if (!q || !a || !menuTarget) return;
-    persist(questions.map(item =>
+    persistQ(questions.map(item =>
       item.id === menuTarget.id
-        ? { ...item, question: q, answer: a, course: editCourse.trim() || undefined }
+        ? { ...item, question: q, answer: a, course: editCourse.trim() || undefined, folderId: editFolderId }
         : item,
     ));
     setEditModal(false); setMenuTarget(null);
@@ -97,45 +122,104 @@ const QuizBankScreen = () => {
 
   const confirmDelete = () => {
     if (!menuTarget) return;
-    persist(questions.filter(q => q.id !== menuTarget.id));
+    persistQ(questions.filter(q => q.id !== menuTarget.id));
     setDeleteModal(false); setMenuTarget(null);
   };
 
+  // ── Folder CRUD ───────────────────────────────────────────────────────────────
+  const addFolder = () => {
+    const name = newFolderName.trim();
+    if (!name) return;
+    persistF([...folders, { id: Date.now().toString(), name, createdAt: Date.now() }]);
+    setNewFolderName(''); setNewFolderModal(false);
+  };
+
+  const openFolderMenu = (f: Folder) => { setFolderMenuTarget(f); setFolderMenuModal(true); };
+
+  const startRename = () => {
+    if (!folderMenuTarget) return;
+    setRenameFolderVal(folderMenuTarget.name);
+    setFolderMenuModal(false); setRenameFolderModal(true);
+  };
+
+  const doRename = () => {
+    const name = renameFolderVal.trim();
+    if (!name || !folderMenuTarget) return;
+    persistF(folders.map(f => f.id === folderMenuTarget.id ? { ...f, name } : f));
+    setRenameFolderModal(false); setFolderMenuTarget(null);
+  };
+
+  const startDelFolder = () => { setFolderMenuModal(false); setDelFolderModal(true); };
+
+  const doDelFolder = () => {
+    if (!folderMenuTarget) return;
+    persistF(folders.filter(f => f.id !== folderMenuTarget.id));
+    setQuestions(prev => {
+      const next = prev.map(q => q.folderId === folderMenuTarget.id ? { ...q, folderId: undefined } : q);
+      saveField('quizBank', next);
+      return next;
+    });
+    if (selFolder === folderMenuTarget.id) setSelFolder(null);
+    setDelFolderModal(false); setFolderMenuTarget(null);
+  };
+
+  // ── Filtered list ─────────────────────────────────────────────────────────────
+  const filtered = questions.filter(q => selFolder === null || q.folderId === selFolder);
   const accentText = theme.mode === 'dark' ? '#000' : '#fff';
 
-  // ── Shared form fields ────────────────────────────────────────────────────────
-  const FormFields = ({
-    q, setQ, a, setA, course, setCourse, autoFocus,
-  }: {
-    q: string; setQ: (v: string) => void;
-    a: string; setA: (v: string) => void;
-    course: string; setCourse: (v: string) => void;
-    autoFocus?: boolean;
-  }) => (
-    <>
-      <TextInput
-        style={[s.input, { color: theme.text, borderColor: theme.border, backgroundColor: theme.bg }]}
-        placeholder="קורס (אופציונלי)" placeholderTextColor={theme.textSub}
-        value={course} onChangeText={setCourse} textAlign="right"
-      />
-      <TextInput
-        style={[s.input, s.inputMulti, { color: theme.text, borderColor: theme.border, backgroundColor: theme.bg }]}
-        placeholder="שאלה" placeholderTextColor={theme.textSub}
-        value={q} onChangeText={setQ}
-        multiline textAlign="right" textAlignVertical="top"
-        autoFocus={autoFocus}
-      />
-      <TextInput
-        style={[s.input, s.inputMulti, { color: theme.text, borderColor: theme.border, backgroundColor: theme.bg }]}
-        placeholder="תשובה" placeholderTextColor={theme.textSub}
-        value={a} onChangeText={setA}
-        multiline textAlign="right" textAlignVertical="top"
-      />
-    </>
+  // ── Folder chip row (reused in add + edit modals) ────────────────────────────
+  const FolderPicker = ({ value, onChange }: { value: string | undefined; onChange: (id: string | undefined) => void }) => (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.pickerChips}>
+      <TouchableOpacity
+        style={[s.chip, { backgroundColor: value === undefined ? theme.accent : theme.surface, borderColor: value === undefined ? theme.accent : theme.border }]}
+        onPress={() => onChange(undefined)}>
+        <Text style={[s.chipText, { color: value === undefined ? accentText : theme.text }]}>ללא תיקייה</Text>
+      </TouchableOpacity>
+      {folders.map(f => {
+        const active = value === f.id;
+        return (
+          <TouchableOpacity key={f.id}
+            style={[s.chip, { backgroundColor: active ? theme.accent : theme.surface, borderColor: active ? theme.accent : theme.border }]}
+            onPress={() => onChange(f.id)}>
+            <MaterialCommunityIcons name="folder-outline" size={13} color={active ? accentText : theme.accent} />
+            <Text style={[s.chipText, { color: active ? accentText : theme.text }]}>{f.name}</Text>
+          </TouchableOpacity>
+        );
+      })}
+    </ScrollView>
   );
 
   return (
     <View style={[s.container, { backgroundColor: theme.bg }]}>
+
+      {/* Folder filter chips */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false}
+        style={[s.folderBar, { borderBottomColor: theme.border }]}
+        contentContainerStyle={s.folderChips}>
+        <TouchableOpacity
+          style={[s.chip, { backgroundColor: selFolder === null ? theme.accent : theme.surface, borderColor: selFolder === null ? theme.accent : theme.border }]}
+          onPress={() => setSelFolder(null)}>
+          <Text style={[s.chipText, { color: selFolder === null ? accentText : theme.text }]}>הכל</Text>
+        </TouchableOpacity>
+        {folders.map(f => {
+          const active = selFolder === f.id;
+          return (
+            <TouchableOpacity key={f.id}
+              style={[s.chip, { backgroundColor: active ? theme.accent : theme.surface, borderColor: active ? theme.accent : theme.border }]}
+              onPress={() => setSelFolder(f.id)}
+              onLongPress={() => openFolderMenu(f)}>
+              <MaterialCommunityIcons name="folder-outline" size={13} color={active ? accentText : theme.accent} />
+              <Text style={[s.chipText, { color: active ? accentText : theme.text }]}>{f.name}</Text>
+            </TouchableOpacity>
+          );
+        })}
+        <TouchableOpacity
+          style={[s.chip, s.chipAdd, { borderColor: theme.border }]}
+          onPress={() => { setNewFolderName(''); setNewFolderModal(true); }}>
+          <MaterialCommunityIcons name="folder-plus-outline" size={16} color={theme.accent} />
+        </TouchableOpacity>
+      </ScrollView>
+
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 100 }}>
         {questions.length === 0 && (
           <View style={s.empty}>
@@ -145,26 +229,22 @@ const QuizBankScreen = () => {
           </View>
         )}
 
-        {questions.map(q => {
+        {filtered.map(q => {
           const isRevealed = revealed.has(q.id);
           return (
             <View key={q.id} style={[s.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
               <TouchableOpacity style={s.cardBody} onPress={() => toggleReveal(q.id)} activeOpacity={0.75}>
-                {/* Header row */}
                 <View style={s.qHeader}>
                   {q.course && (
-                    <View style={[s.chip, { backgroundColor: theme.accent + '22' }]}>
+                    <View style={[s.chip, { backgroundColor: theme.accent + '22', borderColor: 'transparent' }]}>
                       <Text style={[s.chipText, { color: theme.accent }]}>{q.course}</Text>
                     </View>
                   )}
                   <MaterialCommunityIcons
                     name={isRevealed ? 'chevron-up' : 'chevron-down'}
-                    size={18} color={theme.accent}
-                  />
+                    size={18} color={theme.accent} />
                 </View>
-
                 <Text style={[s.questionText, { color: theme.text }]}>{q.question}</Text>
-
                 {isRevealed ? (
                   <View style={[s.answerBox, { borderTopColor: theme.border, backgroundColor: theme.accent + '11' }]}>
                     <Text style={[s.answerLabel, { color: theme.accent }]}>תשובה</Text>
@@ -174,7 +254,6 @@ const QuizBankScreen = () => {
                   <Text style={[s.tapHint, { color: theme.textSub }]}>לחץ לגילוי התשובה</Text>
                 )}
               </TouchableOpacity>
-
               <TouchableOpacity onPress={() => openMenu(q)} style={s.menuBtn}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                 <MaterialCommunityIcons name="dots-vertical" size={20} color={theme.textSub} />
@@ -186,19 +265,32 @@ const QuizBankScreen = () => {
 
       {/* FAB */}
       <TouchableOpacity style={[s.fab, { backgroundColor: theme.accent }]}
-        onPress={() => setAddModal(true)} activeOpacity={0.85}>
+        onPress={openAdd} activeOpacity={0.85}>
         <MaterialCommunityIcons name="plus" size={28} color={accentText} />
       </TouchableOpacity>
 
-      {/* ── Add ── */}
+      {/* ── Add question ── */}
       <Modal visible={addModal} transparent animationType="fade">
         <View style={s.overlay}>
           <View style={[s.panel, { backgroundColor: theme.surface, borderColor: theme.border }]}>
             <Text style={[s.panelTitle, { color: theme.text }]}>שאלה חדשה</Text>
-            <FormFields q={newQ} setQ={setNewQ} a={newA} setA={setNewA}
-              course={newCourse} setCourse={setNewCourse} autoFocus />
+            {folders.length > 0 && <FolderPicker value={newFolder} onChange={setNewFolder} />}
+            <TextInput
+              style={[s.input, { color: theme.text, borderColor: theme.border, backgroundColor: theme.bg }]}
+              placeholder="קורס (אופציונלי)" placeholderTextColor={theme.textSub}
+              value={newCourse} onChangeText={setNewCourse} textAlign="right" />
+            <TextInput
+              style={[s.input, s.inputMulti, { color: theme.text, borderColor: theme.border, backgroundColor: theme.bg }]}
+              placeholder="שאלה" placeholderTextColor={theme.textSub}
+              value={newQ} onChangeText={setNewQ}
+              multiline textAlign="right" textAlignVertical="top" autoFocus />
+            <TextInput
+              style={[s.input, s.inputMulti, { color: theme.text, borderColor: theme.border, backgroundColor: theme.bg }]}
+              placeholder="תשובה" placeholderTextColor={theme.textSub}
+              value={newA} onChangeText={setNewA}
+              multiline textAlign="right" textAlignVertical="top" />
             <View style={s.panelBtns}>
-              <TouchableOpacity onPress={() => { setAddModal(false); setNewQ(''); setNewA(''); setNewCourse(''); }} style={s.cancelBtn}>
+              <TouchableOpacity onPress={() => setAddModal(false)} style={s.cancelBtn}>
                 <Text style={{ color: theme.textSub, fontWeight: '600' }}>ביטול</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={addQuestion} style={[s.confirmBtn, { backgroundColor: theme.accent }]}>
@@ -209,7 +301,7 @@ const QuizBankScreen = () => {
         </View>
       </Modal>
 
-      {/* ── Action sheet ── */}
+      {/* ── Question action sheet ── */}
       <Modal visible={menuModal} transparent animationType="fade">
         <TouchableOpacity style={s.sheetOverlay} activeOpacity={1} onPress={() => setMenuModal(false)}>
           <View style={[s.actionSheet, { backgroundColor: theme.surface, borderColor: theme.border }]}>
@@ -226,13 +318,26 @@ const QuizBankScreen = () => {
         </TouchableOpacity>
       </Modal>
 
-      {/* ── Edit ── */}
+      {/* ── Edit question ── */}
       <Modal visible={editModal} transparent animationType="fade">
         <View style={s.overlay}>
           <View style={[s.panel, { backgroundColor: theme.surface, borderColor: theme.border }]}>
             <Text style={[s.panelTitle, { color: theme.text }]}>עריכת שאלה</Text>
-            <FormFields q={editQ} setQ={setEditQ} a={editA} setA={setEditA}
-              course={editCourse} setCourse={setEditCourse} autoFocus />
+            {folders.length > 0 && <FolderPicker value={editFolderId} onChange={setEditFolderId} />}
+            <TextInput
+              style={[s.input, { color: theme.text, borderColor: theme.border, backgroundColor: theme.bg }]}
+              placeholder="קורס (אופציונלי)" placeholderTextColor={theme.textSub}
+              value={editCourse} onChangeText={setEditCourse} textAlign="right" autoFocus />
+            <TextInput
+              style={[s.input, s.inputMulti, { color: theme.text, borderColor: theme.border, backgroundColor: theme.bg }]}
+              placeholder="שאלה" placeholderTextColor={theme.textSub}
+              value={editQ} onChangeText={setEditQ}
+              multiline textAlign="right" textAlignVertical="top" />
+            <TextInput
+              style={[s.input, s.inputMulti, { color: theme.text, borderColor: theme.border, backgroundColor: theme.bg }]}
+              placeholder="תשובה" placeholderTextColor={theme.textSub}
+              value={editA} onChangeText={setEditA}
+              multiline textAlign="right" textAlignVertical="top" />
             <View style={s.panelBtns}>
               <TouchableOpacity onPress={() => { setEditModal(false); setMenuTarget(null); }} style={s.cancelBtn}>
                 <Text style={{ color: theme.textSub, fontWeight: '600' }}>ביטול</Text>
@@ -245,7 +350,7 @@ const QuizBankScreen = () => {
         </View>
       </Modal>
 
-      {/* ── Delete confirm ── */}
+      {/* ── Delete question confirm ── */}
       <Modal visible={deleteModal} transparent animationType="fade">
         <View style={s.overlay}>
           <View style={[s.confirmPanel, { backgroundColor: theme.surface, borderColor: theme.border }]}>
@@ -263,21 +368,113 @@ const QuizBankScreen = () => {
           </View>
         </View>
       </Modal>
+
+      {/* ── New folder ── */}
+      <Modal visible={newFolderModal} transparent animationType="fade">
+        <View style={s.overlay}>
+          <View style={[s.panel, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+            <Text style={[s.panelTitle, { color: theme.text }]}>תיקייה חדשה</Text>
+            <TextInput
+              style={[s.input, { color: theme.text, borderColor: theme.border, backgroundColor: theme.bg }]}
+              placeholder="שם התיקייה" placeholderTextColor={theme.textSub}
+              value={newFolderName} onChangeText={setNewFolderName}
+              textAlign="right" autoFocus onSubmitEditing={addFolder} />
+            <View style={s.panelBtns}>
+              <TouchableOpacity onPress={() => setNewFolderModal(false)} style={s.cancelBtn}>
+                <Text style={{ color: theme.textSub, fontWeight: '600' }}>ביטול</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={addFolder} style={[s.confirmBtn, { backgroundColor: theme.accent }]}>
+                <Text style={{ color: accentText, fontWeight: '700' }}>צור</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── Folder action sheet ── */}
+      <Modal visible={folderMenuModal} transparent animationType="fade">
+        <TouchableOpacity style={s.sheetOverlay} activeOpacity={1} onPress={() => setFolderMenuModal(false)}>
+          <View style={[s.actionSheet, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+            <Text style={[s.sheetTitle, { color: theme.textSub }]} numberOfLines={1}>{folderMenuTarget?.name}</Text>
+            <TouchableOpacity style={[s.sheetBtn, { borderBottomColor: theme.border }]} onPress={startRename}>
+              <MaterialCommunityIcons name="pencil-outline" size={20} color={theme.accent} />
+              <Text style={[s.sheetBtnText, { color: theme.text }]}>שנה שם</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={s.sheetBtn} onPress={startDelFolder}>
+              <MaterialCommunityIcons name="trash-can-outline" size={20} color="#FF4444" />
+              <Text style={[s.sheetBtnText, { color: '#FF4444' }]}>מחק תיקייה</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* ── Rename folder ── */}
+      <Modal visible={renameFolderModal} transparent animationType="fade">
+        <View style={s.overlay}>
+          <View style={[s.panel, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+            <Text style={[s.panelTitle, { color: theme.text }]}>שנה שם תיקייה</Text>
+            <TextInput
+              style={[s.input, { color: theme.text, borderColor: theme.border, backgroundColor: theme.bg }]}
+              placeholder="שם חדש" placeholderTextColor={theme.textSub}
+              value={renameFolderVal} onChangeText={setRenameFolderVal}
+              textAlign="right" autoFocus onSubmitEditing={doRename} />
+            <View style={s.panelBtns}>
+              <TouchableOpacity onPress={() => setRenameFolderModal(false)} style={s.cancelBtn}>
+                <Text style={{ color: theme.textSub, fontWeight: '600' }}>ביטול</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={doRename} style={[s.confirmBtn, { backgroundColor: theme.accent }]}>
+                <Text style={{ color: accentText, fontWeight: '700' }}>שמור</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── Delete folder confirm ── */}
+      <Modal visible={delFolderModal} transparent animationType="fade">
+        <View style={s.overlay}>
+          <View style={[s.confirmPanel, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+            <MaterialCommunityIcons name="trash-can-outline" size={36} color="#FF4444" />
+            <Text style={[s.confirmTitle, { color: theme.text }]}>מחיקת תיקייה</Text>
+            <Text style={[s.confirmMsg, { color: theme.textSub }]}>
+              למחוק את "{folderMenuTarget?.name}"?{'\n'}השאלות בתיקייה לא יימחקו.
+            </Text>
+            <View style={s.confirmBtns}>
+              <TouchableOpacity style={[s.confirmCancel, { borderColor: theme.border }]} onPress={() => setDelFolderModal(false)}>
+                <Text style={{ color: theme.textSub, fontWeight: '600', fontSize: 15 }}>ביטול</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={s.confirmDel} onPress={doDelFolder}>
+                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>מחק</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
 
 const s = StyleSheet.create({
   container: { flex: 1 },
+
+  folderBar:   { borderBottomWidth: 1, flexGrow: 0 },
+  folderChips: { padding: 10, gap: 8, flexDirection: 'row', alignItems: 'center' },
+  chip: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1,
+  },
+  chipText: { fontSize: 13, fontWeight: '600' },
+  chipAdd:  { paddingHorizontal: 8 },
+
+  pickerChips: { flexDirection: 'row', gap: 8, paddingVertical: 4 },
+
   empty:     { alignItems: 'center', paddingTop: 80, gap: 10 },
   emptyText: { fontSize: 15, fontWeight: '600' },
   emptyHint: { fontSize: 12 },
 
-  card:    { flexDirection: 'row', alignItems: 'flex-start', borderRadius: 14, borderWidth: 1, marginBottom: 10, overflow: 'hidden' },
-  cardBody:{ flex: 1, padding: 14, gap: 8 },
-  qHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: 'flex-end' },
-  chip:    { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10 },
-  chipText:{ fontSize: 11, fontWeight: '600' },
+  card:     { flexDirection: 'row', alignItems: 'flex-start', borderRadius: 14, borderWidth: 1, marginBottom: 10, overflow: 'hidden' },
+  cardBody: { flex: 1, padding: 14, gap: 8 },
+  qHeader:  { flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: 'flex-end' },
 
   questionText: { fontSize: 15, fontWeight: '600', textAlign: 'right', lineHeight: 22 },
   tapHint:      { fontSize: 12, textAlign: 'right' },
@@ -295,7 +492,7 @@ const s = StyleSheet.create({
     shadowOpacity: 0.3, shadowRadius: 4,
   },
 
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 24 },
+  overlay:    { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 24 },
   panel:      { width: '100%', borderRadius: 18, borderWidth: 1, padding: 24, gap: 14 },
   panelTitle: { fontSize: 18, fontWeight: '700', textAlign: 'right' },
   input:      { borderWidth: 1, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, fontSize: 15 },
