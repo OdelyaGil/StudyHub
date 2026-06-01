@@ -6,8 +6,7 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 import { collection, getDocs, setDoc, deleteDoc, doc as fsDoc } from 'firebase/firestore';
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { auth, db, storage } from '../config/firebase';
+import { auth, db } from '../config/firebase';
 import { loadField, saveField } from '../utils/firestore';
 import { useTheme } from '../context/ThemeContext';
 import { AppTheme } from '../context/ThemeContext';
@@ -135,10 +134,9 @@ const SummariesScreen = () => {
   const [summaries, setSummaries] = useState<Summary[]>([]);
   const [folders,   setFolders]   = useState<Folder[]>([]);
   const [selFolder, setSelFolder] = useState<string | null>(null);
-  const [importError,      setImportError]      = useState('');
-  const [importing,        setImporting]        = useState(false);
-  const [uploadProgress,   setUploadProgress]   = useState(0);
-  const [fabOpen,          setFabOpen]          = useState(false);
+  const [importError, setImportError] = useState('');
+  const [importing,   setImporting]   = useState(false);
+  const [fabOpen,     setFabOpen]     = useState(false);
 
   // Text editor
   const [editModal,   setEditModal]   = useState(false);
@@ -317,32 +315,17 @@ const SummariesScreen = () => {
       return;
     }
 
+    const MAX_SIZE = 700 * 1024;
+    if (blob.size > MAX_SIZE) {
+      setImportError(`הקובץ גדול מדי (${Math.round(blob.size / 1024)} KB). גודל מקסימלי: 700KB.`);
+      return;
+    }
+
     setImporting(true);
-    setUploadProgress(0);
     try {
-      const uid = auth.currentUser?.uid;
-      if (!uid) {
-        setImportError('יש להתחבר לחשבון כדי להעלות קבצים');
-        return;
-      }
-
-      const fileId     = Date.now().toString();
-      const storageRef = ref(storage, `users/${uid}/summaries/${fileId}`);
-      const task       = uploadBytesResumable(storageRef, blob, {
-        contentType: mimeType || 'application/octet-stream',
-      });
-
-      await new Promise<void>((resolve, reject) => {
-        task.on(
-          'state_changed',
-          snap => setUploadProgress(Math.round(snap.bytesTransferred / snap.totalBytes * 100)),
-          err  => reject(err),
-          ()   => resolve(),
-        );
-      });
-
-      const downloadURL = await getDownloadURL(task.snapshot.ref);
-      const now = Date.now();
+      const dataURL = await readAsDataURL(blob);
+      const fileId  = Date.now().toString();
+      const now     = Date.now();
       const sum: Summary = {
         id: fileId,
         title: fileName,
@@ -351,26 +334,16 @@ const SummariesScreen = () => {
         folderId: selFolder ?? undefined,
         fileName,
         mimeType,
-        downloadURL,
+        downloadURL: dataURL,
         createdAt: now,
         updatedAt: now,
       };
       await saveFileSummaryDoc(sum);
       setSummaries(prev => [...prev, sum]);
     } catch (err: any) {
-      const code: string = err?.code ?? '';
-      if (code === 'storage/unauthorized' || code === 'storage/unauthenticated') {
-        setImportError('אין הרשאה להעלות קבצים. בדוק את כללי האבטחה ב-Firebase Storage.');
-      } else if (code === 'storage/no-bucket' || code === 'storage/no-default-bucket') {
-        setImportError('Firebase Storage לא מופעל. כנס לקונסול Firebase → Storage → Get Started.');
-      } else if (code === 'storage/canceled') {
-        setImportError('ההעלאה בוטלה.');
-      } else {
-        setImportError(`שגיאה בהעלאה: ${err?.message ?? 'שגיאה לא ידועה'}`);
-      }
+      setImportError(`שגיאה בייבוא: ${err?.message ?? 'שגיאה לא ידועה'}`);
     } finally {
       setImporting(false);
-      setUploadProgress(0);
     }
   };
 
@@ -458,7 +431,7 @@ const SummariesScreen = () => {
         <View style={[s.statusBanner, { backgroundColor: theme.accent + '22', borderColor: theme.accent }]}>
           <MaterialCommunityIcons name="cloud-upload-outline" size={16} color={theme.accent} />
           <Text style={{ color: theme.accent, fontSize: 13, flex: 1, textAlign: 'right' }}>
-            {uploadProgress > 0 ? `מעלה... ${uploadProgress}%` : 'מעלה קובץ...'}
+            מעלה קובץ...
           </Text>
         </View>
       )}
