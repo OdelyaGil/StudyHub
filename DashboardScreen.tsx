@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Platform, useWindowDimensions } from 'react-native';
 import { auth, db } from './src/config/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import ThemeContext, { buildTheme, ThemeMode } from './src/context/ThemeContext';
@@ -10,74 +10,64 @@ import TasksScreen   from './src/screens/TasksScreen';
 import GradesScreen  from './src/screens/GradesScreen';
 import LibraryScreen from './src/screens/LibraryScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
+import AppSidebar, { SIDEBAR_W, TOP_H } from './src/components/AppSidebar';
 
 const Tab = createBottomTabNavigator();
 
 type Props = {
-  navigation: any;
-  accent: string;
-  mode: ThemeMode;
-  onSetAccent: (c: string) => void;
-  onSetMode: (m: ThemeMode) => void;
-  onLogout: () => void;
-};
-
-const ICONS: Record<string, React.ComponentProps<typeof MaterialCommunityIcons>['name']> = {
-  Home:    'home-variant',
-  Events:  'calendar-month-outline',
-  Tasks:   'checkbox-multiple-marked-outline',
-  Grades:  'school-outline',
-  Library: 'bookshelf',
-  Profile: 'account-circle-outline',
+  navigation:   any;
+  accent:       string;
+  mode:         ThemeMode;
+  onSetAccent:  (c: string) => void;
+  onSetMode:    (m: ThemeMode) => void;
+  onLogout:     () => void;
 };
 
 const DashboardScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout }: Props) => {
-  const [userName, setUserName] = useState('');
   const theme = buildTheme(mode, accent);
+  const { width } = useWindowDimensions();
+  const isWide = Platform.OS === 'web' && width >= 720;
+
+  const [userName,     setUserName]     = useState('');
+  const [sidebarOpen,  setSidebarOpen]  = useState(false);
 
   useEffect(() => {
     const user = auth.currentUser;
     if (!user) return;
-    getDoc(doc(db, 'users', user.uid)).then((snap) => {
+    getDoc(doc(db, 'users', user.uid)).then(snap => {
       if (snap.exists()) setUserName(snap.data().name || '');
     });
   }, []);
 
+  const renderTabBar = useCallback((props: any) => (
+    <AppSidebar
+      {...props}
+      userName={userName}
+      onLogout={onLogout}
+      isWide={isWide}
+      isOpen={sidebarOpen}
+      onOpen={() => setSidebarOpen(true)}
+      onClose={() => setSidebarOpen(false)}
+    />
+  ), [userName, onLogout, isWide, sidebarOpen]);
+
   return (
     <ThemeContext.Provider value={theme}>
       <Tab.Navigator
-        screenOptions={({ route }) => ({
-          headerTitle: `שלום ${userName} 👋`,
-          headerStyle: {
-            backgroundColor: theme.bg,
-            borderBottomWidth: 1,
-            borderBottomColor: theme.accent + '33',
-            shadowColor: 'transparent',
-          },
-          headerTintColor: theme.accent,
-          headerTitleStyle: { fontWeight: '700', fontSize: 18 },
-          tabBarActiveTintColor: theme.accent,
-          tabBarInactiveTintColor: theme.textSub,
-          tabBarStyle: {
-            backgroundColor: theme.tabBg,
-            borderTopWidth: 1,
-            borderTopColor: theme.accent + '22',
-            height: 66,
-            paddingBottom: 10,
-            paddingTop: 8,
-          },
-          tabBarLabelStyle: { fontSize: 10, fontWeight: '600' },
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name={ICONS[route.name] ?? 'circle'} size={size} color={color} />
-          ),
-        })}
+        tabBar={renderTabBar}
+        sceneContainerStyle={
+          isWide
+            ? { marginLeft: SIDEBAR_W }
+            : { paddingTop: TOP_H }
+        }
+        screenOptions={{ headerShown: false }}
       >
-        <Tab.Screen name="Home"    component={HomeScreen}    options={{ tabBarLabel: 'ראשי' }} />
-<Tab.Screen name="Events"  component={EventsScreen}  options={{ tabBarLabel: 'אירועים' }} />
-        <Tab.Screen name="Tasks"   component={TasksScreen}   options={{ tabBarLabel: 'משימות' }} />
-        <Tab.Screen name="Grades"  component={GradesScreen}  options={{ tabBarLabel: 'ציונים' }} />
-        <Tab.Screen name="Library" component={LibraryScreen} options={{ tabBarLabel: 'ספריה' }} />
-        <Tab.Screen name="Profile" options={{ tabBarLabel: 'פרופיל' }}>
+        <Tab.Screen name="Home"    component={HomeScreen} />
+        <Tab.Screen name="Events"  component={EventsScreen} />
+        <Tab.Screen name="Tasks"   component={TasksScreen} />
+        <Tab.Screen name="Grades"  component={GradesScreen} />
+        <Tab.Screen name="Library" component={LibraryScreen} />
+        <Tab.Screen name="Profile">
           {() => (
             <ProfileScreen
               accent={accent}
