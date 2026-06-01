@@ -13,12 +13,12 @@ import QuizBankScreen   from './QuizBankScreen';
 import GlossaryScreen   from './GlossaryScreen';
 
 const CATEGORIES = [
-  { key: 'topics',     icon: 'brain',              label: 'נושאי לימוד'},
-  { key: 'quizbank',   icon: 'help-circle-outline', label: 'בנק שאלות'},
-  { key: 'glossary',   icon: 'book-alphabet',       label: 'מילון מונחים' },
-  { key: 'summaries',  icon: 'note-text-outline',   label: 'סיכומים' },
-  { key: 'flashcards', icon: 'cards-outline',       label: 'כרטיסיות' },
-  { key: 'links',      icon: 'link-variant',        label: 'קישורים שימושיים' },
+  { key: 'topics',     icon: 'brain',              label: 'נושאי לימוד',      active: true  },
+  { key: 'quizbank',   icon: 'help-circle-outline', label: 'בנק שאלות',        active: true  },
+  { key: 'glossary',   icon: 'book-alphabet',       label: 'מילון מונחים',     active: true  },
+  { key: 'summaries',  icon: 'note-text-outline',   label: 'סיכומים',          active: true  },
+  { key: 'flashcards', icon: 'cards-outline',       label: 'כרטיסיות',         active: true  },
+  { key: 'links',      icon: 'link-variant',        label: 'קישורים שימושיים', active: true  },
 ];
 
 type ActiveModal = 'topics' | 'summaries' | 'flashcards' | 'links' | 'quizbank' | 'glossary' | null;
