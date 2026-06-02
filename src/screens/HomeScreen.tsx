@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, Image,
+  View, Text, StyleSheet, ScrollView,
   TouchableOpacity, RefreshControl, TextInput, Vibration, Platform,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -113,7 +113,6 @@ const HomeScreen = () => {
   const [requiredCredits, setRequiredCredits]= useState(0);
   const [refreshing,      setRefreshing]     = useState(false);
   const [userName,        setUserName]       = useState('');
-  const [photoURL,        setPhotoURL]       = useState<string | null>(null);
 
   // ── Timer ─────────────────────────────────────────────────────────────────
   const [timerRunning,  setTimerRunning]  = useState(false);
@@ -238,7 +237,6 @@ const HomeScreen = () => {
           const d = snap.data();
           setRequiredCredits(+(d.requiredCredits ?? 0));
           setUserName(d.name || '');
-          setPhotoURL(d.photoURL || null);
         }
       }
     } catch (err) { console.log(err); }
@@ -274,7 +272,6 @@ const HomeScreen = () => {
   const urgentDayColor = (d: number) => d === 0 ? NEON_PINK : d <= 2 ? '#ffa94d' : NEON_GREEN;
   const urgentDayLabel = (d: number) => d === 0 ? 'היום!' : d === 1 ? 'מחר' : `${d} ימים`;
 
-  const initials = userName ? userName.split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2) : '?';
 
   // Timeline: yesterday + today + 5 ahead
   const timelineDays = Array.from({ length: 7 }, (_, i) => {
@@ -308,14 +305,6 @@ const HomeScreen = () => {
 
           {/* LEFT — avatar + user info */}
           <View style={s.heroLeft}>
-            <View style={s.avatarGlowRing}>
-              {photoURL
-                ? <Image source={{ uri: photoURL }} style={s.avatarImg} />
-                : <View style={s.avatarFallback}>
-                    <Text style={s.avatarInitials}>{initials}</Text>
-                  </View>
-              }
-            </View>
             <Text style={s.heroName} numberOfLines={1}>{userName || 'סטודנט'}</Text>
             <Text style={s.heroSubtitle}>{todayLabel}</Text>
             <View style={s.heroStatsMiniRow}>
