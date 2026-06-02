@@ -10,7 +10,7 @@ import TasksScreen   from './src/screens/TasksScreen';
 import GradesScreen  from './src/screens/GradesScreen';
 import LibraryScreen from './src/screens/LibraryScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
-import AppSidebar, { SIDEBAR_W, TOP_H } from './src/components/AppSidebar';
+import AppSidebar, { SIDEBAR_W, SIDEBAR_W_COLLAPSED, TOP_H } from './src/components/AppSidebar';
 
 const Tab = createBottomTabNavigator();
 
@@ -30,7 +30,8 @@ const DashboardScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout }: Pro
 
   const [userName,     setUserName]     = useState('');
   const [userAvatar,   setUserAvatar]   = useState<string | null>(null);
-  const [sidebarOpen,  setSidebarOpen]  = useState(false);
+  const [sidebarOpen,      setSidebarOpen]      = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   useEffect(() => {
     const user = auth.currentUser;
@@ -54,8 +55,10 @@ const DashboardScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout }: Pro
       isOpen={sidebarOpen}
       onOpen={() => setSidebarOpen(true)}
       onClose={() => setSidebarOpen(false)}
+      isCollapsed={sidebarCollapsed}
+      onToggleCollapse={() => setSidebarCollapsed(prev => !prev)}
     />
-  ), [userName, userAvatar, onLogout, isWide, sidebarOpen]);
+  ), [userName, userAvatar, onLogout, isWide, sidebarOpen, sidebarCollapsed]);
 
   return (
     <ThemeContext.Provider value={theme}>
@@ -63,7 +66,7 @@ const DashboardScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout }: Pro
         tabBar={renderTabBar}
         sceneContainerStyle={
           isWide
-            ? { marginLeft: SIDEBAR_W }
+            ? { marginLeft: sidebarCollapsed ? SIDEBAR_W_COLLAPSED : SIDEBAR_W }
             : { paddingTop: TOP_H }
         }
         screenOptions={{ headerShown: false }}
