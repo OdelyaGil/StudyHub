@@ -74,28 +74,31 @@ const formatTime = (secs: number) => {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 };
 
-// ── LED Bars (decorative chart) ───────────────────────────────────────────────
-const LED_HEIGHTS = [0.45, 0.70, 0.55, 0.90, 0.65, 1.0, 0.80];
-const LedBars = ({ color }: { color: string }) => (
-  <View style={s.ledContainer}>
-    {LED_HEIGHTS.map((h, i) => (
-      <View key={i} style={[s.ledBar, {
-        height: 40 * h, backgroundColor: color,
-        shadowColor: color, shadowOpacity: 0.7, shadowRadius: 4, elevation: 3,
-      }]} />
-    ))}
-  </View>
-);
 
-// ── Glow Ring (progress indicator) ───────────────────────────────────────────
-const GlowRing = ({ pct, color, label }: { pct: number; color: string; label: string }) => (
-  <View style={s.glowRingWrap}>
-    <View style={[s.glowRing, { borderColor: color, shadowColor: color }]}>
-      <Text style={[s.glowRingPct, { color }]}>{pct > 0 ? `${pct}%` : '--'}</Text>
+
+// ── Glow Ring — conic-gradient arc on web, border fallback on native ──────────
+const GlowRing = ({ pct, color, label }: { pct: number; color: string; label: string }) => {
+  const deg = Math.max(0, Math.min(360, pct * 3.6));
+  return (
+    <View style={s.glowRingWrap}>
+      <View style={[
+        s.glowRingOuter,
+        Platform.OS === 'web'
+          ? {
+              background: `conic-gradient(${color} ${deg}deg, rgba(255,255,255,0.07) ${deg}deg)`,
+              filter: `drop-shadow(0 0 6px ${color}) drop-shadow(0 0 12px ${color}66)`,
+            } as any
+          : { borderColor: color, borderWidth: 4,
+              shadowColor: color, shadowOpacity: 0.7, shadowRadius: 10, shadowOffset: { width: 0, height: 0 } }
+      ]}>
+        <View style={[s.glowRingInner, { backgroundColor: HERO_BG }]}>
+          <Text style={[s.glowRingPct, { color }]}>{pct > 0 ? `${pct}%` : '--'}</Text>
+        </View>
+      </View>
+      <Text style={[s.heroMetaLabel, { color: 'rgba(255,255,255,0.45)' }]}>{label}</Text>
     </View>
-    <Text style={[s.heroMetaLabel, { color: 'rgba(255,255,255,0.45)' }]}>{label}</Text>
-  </View>
-);
+  );
+};
 
 // ── Component ─────────────────────────────────────────────────────────────────
 const HomeScreen = () => {
@@ -285,19 +288,13 @@ const HomeScreen = () => {
 
         <View style={s.heroInner}>
 
-          {/* CENTER — big average stat */}
+          {/* CENTER — big average stat (centered) */}
           <View style={s.heroCenter}>
             <Text style={[s.heroStatBig, { textShadow: `0 0 18px ${NEON_BLUE}, 0 0 36px rgba(0,229,255,0.45)` } as any]}>{avg ?? '--'}</Text>
             <Text style={s.heroStatLabel}>AVERAGE SCORE</Text>
           </View>
 
-          {/* RIGHT — LED bars (attendance/schedule) */}
-          <View style={s.heroMetaBlock}>
-            <LedBars color={NEON_GREEN} />
-            <Text style={s.heroMetaLabel}>לוח זמנים</Text>
-          </View>
-
-          {/* FAR RIGHT — glow ring (grades) */}
+          {/* RIGHT — progress ring (grades) */}
           <GlowRing pct={creditsPct > 0 ? creditsPct : avgPct} color={NEON_PINK} label="ציונים" />
         </View>
       </View>
@@ -567,12 +564,9 @@ const s = StyleSheet.create({
   ledBar:       { width: 5, borderRadius: 3 },
 
   // Glow ring
-  glowRing: {
-    width: 56, height: 56, borderRadius: 28,
-    borderWidth: 3, justifyContent: 'center', alignItems: 'center',
-    shadowOpacity: 0.7, shadowRadius: 10, shadowOffset: { width: 0, height: 0 },
-  },
-  glowRingPct: { fontSize: 13, fontWeight: '900' },
+  glowRingOuter: { width: 72, height: 72, borderRadius: 36, justifyContent: 'center', alignItems: 'center' },
+  glowRingInner: { width: 50, height: 50, borderRadius: 25, justifyContent: 'center', alignItems: 'center' },
+  glowRingPct:   { fontSize: 13, fontWeight: '900' },
 
   // ── Content cards ──────────────────────────────────────────────────────────
   cardsRow:    { flexDirection: 'row', gap: 12, marginBottom: 16 },
