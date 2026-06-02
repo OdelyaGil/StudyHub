@@ -262,6 +262,7 @@ const HomeScreen = () => {
   const topicsReview  = topics.filter(t => t.needsReview).length;
   const earnedCredits = grades.reduce((s: number, g: any) => s + (g.credits || 0), 0);
   const creditsPct    = requiredCredits > 0 ? Math.min(100, Math.round((earnedCredits / requiredCredits) * 100)) : 0;
+  const creditsLeft   = requiredCredits > 0 ? Math.max(0, requiredCredits - earnedCredits) : 0;
   const studyRecs     = Array.from(new Set(urgentTasks.filter(t => t.course).map(t => t.course)))
     .map(course => {
       const nearest = urgentTasks.find(t => t.course === course)!;
@@ -315,7 +316,7 @@ const HomeScreen = () => {
 
           {/* CENTER — big average stat */}
           <View style={s.heroCenter}>
-            <Text style={s.heroStatBig}>{avg ?? '--'}</Text>
+            <Text style={[s.heroStatBig, { textShadow: `0 0 18px ${NEON_BLUE}, 0 0 36px rgba(0,229,255,0.45)` } as any]}>{avg ?? '--'}</Text>
             <Text style={s.heroStatLabel}>AVERAGE SCORE</Text>
           </View>
 
@@ -522,6 +523,39 @@ const HomeScreen = () => {
       )}
 
       {/* ══════════════════════════════════════════════════════════════════════
+          CREDIT POINTS PROGRESS
+      ══════════════════════════════════════════════════════════════════════ */}
+      <TouchableOpacity style={s.whiteCard} onPress={() => navigation.navigate('Grades')} activeOpacity={0.85}>
+        <View style={s.whiteCardHeader}>
+          <MaterialCommunityIcons name="school-outline" size={18} color={theme.accent} />
+          <Text style={[s.whiteCardTitle, { color: theme.accent }]}>התקדמות נקודות זכות</Text>
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
+          <Text style={{ fontSize: 36, fontWeight: '900', color: theme.text }}>{earnedCredits}</Text>
+          <Text style={{ fontSize: 14, fontWeight: '600', color: theme.textSub }}>
+            {requiredCredits > 0 ? `/ ${requiredCredits} נ"ז` : 'נ"ז נצברו'}
+          </Text>
+        </View>
+        {requiredCredits > 0 ? (
+          <>
+            <View style={[s.timerBarBg, { backgroundColor: theme.accent + '22', marginVertical: 10 }]}>
+              <View style={[s.timerBarFill, { width: `${creditsPct}%` as any, backgroundColor: theme.accent }]} />
+            </View>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              <Text style={{ fontSize: 13, fontWeight: '800', color: theme.accent }}>{creditsPct}% הושלמו</Text>
+              {creditsLeft > 0 && (
+                <Text style={{ fontSize: 12, color: theme.textSub }}>עוד {creditsLeft} נ"ז לסיום</Text>
+              )}
+            </View>
+          </>
+        ) : (
+          <Text style={{ fontSize: 12, color: theme.textSub, textAlign: 'right', marginTop: 8 }}>
+            הגדר נ"ז נדרשות בפרופיל כדי לראות את ההתקדמות
+          </Text>
+        )}
+      </TouchableOpacity>
+
+      {/* ══════════════════════════════════════════════════════════════════════
           MOTIVATIONAL TIP
       ══════════════════════════════════════════════════════════════════════ */}
       <View style={[s.whiteCard, { borderLeftWidth: 3, borderLeftColor: NEON_GREEN }]}>
@@ -587,8 +621,7 @@ const s = StyleSheet.create({
   heroStatsMiniRow:  { flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 5 },
   heroStatsMiniText: { fontSize: 9, color: NEON_BLUE, fontWeight: '600' },
 
-  heroStatBig:   { fontSize: 44, fontWeight: '900', color: '#fff', letterSpacing: 1,
-    shadowColor: NEON_BLUE, shadowOpacity: 0.5, shadowRadius: 10 },
+  heroStatBig:   { fontSize: 44, fontWeight: '900', color: '#fff', letterSpacing: 1 },
   heroStatLabel: { fontSize: 9, fontWeight: '700', color: 'rgba(255,255,255,0.4)', letterSpacing: 2, textTransform: 'uppercase', marginTop: 4 },
   heroMetaLabel: { fontSize: 9, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1, marginTop: 6, textAlign: 'center' },
 
