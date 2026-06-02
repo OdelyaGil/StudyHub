@@ -941,11 +941,11 @@ const styles = StyleSheet.create({
   viewTabText:{ fontSize: 13, fontWeight: '700' },
 
   // Shared navigation bar (day / week / year views)
-  navBar:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, height: CAL_TOP_H + 8, marginHorizontal: 16, marginBottom: 8, borderRadius: 16, shadowColor: '#4A5B9A', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 2 },
+  navBar:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, height: CAL_TOP_H + 8, marginHorizontal: 16, marginBottom: 8, borderRadius: 16, shadowColor: '#3D1568', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 2 },
   navTitle:  { fontSize: 15, fontWeight: '700', flex: 1, textAlign: 'center' },
 
   // Month calendar
-  calBlock:     { marginHorizontal: 16, borderRadius: 20, marginBottom: 10, shadowColor: '#4A5B9A', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.10, shadowRadius: 12, elevation: 4, overflow: 'hidden' },
+  calBlock:     { marginHorizontal: 16, borderRadius: 20, marginBottom: 10, shadowColor: '#3D1568', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.13, shadowRadius: 22, elevation: 8, overflow: 'hidden', ...Platform.select({ web: { boxShadow: '6px 6px 20px rgba(61,21,104,0.12), -3px -3px 12px rgba(255,255,255,0.88)' } as any, default: {} }) },
   calHeader:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, height: CAL_TOP_H },
   navBtn:       { padding: 6 },
   monthYearBtn: { flexDirection: 'row', alignItems: 'center', gap: 2, flex: 1, justifyContent: 'center' },
@@ -972,7 +972,7 @@ const styles = StyleSheet.create({
   eventsSectionTitle: { fontSize: 13, fontWeight: '700', marginBottom: 12, textAlign: 'right', color: '#9299B8', textTransform: 'uppercase', letterSpacing: 0.8 },
   noEventsText:       { fontSize: 13, textAlign: 'center', paddingVertical: 24, opacity: 0.6 },
 
-  eventItem:    { flexDirection: 'row', alignItems: 'center', borderRadius: 20, marginBottom: 10, borderRightWidth: 4, shadowColor: '#4A5B9A', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.10, shadowRadius: 12, elevation: 4, overflow: 'hidden' },
+  eventItem:    { flexDirection: 'row', alignItems: 'center', borderRadius: 20, marginBottom: 10, borderRightWidth: 4, shadowColor: '#3D1568', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.11, shadowRadius: 18, elevation: 6, overflow: 'hidden', ...Platform.select({ web: { boxShadow: '6px 6px 20px rgba(61,21,104,0.11), -3px -3px 12px rgba(255,255,255,0.88)' } as any, default: {} }) },
   eventBody:    { flex: 1, paddingVertical: 12, paddingHorizontal: 14 },
   eventTitle:   { fontSize: 14, fontWeight: '700', marginBottom: 4, textAlign: 'right' },
   eventMeta:    { flexDirection: 'row', gap: 10, flexWrap: 'wrap' },
@@ -982,14 +982,14 @@ const styles = StyleSheet.create({
   actionBtn:    { padding: 8 },
 
   // Week view
-  weekDayHeader:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, marginHorizontal: 16, marginBottom: 6, borderRadius: 14, shadowColor: '#4A5B9A', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.07, shadowRadius: 8, elevation: 2 },
+  weekDayHeader:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, marginHorizontal: 16, marginBottom: 6, borderRadius: 14, shadowColor: '#3D1568', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.07, shadowRadius: 8, elevation: 2 },
   weekDayName:    { fontSize: 14, fontWeight: '700', textAlign: 'right' },
   weekDayCount:   { fontSize: 12, fontWeight: '600' },
   weekNoEventsText:{ fontSize: 12, textAlign: 'right', paddingHorizontal: 16, paddingVertical: 6, opacity: 0.5 },
 
   // Year view mini calendars
   yearGrid:       { flexDirection: 'row', flexWrap: 'wrap', padding: 16, gap: 12, paddingBottom: 100 },
-  miniMonth:      { width: '47%', borderRadius: 20, borderWidth: 0, padding: 12, shadowColor: '#4A5B9A', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.10, shadowRadius: 12, elevation: 4 },
+  miniMonth:      { width: '47%', borderRadius: 20, borderWidth: 0, padding: 12, shadowColor: '#3D1568', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.10, shadowRadius: 12, elevation: 4 },
   miniMonthTitle: { fontSize: 13, fontWeight: '700', textAlign: 'center', marginBottom: 8 },
   miniDayRow:     { flexDirection: 'row', marginBottom: 2 },
   miniDayLabel:   { width: '14.2857%', textAlign: 'center', fontSize: 8, fontWeight: '600' },

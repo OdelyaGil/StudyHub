@@ -13,12 +13,31 @@ import { scheduleAllNotifications, scheduleTimerNotification, cancelTimerNotific
 import { useCustomAlert } from '../hooks/useCustomAlert';
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
-const NEON_BLUE  = '#00E5FF';
-const NEON_GREEN = '#00D4AA';
-const NEON_PINK  = '#FF6B9D';
-const PURPLE     = '#9B5CF6';
-const HERO_BG    = '#1C1F2E';
-const PAGE_BG    = '#EBF0FA';
+const PAGE_BG    = '#EEF0F9';   // light lavender-white
+const DARK_CARD  = '#3D1568';   // hero card purple
+const SOFT_TEAL  = '#00C9B1';
+const NEON_PINK  = '#EF5B8A';
+const NEON_BLUE  = '#00C8E8';
+const NEON_GREEN = '#00BFA5';
+
+// ── Neumorphic shadows ────────────────────────────────────────────────────────
+// outer raised shadow for light-bg cards
+const NEU_OUTER = Platform.select<object>({
+  web: { boxShadow: '8px 8px 22px #C0C3D8, -6px -6px 18px #FFFFFF' } as any,
+  default: {
+    shadowColor: '#B0B3C8',
+    shadowOffset: { width: 5, height: 5 },
+    shadowOpacity: 0.7,
+    shadowRadius: 14,
+    elevation: 8,
+  },
+});
+
+// inset pressed for search / progress bars
+const NEU_INSET = Platform.select<object>({
+  web: { boxShadow: 'inset 4px 4px 10px #C0C3D8, inset -3px -3px 8px #FFFFFF' } as any,
+  default: {},
+});
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const HEB_DAYS   = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
@@ -27,13 +46,12 @@ const HEB_MONTHS = ['ינואר','פברואר','מרץ','אפריל','מאי','
 const STUDY_TIPS = [
   'תלמדי בסביבה שקטה ללא הפרעות — הריכוז עולה ב-40%',
   'שיטת פומודורו: 25 דקות לימוד, 5 דקות הפסקה',
-  'חזרה על חומר לפני השינה משפרת שינון לטווח ארוך',
+  'חזרה על חומר לפני השינה משפרת זיכרון לטווח ארוך',
   'הסבירי את החומר בקול רם — זה מחזק הבנה עמוקה',
   'חלקי חומר קשה למנות קטנות ובדקי את עצמך בסוף',
   'שמרי על לחות — שתיית מים משפרת ריכוז וזיכרון',
   'לימוד בקבוצות קטנות יכול להאיר זוויות חדשות',
 ];
-
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const toISO = (d: Date) => {
@@ -77,9 +95,7 @@ const formatTime = (secs: number) => {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 };
 
-
-
-// ── Glow Ring — conic-gradient arc on web, border fallback on native ──────────
+// ── Soft Ring ─────────────────────────────────────────────────────────────────
 const GlowRing = ({ pct, color, label }: { pct: number; color: string; label: string }) => {
   const deg = Math.max(0, Math.min(360, pct * 3.6));
   return (
@@ -88,13 +104,12 @@ const GlowRing = ({ pct, color, label }: { pct: number; color: string; label: st
         s.glowRingOuter,
         Platform.OS === 'web'
           ? {
-              background: `conic-gradient(${color} ${deg}deg, rgba(255,255,255,0.07) ${deg}deg)`,
-              filter: `drop-shadow(0 0 6px ${color}) drop-shadow(0 0 12px ${color}66)`,
+              background: `conic-gradient(${color} ${deg}deg, rgba(255,255,255,0.12) ${deg}deg)`,
+              boxShadow: '5px 5px 14px rgba(0,0,0,0.5), -3px -3px 8px rgba(255,255,255,0.07)',
             } as any
-          : { borderColor: color, borderWidth: 4,
-              shadowColor: color, shadowOpacity: 0.7, shadowRadius: 10, shadowOffset: { width: 0, height: 0 } }
+          : { borderColor: color, borderWidth: 4 }
       ]}>
-        <View style={[s.glowRingInner, { backgroundColor: HERO_BG }]}>
+        <View style={[s.glowRingInner, { backgroundColor: DARK_CARD }]}>
           <Text style={[s.glowRingPct, { color }]}>{pct > 0 ? `${pct}%` : '--'}</Text>
         </View>
       </View>
@@ -112,7 +127,6 @@ const HomeScreen = () => {
   const [grades,          setGrades]         = useState<any[]>([]);
   const [tasks,           setTasks]          = useState<any[]>([]);
   const [events,          setEvents]         = useState<any[]>([]);
-  const [topics,          setTopics]         = useState<any[]>([]);
   const [requiredCredits, setRequiredCredits]= useState(0);
   const [refreshing,      setRefreshing]     = useState(false);
   const [userName,        setUserName]       = useState('');
@@ -228,10 +242,10 @@ const HomeScreen = () => {
 
   const loadAll = async () => {
     try {
-      const [g, t, e, tp] = await Promise.all([
-        loadField('grades'), loadField('tasks'), loadField('schedule'), loadField('topics'),
+      const [g, t, e] = await Promise.all([
+        loadField('grades'), loadField('tasks'), loadField('schedule'),
       ]);
-      setGrades(g ?? []); setTasks(t ?? []); setEvents(e ?? []); setTopics(tp ?? []);
+      setGrades(g ?? []); setTasks(t ?? []); setEvents(e ?? []);
       scheduleAllNotifications(t ?? [], e ?? []);
       const user = auth.currentUser;
       if (user) {
@@ -254,23 +268,23 @@ const HomeScreen = () => {
   const todayLabel = `יום ${HEB_DAYS[today.getDay()]}, ${today.getDate()} ב${HEB_MONTHS[today.getMonth()]}`;
   const firstName  = userName ? userName.split(' ')[0] : '';
 
-  const activeTasks    = tasks.filter(t => !t.completed);
-  const completedCnt   = tasks.filter(t => t.completed).length;
-  const urgentTasks   = activeTasks
+  const activeTasks  = tasks.filter(t => !t.completed);
+  const completedCnt = tasks.filter(t => t.completed).length;
+  const urgentTasks  = activeTasks
     .filter(t => { const d = daysUntil(t.dueDate); return d >= 0 && d <= 7; })
     .sort((a, b) => daysUntil(a.dueDate) - daysUntil(b.dueDate));
   const todayEvents   = events.filter(e => occursOnISO(e, todayISO)).sort((a, b) => a.startTime.localeCompare(b.startTime));
-  const nowStr         = `${String(today.getHours()).padStart(2,'0')}:${String(today.getMinutes()).padStart(2,'0')}`;
+  const nowStr        = `${String(today.getHours()).padStart(2,'0')}:${String(today.getMinutes()).padStart(2,'0')}`;
   const upcomingEvents = todayEvents.filter(ev => (ev.endTime || ev.startTime) >= nowStr);
   const next7Dates    = Array.from({ length: 7 }, (_, i) => { const d = new Date(today); d.setDate(d.getDate() + i + 1); return toISO(d); });
   const next7Events   = next7Dates.flatMap(iso => events.filter(e => occursOnISO(e, iso)));
   const avg           = calcWeightedAvg(grades);
   const avgPct        = avg ? Math.min(100, Math.round(avg)) : 0;
-  const topicsReview  = topics.filter(t => t.needsReview).length;
-  const earnedCredits = grades.reduce((s: number, g: any) => s + (g.credits || 0), 0);
+  const earnedCredits = grades.reduce((sum: number, g: any) => sum + (g.credits || 0), 0);
   const creditsPct    = requiredCredits > 0 ? Math.min(100, Math.round((earnedCredits / requiredCredits) * 100)) : 0;
-  const creditsLeft   = requiredCredits > 0 ? Math.max(0, requiredCredits - earnedCredits) : 0;
-  const studyRecs     = Array.from(new Set(urgentTasks.filter(t => t.course).map(t => t.course)))
+  const ringPct       = creditsPct > 0 ? creditsPct : avgPct;
+
+  const studyRecs = Array.from(new Set(urgentTasks.filter(t => t.course).map(t => t.course)))
     .map(course => {
       const nearest = urgentTasks.find(t => t.course === course)!;
       const days = daysUntil(nearest.dueDate);
@@ -280,365 +294,322 @@ const HomeScreen = () => {
   const urgentDayColor = (d: number) => d === 0 ? NEON_PINK : d <= 2 ? '#ffa94d' : NEON_GREEN;
   const urgentDayLabel = (d: number) => d === 0 ? 'היום!' : d === 1 ? 'מחר' : `${d} ימים`;
 
-
-
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <View style={{ flex: 1, backgroundColor: PAGE_BG }}>
-    <ScrollView
-      style={{ flex: 1 }}
-      contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={NEON_BLUE} />}
-    >
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={SOFT_TEAL} />}
+      >
 
-      {/* ══════════════════════════════════════════════════════════════════════
-          HERO CARD — dark matte, neon glow
-      ══════════════════════════════════════════════════════════════════════ */}
-      <View style={s.heroCard}>
-
-        <View style={s.heroInner}>
-
-          {/* LEFT — greeting + date */}
-          <View style={s.heroLeft}>
-            {firstName ? <Text style={s.heroGreeting}>שלום, {firstName} 👋</Text> : null}
-            <Text style={s.heroDate}>{todayLabel}</Text>
+        {/* ══ HERO CARD (dark purple) ════════════════════════════════════════ */}
+        <View style={s.heroCard}>
+          <View style={s.heroInner}>
+            {/* LEFT — greeting */}
+            <View style={s.heroLeft}>
+              {firstName ? <Text style={s.heroGreeting}>שלום, {firstName} 🧡</Text> : null}
+              <Text style={s.heroDate}>{todayLabel}</Text>
+            </View>
+            {/* CENTER — average */}
+            <View style={s.heroCenter}>
+              <Text style={s.heroStatBig}>{avg ?? '--'}</Text>
+              <Text style={s.heroStatLabel}>AVERAGE SCORE</Text>
+            </View>
+            {/* RIGHT — ring */}
+            <GlowRing pct={ringPct} color={SOFT_TEAL} label="ציונים" />
           </View>
 
-          {/* CENTER — big average stat */}
-          <View style={s.heroCenter}>
-            <Text style={[s.heroStatBig, { textShadow: `0 0 18px ${NEON_BLUE}, 0 0 36px rgba(0,229,255,0.45)` } as any]}>{avg ?? '--'}</Text>
-            <Text style={s.heroStatLabel}>AVERAGE SCORE</Text>
-          </View>
-
-          {/* RIGHT — progress ring (grades) */}
-          <GlowRing pct={creditsPct > 0 ? creditsPct : avgPct} color={NEON_PINK} label="ציונים" />
-        </View>
-
-        {/* BOTTOM STATS ROW */}
-        <View style={s.heroBottomRow}>
-          <View style={s.heroBottomStat}>
-            <Text style={s.heroBottomNum}>{activeTasks.length}</Text>
-            <Text style={s.heroBottomLabel}>מטלות פעילות</Text>
-          </View>
-          <View style={s.heroBottomDivider} />
-          <View style={s.heroBottomStat}>
-            <Text style={s.heroBottomNum}>{next7Events.length}</Text>
-            <Text style={s.heroBottomLabel}>אירועים בשבוע</Text>
-          </View>
-          <View style={s.heroBottomDivider} />
-          <View style={s.heroBottomStat}>
-            <Text style={s.heroBottomNum}>{earnedCredits}</Text>
-            <Text style={s.heroBottomLabel}>נ"ז נצברו</Text>
-          </View>
-        </View>
-      </View>
-
-      {/* ══════════════════════════════════════════════════════════════════════
-          DEADLINES (left) + TODAY EVENTS vertical (right)
-      ══════════════════════════════════════════════════════════════════════ */}
-      <View style={s.cardsRow}>
-
-        {/* LEFT — Deadlines card */}
-        <TouchableOpacity style={[s.contentCard, { flex: 2, marginBottom: 0 }]} onPress={() => navigation.navigate('Tasks')} activeOpacity={0.9}>
-          <View style={s.cardTopRow}>
-            <Text style={s.cardMeta}>{urgentTasks.length} השבוע</Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <MaterialCommunityIcons name="clipboard-alert-outline" size={15} color={NEON_PINK} />
-              <Text style={[s.whiteCardTitle, { color: NEON_PINK }]}>דדליינים</Text>
+          <View style={s.heroBottomRow}>
+            <View style={s.heroBottomStat}>
+              <Text style={s.heroBottomNum}>{activeTasks.length}</Text>
+              <Text style={s.heroBottomLabel}>מטלות פעילות</Text>
+            </View>
+            <View style={s.heroBottomDivider} />
+            <View style={s.heroBottomStat}>
+              <Text style={s.heroBottomNum}>{next7Events.length}</Text>
+              <Text style={s.heroBottomLabel}>אירועים בשבוע</Text>
+            </View>
+            <View style={s.heroBottomDivider} />
+            <View style={s.heroBottomStat}>
+              <Text style={s.heroBottomNum}>{earnedCredits}</Text>
+              <Text style={s.heroBottomLabel}>נ״ז נצברו</Text>
             </View>
           </View>
+        </View>
 
-          {urgentTasks.length > 0 ? urgentTasks.slice(0, 3).map(task => {
-            const d = daysUntil(task.dueDate);
-            const col = urgentDayColor(d);
-            return (
-              <View key={task.id} style={[s.taskPill, { borderColor: col + '55', backgroundColor: col + '10' }]}>
-                <View style={{ flex: 1 }}>
-                  <Text style={s.taskPillTitle} numberOfLines={1}>{task.name}</Text>
-                  {task.course ? <Text style={s.taskPillSub}>{task.course}</Text> : null}
-                </View>
-                <View style={[s.taskPillBadge, { backgroundColor: col + '22' }]}>
-                  <Text style={[s.taskPillBadgeText, { color: col }]}>{urgentDayLabel(d)}</Text>
-                </View>
+        {/* ══ TWO-COLUMN ROW ════════════════════════════════════════════════ */}
+        <View style={s.cardsRow}>
+
+          {/* LEFT — Deadlines */}
+          <TouchableOpacity
+            style={[s.lightCard, { flex: 2, marginBottom: 0 }]}
+            onPress={() => navigation.navigate('Tasks')}
+            activeOpacity={0.9}
+          >
+            <View style={s.cardTopRow}>
+              <Text style={s.cardMeta}>{urgentTasks.length} השבוע</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <MaterialCommunityIcons name="clipboard-alert-outline" size={15} color={SOFT_TEAL} />
+                <Text style={[s.cardTitle, { color: SOFT_TEAL }]}>דדליינים</Text>
               </View>
-            );
-          }) : (
-            <View style={s.miniStatsGrid}>
-              {[
-                { icon: 'checkbox-marked-circle-outline' as const, color: NEON_GREEN,  val: completedCnt,       label: 'הושלמו'  },
-                { icon: 'clipboard-list-outline'         as const, color: '#667eea',   val: activeTasks.length, label: 'פעילות'  },
-                { icon: 'calendar-alert-outline'         as const, color: '#ffa94d',   val: urgentTasks.length, label: 'דחופות'  },
-              ].map(item => (
-                <View key={item.label} style={s.miniStatCell}>
-                  <MaterialCommunityIcons name={item.icon} size={20} color={item.color} />
-                  <Text style={[s.miniStatNum, { color: item.color }]}>{item.val}</Text>
-                  <Text style={[s.miniStatLabel, { color: theme.textSub }]}>{item.label}</Text>
+            </View>
+
+            {urgentTasks.length > 0 ? urgentTasks.slice(0, 3).map(task => {
+              const d = daysUntil(task.dueDate);
+              const col = urgentDayColor(d);
+              return (
+                <View key={task.id} style={[s.taskPill, { borderColor: col + '55', backgroundColor: col + '10' }]}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={s.taskPillTitle} numberOfLines={1}>{task.name}</Text>
+                    {task.course ? <Text style={s.taskPillSub}>{task.course}</Text> : null}
+                  </View>
+                  <View style={[s.taskPillBadge, { backgroundColor: col + '22' }]}>
+                    <Text style={[s.taskPillBadgeText, { color: col }]}>{urgentDayLabel(d)}</Text>
+                  </View>
+                </View>
+              );
+            }) : (
+              <View style={s.miniStatsGrid}>
+                {[
+                  { icon: 'check-circle-outline'     as const, color: NEON_GREEN,  val: completedCnt,       label: 'הושלמו' },
+                  { icon: 'clipboard-list-outline'   as const, color: NEON_BLUE,   val: activeTasks.length, label: 'פעילות' },
+                  { icon: 'flag-outline'              as const, color: NEON_PINK,   val: urgentTasks.length, label: 'דחופות' },
+                ].map(item => {
+                  const c = item.val === 0 ? '#C0C0D0' : item.color;
+                  return (
+                    <View key={item.label} style={s.miniStatCell}>
+                      <MaterialCommunityIcons name={item.icon} size={20} color={c} />
+                      <Text style={[s.miniStatNum, { color: c }]}>{item.val}</Text>
+                      <Text style={[s.miniStatLabel, { color: '#9299B8' }]}>{item.label}</Text>
+                    </View>
+                  );
+                })}
+              </View>
+            )}
+
+            {urgentTasks.length > 3 && (
+              <Text style={s.cardMore}>עוד {urgentTasks.length - 3} →</Text>
+            )}
+          </TouchableOpacity>
+
+          {/* RIGHT — Events */}
+          <View style={{ flex: 3 }}>
+            <View style={[s.eventsHeaderRow, { marginBottom: 8 }]}>
+              <Text style={s.eventsMeta}>{todayEvents.length} ימים</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <MaterialCommunityIcons name="calendar-today" size={15} color={NEON_BLUE} />
+                <Text style={[s.cardTitle, { color: NEON_BLUE }]}>אירועים היום</Text>
+              </View>
+            </View>
+
+            {upcomingEvents.length > 0 ? upcomingEvents.slice(0, 4).map(ev => (
+              <TouchableOpacity
+                key={ev.id}
+                style={[s.eventVertRow, { borderLeftColor: ev.color || NEON_BLUE }]}
+                onPress={() => navigation.navigate('Events')}
+                activeOpacity={0.85}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={s.eventTitle} numberOfLines={1}>{ev.title}</Text>
+                  <Text style={[s.eventTime, { color: ev.color || NEON_BLUE }]}>
+                    {ev.startTime}{ev.endTime ? ` – ${ev.endTime}` : ''}
+                  </Text>
+                </View>
+                <MaterialCommunityIcons name="chevron-left" size={14} color="#ccc" />
+              </TouchableOpacity>
+            )) : (
+              <View style={[s.eventVertRow, { borderLeftColor: '#E8EDF5' }]}>
+                <Text style={[s.eventTitle, { color: '#aaa' }]}>
+                  {todayEvents.length > 0 ? 'כל האירועים להיום הסתיימו ✓' : 'אין אירועים היום'}
+                </Text>
+              </View>
+            )}
+
+            {upcomingEvents.length > 4 && (
+              <Text style={s.cardMore}>עוד {upcomingEvents.length - 4} →</Text>
+            )}
+          </View>
+        </View>
+
+        {/* ══ TIP STRIP ═════════════════════════════════════════════════════ */}
+        <View style={[s.lightCard, { borderLeftWidth: 3, borderLeftColor: SOFT_TEAL, paddingVertical: 12 }]}>
+          <View style={{ flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+            <MaterialCommunityIcons name="lightbulb-on-outline" size={15} color={SOFT_TEAL} />
+            <Text style={{ fontSize: 12, fontWeight: '700', color: SOFT_TEAL }}>טיפ יומי</Text>
+          </View>
+          <Text style={[s.tipText, { color: '#6B6B8A' }]} numberOfLines={3}>{tip}</Text>
+        </View>
+
+        {/* ══ STUDY RECS ════════════════════════════════════════════════════ */}
+        {studyRecs.length > 0 && (
+          <View style={s.lightCard}>
+            <View style={s.cardTopRow}>
+              <View />
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <MaterialCommunityIcons name="book-clock-outline" size={16} color="#ffa94d" />
+                <Text style={[s.cardTitle, { color: '#ffa94d' }]}>המלצות לימוד</Text>
+              </View>
+            </View>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              {studyRecs.map((rec, i) => (
+                <View key={i} style={[s.taskPill, { flex: 1, minWidth: 140, borderColor: '#ffa94d55', backgroundColor: '#ffa94d08' }]}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={s.taskPillTitle} numberOfLines={1}>{rec.course}</Text>
+                    <Text style={s.taskPillSub}>{rec.hours} שע׳ · {rec.taskName} · {rec.days} ימים</Text>
+                  </View>
                 </View>
               ))}
             </View>
-          )}
-
-          {urgentTasks.length > 3 && (
-            <Text style={s.cardMore}>עוד {urgentTasks.length - 3} →</Text>
-          )}
-        </TouchableOpacity>
-
-        {/* RIGHT — Events vertical (no card, floating rows) */}
-        <View style={{ flex: 3 }}>
-          <View style={[s.eventsHeaderRow, { marginBottom: 8 }]}>
-            <Text style={s.eventsMeta}>{todayEvents.length} היום</Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <MaterialCommunityIcons name="calendar-today" size={15} color={NEON_BLUE} />
-              <Text style={[s.whiteCardTitle, { color: NEON_BLUE }]}>אירועים היום</Text>
-            </View>
-          </View>
-
-          {upcomingEvents.length > 0 ? upcomingEvents.slice(0, 4).map(ev => (
-            <TouchableOpacity
-              key={ev.id}
-              style={[s.eventVertRow, { borderLeftColor: ev.color || NEON_BLUE }]}
-              onPress={() => navigation.navigate('Events')}
-              activeOpacity={0.85}
-            >
-              <View style={{ flex: 1 }}>
-                <Text style={s.eventTitle} numberOfLines={1}>{ev.title}</Text>
-                <Text style={[s.eventTime, { color: ev.color || NEON_BLUE }]}>
-                  {ev.startTime}{ev.endTime ? ` – ${ev.endTime}` : ''}
-                </Text>
-              </View>
-              <MaterialCommunityIcons name="chevron-left" size={14} color="#ccc" />
-            </TouchableOpacity>
-          )) : (
-            <View style={[s.eventVertRow, { borderLeftColor: '#E8EDF5' }]}>
-              <Text style={[s.eventTitle, { color: '#aaa' }]}>
-                {todayEvents.length > 0 ? 'כל האירועים להיום הסתיימו ✓' : 'אין אירועים היום'}
-              </Text>
-            </View>
-          )}
-
-          {upcomingEvents.length > 4 && (
-            <Text style={s.cardMore}>עוד {upcomingEvents.length - 4} →</Text>
-          )}
-        </View>
-      </View>
-
-      {/* ══════════════════════════════════════════════════════════════════════
-          TIP — full-width flat strip
-      ══════════════════════════════════════════════════════════════════════ */}
-      <View style={[s.whiteCard, { borderLeftWidth: 3, borderLeftColor: NEON_GREEN, paddingVertical: 12 }]}>
-        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-          <MaterialCommunityIcons name="lightbulb-on-outline" size={15} color={NEON_GREEN} />
-          <Text style={{ fontSize: 12, fontWeight: '700', color: NEON_GREEN }}>טיפ יומי</Text>
-        </View>
-        <Text style={[s.tipStripText, { color: theme.textSub }]} numberOfLines={3}>{tip}</Text>
-      </View>
-
-      {/* ══════════════════════════════════════════════════════════════════════
-          RECS — conditional, full-width
-      ══════════════════════════════════════════════════════════════════════ */}
-      {studyRecs.length > 0 && (
-        <View style={s.whiteCard}>
-          <View style={s.whiteCardHeader}>
-            <MaterialCommunityIcons name="book-clock-outline" size={16} color="#ffa94d" />
-            <Text style={[s.whiteCardTitle, { color: '#ffa94d' }]}>המלצות לימוד</Text>
-          </View>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-            {studyRecs.map((rec, i) => (
-              <View key={i} style={[s.taskPill, { flex: 1, minWidth: 140, borderColor: '#ffa94d55', backgroundColor: '#ffa94d10' }]}>
-                <View style={{ flex: 1 }}>
-                  <Text style={s.taskPillTitle} numberOfLines={1}>{rec.course}</Text>
-                  <Text style={s.taskPillSub}>{rec.hours} שע׳ · {rec.taskName} · {rec.days} ימים</Text>
-                </View>
-              </View>
-            ))}
-          </View>
-        </View>
-      )}
-
-      {/* ══════════════════════════════════════════════════════════════════════
-          STUDY TIMER
-      ══════════════════════════════════════════════════════════════════════ */}
-      <View style={s.whiteCard}>
-        <View style={s.whiteCardHeader}>
-          <MaterialCommunityIcons name="timer-outline" size={18} color={theme.accent} />
-          <Text style={[s.whiteCardTitle, { color: theme.accent }]}>טיימר לימוד עצמי</Text>
-          {timerDone && (
-            <View style={s.doneBadge}>
-              <Text style={s.doneBadgeText}>✓ הסתיים</Text>
-            </View>
-          )}
-        </View>
-
-        <Text style={[s.timerDisplay, { color: timerDone ? NEON_GREEN : timerLeft > 0 && timerLeft <= 60 ? NEON_PINK : theme.text } as any]}>
-          {timerLeft > 0 ? formatTime(timerLeft) : timerDone ? formatTime(0) : formatTime((parseInt(timerInput) || 25) * 60)}
-        </Text>
-        <Text style={[s.timerStatus, { color: theme.textSub }]}>
-          {timerRunning ? 'לומד...' : timerDone ? 'כל הכבוד!' : timerLeft > 0 ? 'בהפסקה' : 'מוכן להתחיל'}
-        </Text>
-
-        <View style={[s.timerBarBg, { backgroundColor: theme.accent + '22' }]}>
-          <View style={[s.timerBarFill, { width: `${timerPct}%` as any, backgroundColor: timerDone ? NEON_GREEN : theme.accent }]} />
-        </View>
-
-        {!timerRunning && timerLeft === 0 && (
-          <View style={s.timerPresets}>
-            {[15, 25, 45, 60].map(m => (
-              <TouchableOpacity
-                key={m}
-                style={[s.presetBtn, {
-                  borderColor: timerInput === String(m) ? theme.accent : theme.border,
-                  backgroundColor: timerInput === String(m) ? theme.accent + '18' : 'transparent',
-                }]}
-                onPress={() => setTimerInput(String(m))}
-              >
-                <Text style={[s.presetText, { color: timerInput === String(m) ? theme.accent : theme.textSub }]}>{m}</Text>
-              </TouchableOpacity>
-            ))}
-            <TextInput
-              style={[s.timerInput, { borderColor: theme.border, color: theme.text }]}
-              value={timerInput}
-              onChangeText={v => setTimerInput(v.replace(/[^0-9]/g, ''))}
-              keyboardType="number-pad" maxLength={3} textAlign="center"
-              placeholderTextColor={theme.textSub} placeholder="25"
-            />
           </View>
         )}
 
-        <View style={s.timerBtns}>
-          {!timerRunning ? (
-            <TouchableOpacity style={[s.timerStartBtn, { backgroundColor: theme.accent }]} onPress={handleTimerStart}>
-              <MaterialCommunityIcons name="play" size={18} color="#fff" />
-              <Text style={s.timerStartText}>{timerLeft > 0 ? 'המשך' : 'התחל'}</Text>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity style={[s.timerPauseBtn, { borderColor: theme.accent }]} onPress={handleTimerPause}>
-              <MaterialCommunityIcons name="pause" size={18} color={theme.accent} />
-              <Text style={[s.timerPauseText, { color: theme.accent }]}>השהה</Text>
-            </TouchableOpacity>
-          )}
-          {(timerLeft > 0 || timerDone) && (
-            <TouchableOpacity style={[s.timerResetBtn, { borderColor: theme.border }]} onPress={handleTimerReset}>
-              <MaterialCommunityIcons name="restart" size={18} color={theme.textSub} />
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
+        {/* ══ TIMER ═════════════════════════════════════════════════════════ */}
+        <View style={s.lightCard}>
+          <View style={s.cardTopRow}>
+            <View />
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <MaterialCommunityIcons name="timer-outline" size={18} color={SOFT_TEAL} />
+              <Text style={[s.cardTitle, { color: SOFT_TEAL }]}>טיימר ללימוד עצמי</Text>
+              {timerDone && (
+                <View style={s.doneBadge}>
+                  <Text style={s.doneBadgeText}>✓ הסתיים</Text>
+                </View>
+              )}
+            </View>
+          </View>
 
-    </ScrollView>
-    {alertNode}
+          <Text style={[
+            s.timerDisplay,
+            { color: timerDone ? NEON_GREEN : timerLeft > 0 && timerLeft <= 60 ? NEON_PINK : '#1A2052' },
+          ]}>
+            {timerLeft > 0 ? formatTime(timerLeft) : timerDone ? formatTime(0) : formatTime((parseInt(timerInput) || 25) * 60)}
+          </Text>
+
+          <Text style={s.timerStatus}>
+            {timerRunning ? 'לומד...' : timerDone ? 'כל הכבוד!' : timerLeft > 0 ? 'בהפסקה' : 'מוכן להתחיל'}
+          </Text>
+
+          <View style={[s.timerBarBg, NEU_INSET as any]}>
+            <View style={[s.timerBarFill, {
+              width: `${timerPct}%` as any,
+              backgroundColor: timerDone ? NEON_GREEN : SOFT_TEAL,
+            }]} />
+          </View>
+
+          {!timerRunning && timerLeft === 0 && (
+            <View style={s.timerPresets}>
+              {[15, 25, 45, 60].map(m => {
+                const active = timerInput === String(m);
+                return (
+                  <TouchableOpacity
+                    key={m}
+                    style={[s.presetBtn, NEU_OUTER as any, active && { borderColor: SOFT_TEAL, borderWidth: 1.5 }]}
+                    onPress={() => setTimerInput(String(m))}
+                  >
+                    <Text style={[s.presetText, { color: active ? SOFT_TEAL : '#9299B8' }]}>{m}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+              <TextInput
+                style={[s.timerInput, NEU_INSET as any]}
+                value={timerInput}
+                onChangeText={v => setTimerInput(v.replace(/[^0-9]/g, ''))}
+                keyboardType="number-pad" maxLength={3} textAlign="center"
+                placeholderTextColor="#9299B8" placeholder="25"
+              />
+            </View>
+          )}
+
+          <View style={s.timerBtns}>
+            {!timerRunning ? (
+              <TouchableOpacity style={[s.timerStartBtn, { backgroundColor: SOFT_TEAL }]} onPress={handleTimerStart}>
+                <MaterialCommunityIcons name="play" size={18} color="#fff" />
+                <Text style={s.timerStartText}>{timerLeft > 0 ? 'המשך' : 'התחל'}</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity style={[s.timerPauseBtn, { borderColor: SOFT_TEAL }]} onPress={handleTimerPause}>
+                <MaterialCommunityIcons name="pause" size={18} color={SOFT_TEAL} />
+                <Text style={[s.timerPauseText, { color: SOFT_TEAL }]}>השהה</Text>
+              </TouchableOpacity>
+            )}
+            {(timerLeft > 0 || timerDone) && (
+              <TouchableOpacity style={[s.timerResetBtn, NEU_OUTER as any]} onPress={handleTimerReset}>
+                <MaterialCommunityIcons name="restart" size={18} color="#9299B8" />
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+
+      </ScrollView>
+      {alertNode}
     </View>
   );
 };
 
 // ── Styles ────────────────────────────────────────────────────────────────────
-const CARD_SHADOW = {
-  shadowColor: '#4A5B9A' as string,
-  shadowOffset: { width: 0, height: 4 },
-  shadowOpacity: 0.10,
-  shadowRadius: 16,
-  elevation: 4,
-};
-
 const s = StyleSheet.create({
-  // ── Hero ───────────────────────────────────────────────────────────────────
+  // ── Hero card (dark) ───────────────────────────────────────────────────────
   heroCard: {
-    borderRadius: 24, padding: 20, marginBottom: 20,
-    backgroundColor: HERO_BG,
-    shadowColor: NEON_BLUE, shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.18, shadowRadius: 24, elevation: 10,
+    backgroundColor: DARK_CARD,
+    borderRadius: 28,
+    padding: 22,
+    marginBottom: 18,
+    shadowColor: '#1A0A3A',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.40,
+    shadowRadius: 32,
+    elevation: 14,
+    ...(Platform.OS === 'web'
+      ? { boxShadow: '0 12px 40px rgba(26,10,58,0.45)' } as any
+      : {}),
   },
-  allStatsBtn: {
-    position: 'absolute', top: 14, left: 14,
-    backgroundColor: PURPLE, paddingHorizontal: 12, paddingVertical: 7,
-    borderRadius: 20,
-    shadowColor: PURPLE, shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5, shadowRadius: 8,
-  },
-  allStatsText: { fontSize: 10, fontWeight: '800', color: '#fff', letterSpacing: 0.5 },
-
   heroInner:   { flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginTop: 4 },
-  heroLeft:    { width: 100, alignSelf: 'flex-start', paddingTop: 2 },
+  heroLeft:    { width: 110, alignSelf: 'flex-start', paddingTop: 2 },
   heroGreeting:{ fontSize: 17, fontWeight: '700', color: '#fff', textAlign: 'right' },
   heroDate:    { fontSize: 10, color: 'rgba(255,255,255,0.5)', textAlign: 'right', marginTop: 3 },
   heroCenter:  { flex: 1, alignItems: 'center' },
-  glowRingWrap:{ alignItems: 'center', width: 80 },
+  heroStatBig: { fontSize: 44, fontWeight: '900', color: '#fff', letterSpacing: 1 },
+  heroStatLabel: { fontSize: 9, fontWeight: '700', color: 'rgba(255,255,255,0.4)', letterSpacing: 2, textTransform: 'uppercase', marginTop: 4 },
+  heroMetaLabel: { fontSize: 9, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1, marginTop: 6, textAlign: 'center' },
 
   heroBottomRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around',
     marginTop: 20, paddingTop: 16,
-    borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.08)',
+    borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.18)',
   },
   heroBottomStat:    { flex: 1, alignItems: 'center' },
   heroBottomNum:     { fontSize: 20, fontWeight: '900', color: '#fff' },
   heroBottomLabel:   { fontSize: 9, fontWeight: '600', color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: 0.8, marginTop: 3, textAlign: 'center' },
   heroBottomDivider: { width: 1, height: 28, backgroundColor: 'rgba(255,255,255,0.1)' },
 
-  avatarGlowRing: {
-    width: 68, height: 68, borderRadius: 34,
-    borderWidth: 2.5, borderColor: NEON_BLUE,
-    justifyContent: 'center', alignItems: 'center', overflow: 'hidden',
-    shadowColor: NEON_BLUE, shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8, shadowRadius: 12,
-    marginBottom: 8,
+  glowRingWrap:  { alignItems: 'center', width: 90 },
+  glowRingOuter: { width: 82, height: 82, borderRadius: 41, justifyContent: 'center', alignItems: 'center' },
+  glowRingInner: { width: 58, height: 58, borderRadius: 29, justifyContent: 'center', alignItems: 'center' },
+  glowRingPct:   { fontSize: 14, fontWeight: '900' },
+
+  // ── Light cards (neumorphic) ───────────────────────────────────────────────
+  lightCard: {
+    backgroundColor: PAGE_BG,
+    borderRadius: 20,
+    padding: 16,
+    marginBottom: 14,
+    ...NEU_OUTER,
   },
-  avatarImg:      { width: 64, height: 64, borderRadius: 32 },
-  avatarFallback: { width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(0,229,255,0.15)', justifyContent: 'center', alignItems: 'center' },
-  avatarInitials: { fontSize: 22, fontWeight: '900', color: NEON_BLUE },
 
-  heroName:          { fontSize: 13, fontWeight: '800', color: '#fff', textAlign: 'center' },
-  heroSubtitle:      { fontSize: 9, color: 'rgba(255,255,255,0.45)', textAlign: 'center', marginTop: 2 },
-  heroStatsMiniRow:  { flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 5 },
-  heroStatsMiniText: { fontSize: 9, color: NEON_BLUE, fontWeight: '600' },
-
-  heroStatBig:   { fontSize: 44, fontWeight: '900', color: '#fff', letterSpacing: 1 },
-  heroStatLabel: { fontSize: 9, fontWeight: '700', color: 'rgba(255,255,255,0.4)', letterSpacing: 2, textTransform: 'uppercase', marginTop: 4 },
-  heroMetaLabel: { fontSize: 9, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1, marginTop: 6, textAlign: 'center' },
-
-  // LED bars
-  ledContainer: { flexDirection: 'row', alignItems: 'flex-end', gap: 3, height: 44 },
-  ledBar:       { width: 5, borderRadius: 3 },
-
-  // Glow ring
-  glowRingOuter: { width: 72, height: 72, borderRadius: 36, justifyContent: 'center', alignItems: 'center' },
-  glowRingInner: { width: 50, height: 50, borderRadius: 25, justifyContent: 'center', alignItems: 'center' },
-  glowRingPct:   { fontSize: 13, fontWeight: '900' },
-
-  // ── Content cards ──────────────────────────────────────────────────────────
   cardsRow:    { flexDirection: 'row', gap: 12, marginBottom: 16 },
-  contentCard: { backgroundColor: '#fff', borderRadius: 20, padding: 16, marginBottom: 14, ...CARD_SHADOW },
-
-  // ── Event chips ────────────────────────────────────────────────────────────
-  eventsSection:   { marginBottom: 16 },
-  eventsHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, paddingHorizontal: 2 },
-  eventsLabel:     { fontSize: 10, fontWeight: '700', color: '#9299B8', textTransform: 'uppercase', letterSpacing: 0.8 },
-  eventsMeta:      { fontSize: 11, fontWeight: '600', color: '#9299B8' },
-  chipsScroll:     { paddingBottom: 4, gap: 10 },
-  miniStatsGrid:  { flexDirection: 'row', justifyContent: 'space-around', marginTop: 8 },
-  miniStatCell:   { alignItems: 'center', gap: 4, flex: 1 },
-  miniStatNum:    { fontSize: 22, fontWeight: '900' },
-  miniStatLabel:  { fontSize: 10, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 },
-
-  eventVertRow: {
-    backgroundColor: '#fff', borderRadius: 12, padding: 10, marginBottom: 8,
-    borderLeftWidth: 3, flexDirection: 'row', alignItems: 'center',
-    shadowColor: '#4A5B9A', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.07, shadowRadius: 8, elevation: 2,
-  },
-
-  eventChip: {
-    borderRadius: 16, borderWidth: 1,
-    paddingHorizontal: 14, paddingVertical: 12,
-    minWidth: 130, maxWidth: 180,
-    ...CARD_SHADOW,
-  },
-  eventChipDot:   { width: 8, height: 8, borderRadius: 4, marginBottom: 8 },
-  eventChipTime:  { fontSize: 11, fontWeight: '700', marginBottom: 4 },
-  eventChipTitle: { fontSize: 12, fontWeight: '600', color: '#1A2052', lineHeight: 17 },
   cardTopRow:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  cardLabel:   { fontSize: 10, fontWeight: '800', color: '#1A2052', textTransform: 'uppercase', letterSpacing: 1 },
+  cardTitle:   { fontSize: 13, fontWeight: '700' },
   cardMeta:    { fontSize: 10, fontWeight: '600', color: '#9299B8' },
   cardMore:    { fontSize: 11, fontWeight: '600', color: '#9299B8', textAlign: 'right', marginTop: 6 },
 
+  // ── Mini stats grid ────────────────────────────────────────────────────────
+  miniStatsGrid: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 8 },
+  miniStatCell:  { alignItems: 'center', gap: 4, flex: 1 },
+  miniStatNum:   { fontSize: 22, fontWeight: '900' },
+  miniStatLabel: { fontSize: 10, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 },
+
+  // ── Task pills ─────────────────────────────────────────────────────────────
   taskPill: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     borderWidth: 1, borderRadius: 12, padding: 10, marginBottom: 8,
@@ -648,63 +619,42 @@ const s = StyleSheet.create({
   taskPillBadge:     { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
   taskPillBadgeText: { fontSize: 10, fontWeight: '800' },
 
-  eventRow:      { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
-  eventColorBar: { width: 4, height: 40, borderRadius: 2 },
-  eventTitle:    { fontSize: 12, fontWeight: '700', color: '#1A2052', textAlign: 'right' },
-  eventTime:     { fontSize: 10, color: '#9299B8', marginTop: 2, textAlign: 'right' },
-
-  // ── Timeline ───────────────────────────────────────────────────────────────
-  timelineSection: { marginBottom: 16 },
-  timelineHeader:  { fontSize: 10, fontWeight: '700', color: '#9299B8', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 10, textAlign: 'right' },
-  timelineScroll:  { gap: 8, paddingBottom: 4, paddingTop: 16 },
-
-  dayTab: {
-    width: 72, borderRadius: 16, paddingVertical: 14, paddingHorizontal: 8,
-    alignItems: 'center', gap: 3,
-    backgroundColor: '#fff', ...CARD_SHADOW,
+  // ── Events ────────────────────────────────────────────────────────────────
+  eventsHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 2 },
+  eventsMeta:      { fontSize: 11, fontWeight: '600', color: '#9299B8' },
+  eventVertRow: {
+    backgroundColor: PAGE_BG,
+    borderRadius: 12, padding: 10, marginBottom: 8,
+    borderLeftWidth: 3, flexDirection: 'row', alignItems: 'center',
+    ...NEU_OUTER,
   },
-  dayTabActive: {
-    backgroundColor: NEON_GREEN,
-    shadowColor: NEON_GREEN, shadowOpacity: 0.35, shadowRadius: 16,
-  },
-  dayTabBadge: {
-    position: 'absolute', top: -12,
-    backgroundColor: '#1C1F2E', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10,
-  },
-  dayTabBadgeText: { fontSize: 9, fontWeight: '800', color: '#fff' },
-  dayNum:          { fontSize: 22, fontWeight: '900', color: '#1A2052' },
-  dayNumActive:    { color: '#fff' },
-  dayMonth:        { fontSize: 9, fontWeight: '700', color: '#9299B8', textTransform: 'uppercase' },
-  dayMonthActive:  { color: 'rgba(255,255,255,0.8)' },
-  dayName:         { fontSize: 9, fontWeight: '600', color: '#9299B8' },
-  dayNameActive:   { color: 'rgba(255,255,255,0.7)' },
-  dayDot:          { width: 5, height: 5, borderRadius: 3, marginTop: 2 },
+  eventTitle: { fontSize: 12, fontWeight: '700', color: '#1A2052', textAlign: 'right' },
+  eventTime:  { fontSize: 10, color: '#9299B8', marginTop: 2, textAlign: 'right' },
 
-  // ── White card (timer, recs, tip) ──────────────────────────────────────────
-  whiteCard:    { backgroundColor: '#fff', borderRadius: 20, padding: 16, marginBottom: 14, ...CARD_SHADOW },
-  tipStrip:     { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, borderLeftWidth: 3, borderLeftColor: NEON_GREEN },
-  tipStripText: { flex: 1, fontSize: 13, lineHeight: 19 },
-  whiteCardHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14, justifyContent: 'flex-end' },
-  whiteCardTitle:  { fontSize: 13, fontWeight: '700' },
-  doneBadge:       { marginLeft: 8, backgroundColor: NEON_GREEN + '22', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10 },
-  doneBadgeText:   { fontSize: 11, fontWeight: '700', color: NEON_GREEN },
-  tipText:         { fontSize: 13, lineHeight: 21, color: '#1A2052', textAlign: 'right' },
+  // ── Tip ───────────────────────────────────────────────────────────────────
+  tipText: { flex: 1, fontSize: 13, lineHeight: 19, textAlign: 'right' },
 
-  // ── Timer controls ─────────────────────────────────────────────────────────
-  timerDisplay:  { fontSize: 52, fontWeight: '900', textAlign: 'center', letterSpacing: 2, marginTop: 2 },
-  timerStatus:   { fontSize: 11, fontWeight: '700', textAlign: 'center', marginTop: 4, textTransform: 'uppercase', letterSpacing: 1 },
-  timerBarBg:    { height: 6, borderRadius: 3, overflow: 'hidden', marginVertical: 14 },
-  timerBarFill:  { height: 6, borderRadius: 3 },
-  timerPresets:  { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 4 },
-  presetBtn:     { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, borderWidth: 1 },
-  presetText:    { fontSize: 12, fontWeight: '700' },
-  timerInput:    { width: 52, borderWidth: 1, borderRadius: 20, paddingVertical: 7, fontSize: 12, fontWeight: '700', textAlign: 'center', color: '#1A2052' },
+  // ── Timer ─────────────────────────────────────────────────────────────────
+  doneBadge:     { marginLeft: 8, backgroundColor: NEON_GREEN + '22', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10 },
+  doneBadgeText: { fontSize: 11, fontWeight: '700', color: NEON_GREEN },
+
+  timerDisplay: { fontSize: 52, fontWeight: '900', textAlign: 'center', letterSpacing: 2, marginTop: 2 },
+  timerStatus:  { fontSize: 11, fontWeight: '700', textAlign: 'center', color: '#9299B8', marginTop: 4, textTransform: 'uppercase', letterSpacing: 1 },
+
+  timerBarBg:   { height: 8, borderRadius: 20, backgroundColor: PAGE_BG, overflow: 'hidden', marginVertical: 14 },
+  timerBarFill: { height: 8, borderRadius: 20 },
+
+  timerPresets: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4, justifyContent: 'center' },
+  presetBtn:    { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', backgroundColor: PAGE_BG },
+  presetText:   { fontSize: 12, fontWeight: '700' },
+  timerInput:   { width: 52, height: 46, borderRadius: 23, backgroundColor: PAGE_BG, fontSize: 12, fontWeight: '700', color: '#1A2052', textAlign: 'center' },
+
   timerBtns:     { flexDirection: 'row', gap: 10, marginTop: 10, alignItems: 'center' },
   timerStartBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 13, borderRadius: 14 },
   timerStartText:{ fontSize: 15, fontWeight: '800', color: '#fff' },
   timerPauseBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 13, borderRadius: 14, borderWidth: 1.5 },
   timerPauseText:{ fontSize: 15, fontWeight: '800' },
-  timerResetBtn: { width: 44, height: 44, borderRadius: 22, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  timerResetBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: PAGE_BG },
 });
 
 export default HomeScreen;

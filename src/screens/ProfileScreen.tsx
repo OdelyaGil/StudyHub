@@ -16,21 +16,21 @@ import { useTheme } from '../context/ThemeContext';
 import { ThemeMode } from '../context/ThemeContext';
 
 const DARK_ACCENTS = [
-  { name: 'ציאן',    color: '#00FFFF' },
-  { name: 'ירוק',    color: '#00FF88' },
-  { name: 'סגול',    color: '#BF5FFF' },
-  { name: 'ורוד',    color: '#FF2D78' },
-  { name: 'כתום',    color: '#FF8C00' },
+  { name: 'CRYSTAL CLEAR',    color: '#92F1EC' },
+  { name: 'TROPICAL SEA',    color: '#35AEAC' },
+  { name: 'PALM SPLASH',    color: '#19887F' },
+  { name: 'DEEP SKY',    color: '#076DDF' },
+  { name: 'BRIGHT AZURE',    color: '#3C92FF' },
 
 ];
 
 
 const LIGHT_ACCENTS = [
-  { name: 'ציאן',    color: '#00FFFF' },
-  { name: 'ירוק',    color: '#00FF88' },
-  { name: 'סגול',    color: '#BF5FFF' },
-  { name: 'ורוד',    color: '#FF2D78' },
-  { name: 'כתום',    color: '#FF8C00' },
+  { name: 'CRYSTAL CLEAR',    color: '#92F1EC' },
+  { name: 'TROPICAL SEA',    color: '#35AEAC' },
+  { name: 'PALM SPLASH',    color: '#19887F' },
+  { name: 'DEEP SKY',    color: '#076DDF' },
+  { name: 'BRIGHT AZURE',    color: '#3C92FF' },
 
 ];
 
@@ -440,7 +440,12 @@ const s = StyleSheet.create({
   card: {
     width: '100%', borderRadius: 20,
     padding: 16, marginBottom: 16,
-    borderWidth: 1,
+    borderWidth: 0,
+    shadowColor: '#3D1568',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.11,
+    shadowRadius: 18,
+    elevation: 6,
   },
   sectionTitle: { fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 12, textTransform: 'uppercase', textAlign: 'right' },
   row:          { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8 },
