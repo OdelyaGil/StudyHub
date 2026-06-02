@@ -331,12 +331,12 @@ const HomeScreen = () => {
       </View>
 
       {/* ══════════════════════════════════════════════════════════════════════
-          CONTENT CARDS — two side by side
+          CONTENT CARDS — asymmetric 2/5 + 3/5
       ══════════════════════════════════════════════════════════════════════ */}
       <View style={s.cardsRow}>
 
-        {/* CARD 1 — Urgent tasks (like TESTS) */}
-        <TouchableOpacity style={s.contentCard} onPress={() => navigation.navigate('Tasks')} activeOpacity={0.9}>
+        {/* CARD 1 — Deadlines (narrower, 2/5) */}
+        <TouchableOpacity style={[s.contentCard, { flex: 2 }]} onPress={() => navigation.navigate('Tasks')} activeOpacity={0.9}>
           <View style={s.cardTopRow}>
             <Text style={s.cardLabel}>דדליינים</Text>
             <Text style={s.cardMeta}>{urgentTasks.length} השבוע</Text>
@@ -358,23 +358,23 @@ const HomeScreen = () => {
             );
           }) : (
             <View style={[s.taskPill, { borderColor: NEON_GREEN + '55', backgroundColor: NEON_GREEN + '10' }]}>
-              <Text style={[s.taskPillTitle, { color: NEON_GREEN }]}>אין דדליינים קרובים 🎉</Text>
+              <Text style={[s.taskPillTitle, { color: NEON_GREEN }]}>אין דדליינים 🎉</Text>
             </View>
           )}
 
           {urgentTasks.length > 3 && (
-            <Text style={s.cardMore}>עוד {urgentTasks.length - 3} מטלות השבוע →</Text>
+            <Text style={s.cardMore}>עוד {urgentTasks.length - 3} →</Text>
           )}
         </TouchableOpacity>
 
-        {/* CARD 2 — Today's events (like NEXT CLASSES) */}
-        <TouchableOpacity style={s.contentCard} onPress={() => navigation.navigate('Events')} activeOpacity={0.9}>
+        {/* CARD 2 — Today events (wider, 3/5) */}
+        <TouchableOpacity style={[s.contentCard, { flex: 3 }]} onPress={() => navigation.navigate('Events')} activeOpacity={0.9}>
           <View style={s.cardTopRow}>
             <Text style={s.cardLabel}>אירועים היום</Text>
             <Text style={s.cardMeta}>{todayEvents.length} היום</Text>
           </View>
 
-          {todayEvents.length > 0 ? todayEvents.slice(0, 3).map(ev => (
+          {todayEvents.length > 0 ? todayEvents.slice(0, 4).map(ev => (
             <View key={ev.id} style={s.eventRow}>
               <View style={[s.eventColorBar, { backgroundColor: ev.color || NEON_BLUE }]} />
               <View style={{ flex: 1 }}>
@@ -390,77 +390,41 @@ const HomeScreen = () => {
             </View>
           )}
 
-          {todayEvents.length > 3 && (
-            <Text style={s.cardMore}>עוד {todayEvents.length - 3} אירועים →</Text>
+          {todayEvents.length > 4 && (
+            <Text style={s.cardMore}>עוד {todayEvents.length - 4} אירועים →</Text>
           )}
         </TouchableOpacity>
       </View>
 
       {/* ══════════════════════════════════════════════════════════════════════
-          CREDIT POINTS PROGRESS
+          TIP — full-width flat strip
       ══════════════════════════════════════════════════════════════════════ */}
-      <TouchableOpacity style={s.whiteCard} onPress={() => navigation.navigate('Grades')} activeOpacity={0.85}>
-        <View style={s.whiteCardHeader}>
-          <MaterialCommunityIcons name="school-outline" size={18} color={theme.accent} />
-          <Text style={[s.whiteCardTitle, { color: theme.accent }]}>התקדמות נקודות זכות</Text>
-        </View>
-        <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
-          <Text style={{ fontSize: 36, fontWeight: '900', color: theme.text }}>{earnedCredits}</Text>
-          <Text style={{ fontSize: 14, fontWeight: '600', color: theme.textSub }}>
-            {requiredCredits > 0 ? `/ ${requiredCredits} נ"ז` : 'נ"ז נצברו'}
-          </Text>
-        </View>
-        {requiredCredits > 0 ? (
-          <>
-            <View style={[s.timerBarBg, { backgroundColor: theme.accent + '22', marginVertical: 10 }]}>
-              <View style={[s.timerBarFill, { width: `${creditsPct}%` as any, backgroundColor: theme.accent }]} />
-            </View>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <Text style={{ fontSize: 13, fontWeight: '800', color: theme.accent }}>{creditsPct}% הושלמו</Text>
-              {creditsLeft > 0 && (
-                <Text style={{ fontSize: 12, color: theme.textSub }}>עוד {creditsLeft} נ"ז לסיום</Text>
-              )}
-            </View>
-          </>
-        ) : (
-          <Text style={{ fontSize: 12, color: theme.textSub, textAlign: 'right', marginTop: 8 }}>
-            הגדר נ"ז נדרשות בפרופיל כדי לראות את ההתקדמות
-          </Text>
-        )}
-      </TouchableOpacity>
+      <View style={[s.whiteCard, s.tipStrip]}>
+        <MaterialCommunityIcons name="lightbulb-on-outline" size={16} color={NEON_GREEN} />
+        <Text style={[s.tipStripText, { color: theme.text }]} numberOfLines={2}>{tip}</Text>
+      </View>
 
       {/* ══════════════════════════════════════════════════════════════════════
-          RECS + TIP — side by side square cards
+          RECS — conditional, full-width
       ══════════════════════════════════════════════════════════════════════ */}
-      <View style={{ flexDirection: 'row', gap: 12, marginBottom: 14 }}>
-
-        {/* Recommendations */}
-        <View style={[s.squareCard, { backgroundColor: '#fff' }]}>
+      {studyRecs.length > 0 && (
+        <View style={s.whiteCard}>
           <View style={s.whiteCardHeader}>
             <MaterialCommunityIcons name="book-clock-outline" size={16} color="#ffa94d" />
-            <Text style={[s.whiteCardTitle, { color: '#ffa94d', fontSize: 12 }]}>המלצות לימוד</Text>
+            <Text style={[s.whiteCardTitle, { color: '#ffa94d' }]}>המלצות לימוד</Text>
           </View>
-          {studyRecs.length > 0 ? studyRecs.slice(0, 2).map((rec, i) => (
-            <View key={i} style={[s.taskPill, { borderColor: '#ffa94d55', backgroundColor: '#ffa94d10', marginBottom: 6 }]}>
-              <View style={{ flex: 1 }}>
-                <Text style={[s.taskPillTitle, { fontSize: 11 }]} numberOfLines={1}>{rec.course}</Text>
-                <Text style={[s.taskPillSub, { fontSize: 9 }]} numberOfLines={1}>{rec.hours} שע׳ · {rec.days} ימים</Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            {studyRecs.map((rec, i) => (
+              <View key={i} style={[s.taskPill, { flex: 1, minWidth: 140, borderColor: '#ffa94d55', backgroundColor: '#ffa94d10' }]}>
+                <View style={{ flex: 1 }}>
+                  <Text style={s.taskPillTitle} numberOfLines={1}>{rec.course}</Text>
+                  <Text style={s.taskPillSub}>{rec.hours} שע׳ · {rec.taskName} · {rec.days} ימים</Text>
+                </View>
               </View>
-            </View>
-          )) : (
-            <Text style={[s.taskPillSub, { textAlign: 'center', marginTop: 8 }]}>אין המלצות כרגע</Text>
-          )}
-        </View>
-
-        {/* Daily tip */}
-        <View style={[s.squareCard, { backgroundColor: '#fff', borderLeftWidth: 3, borderLeftColor: NEON_GREEN }]}>
-          <View style={s.whiteCardHeader}>
-            <MaterialCommunityIcons name="lightbulb-on-outline" size={16} color={NEON_GREEN} />
-            <Text style={[s.whiteCardTitle, { color: NEON_GREEN, fontSize: 12 }]}>טיפ יומי</Text>
+            ))}
           </View>
-          <Text style={[s.tipText, { color: theme.text, fontSize: 12, lineHeight: 18 }]} numberOfLines={6}>{tip}</Text>
         </View>
-      </View>
+      )}
 
       {/* ══════════════════════════════════════════════════════════════════════
           STUDY TIMER
@@ -660,8 +624,9 @@ const s = StyleSheet.create({
   dayDot:          { width: 5, height: 5, borderRadius: 3, marginTop: 2 },
 
   // ── White card (timer, recs, tip) ──────────────────────────────────────────
-  whiteCard:       { backgroundColor: '#fff', borderRadius: 20, padding: 16, marginBottom: 14, ...CARD_SHADOW },
-  squareCard:      { flex: 1, aspectRatio: 1, borderRadius: 20, padding: 14, ...CARD_SHADOW },
+  whiteCard:    { backgroundColor: '#fff', borderRadius: 20, padding: 16, marginBottom: 14, ...CARD_SHADOW },
+  tipStrip:     { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, borderLeftWidth: 3, borderLeftColor: NEON_GREEN },
+  tipStripText: { flex: 1, fontSize: 13, lineHeight: 19 },
   whiteCardHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 },
   whiteCardTitle:  { fontSize: 13, fontWeight: '700' },
   doneBadge:       { marginLeft: 8, backgroundColor: NEON_GREEN + '22', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10 },
