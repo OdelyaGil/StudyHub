@@ -32,7 +32,6 @@ const STUDY_TIPS = [
 ];
 
 const HEB_DAYS   = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
-const HEB_MONTHS = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
 const SHORT_MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -112,7 +111,6 @@ const HomeScreen = () => {
   const [topics,          setTopics]         = useState<any[]>([]);
   const [requiredCredits, setRequiredCredits]= useState(0);
   const [refreshing,      setRefreshing]     = useState(false);
-  const [userName,        setUserName]       = useState('');
 
   // ── Timer ─────────────────────────────────────────────────────────────────
   const [timerRunning,  setTimerRunning]  = useState(false);
@@ -236,7 +234,6 @@ const HomeScreen = () => {
         if (snap.exists()) {
           const d = snap.data();
           setRequiredCredits(+(d.requiredCredits ?? 0));
-          setUserName(d.name || '');
         }
       }
     } catch (err) { console.log(err); }
@@ -248,7 +245,6 @@ const HomeScreen = () => {
   const today      = new Date();
   const todayISO   = toISO(today);
   const tip        = STUDY_TIPS[today.getDay()];
-  const todayLabel = `יום ${HEB_DAYS[today.getDay()]}, ${today.getDate()} ב${HEB_MONTHS[today.getMonth()]}`;
 
   const activeTasks   = tasks.filter(t => !t.completed);
   const urgentTasks   = activeTasks
@@ -297,22 +293,7 @@ const HomeScreen = () => {
       ══════════════════════════════════════════════════════════════════════ */}
       <View style={s.heroCard}>
 
-        {/* ALL STATS button — top right */}
-        <TouchableOpacity style={s.allStatsBtn} onPress={() => navigation.navigate('Grades')}>
-          <Text style={s.allStatsText}>ALL STATS</Text>
-        </TouchableOpacity>
-
         <View style={s.heroInner}>
-
-          {/* LEFT — avatar + user info */}
-          <View style={s.heroLeft}>
-            <Text style={s.heroName} numberOfLines={1}>{userName || 'סטודנט'}</Text>
-            <Text style={s.heroSubtitle}>{todayLabel}</Text>
-            <View style={s.heroStatsMiniRow}>
-              <MaterialCommunityIcons name="checkbox-marked-circle-outline" size={12} color={NEON_BLUE} />
-              <Text style={s.heroStatsMiniText}>{activeTasks.length} מטלות</Text>
-            </View>
-          </View>
 
           {/* CENTER — big average stat */}
           <View style={s.heroCenter}>
