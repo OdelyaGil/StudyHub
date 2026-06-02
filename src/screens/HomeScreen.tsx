@@ -341,7 +341,10 @@ const HomeScreen = () => {
         {/* LEFT — Deadlines card */}
         <TouchableOpacity style={[s.contentCard, { flex: 2, marginBottom: 0 }]} onPress={() => navigation.navigate('Tasks')} activeOpacity={0.9}>
           <View style={s.cardTopRow}>
-            <Text style={s.cardMeta}>דדליינים</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <MaterialCommunityIcons name="clipboard-alert-outline" size={15} color={NEON_PINK} />
+              <Text style={[s.whiteCardTitle, { color: NEON_PINK }]}>דדליינים</Text>
+            </View>
             <Text style={s.cardMeta}>{urgentTasks.length} השבוע</Text>
           </View>
 
@@ -383,8 +386,11 @@ const HomeScreen = () => {
         {/* RIGHT — Events vertical (no card, floating rows) */}
         <View style={{ flex: 3 }}>
           <View style={[s.eventsHeaderRow, { marginBottom: 8 }]}>
-            <Text style={s.eventsLabel}>אירועים היום</Text>
             <Text style={s.eventsMeta}>{todayEvents.length} היום</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <MaterialCommunityIcons name="calendar-today" size={15} color={NEON_BLUE} />
+              <Text style={[s.whiteCardTitle, { color: NEON_BLUE }]}>אירועים היום</Text>
+            </View>
           </View>
 
           {upcomingEvents.length > 0 ? upcomingEvents.slice(0, 4).map(ev => (
