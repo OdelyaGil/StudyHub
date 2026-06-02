@@ -369,38 +369,6 @@ const HomeScreen = () => {
       </View>
 
       {/* ══════════════════════════════════════════════════════════════════════
-          STUDY RECOMMENDATIONS
-      ══════════════════════════════════════════════════════════════════════ */}
-      {studyRecs.length > 0 && (
-        <View style={s.whiteCard}>
-          <View style={s.whiteCardHeader}>
-            <MaterialCommunityIcons name="book-clock-outline" size={18} color="#ffa94d" />
-            <Text style={[s.whiteCardTitle, { color: '#ffa94d' }]}>המלצות לימוד</Text>
-          </View>
-          {studyRecs.map((rec, i) => (
-            <View key={i} style={[s.taskPill, { borderColor: '#ffa94d55', backgroundColor: '#ffa94d10' }]}>
-              <MaterialCommunityIcons name="clock-fast" size={14} color="#ffa94d" style={{ marginTop: 1 }} />
-              <View style={{ flex: 1 }}>
-                <Text style={s.taskPillTitle}>{rec.course}</Text>
-                <Text style={s.taskPillSub}>{rec.hours} שעות — "{rec.taskName}" בעוד {rec.days} ימים</Text>
-              </View>
-            </View>
-          ))}
-        </View>
-      )}
-
-      {/* ══════════════════════════════════════════════════════════════════════
-          MOTIVATIONAL TIP
-      ══════════════════════════════════════════════════════════════════════ */}
-      <View style={[s.whiteCard, { borderLeftWidth: 3, borderLeftColor: NEON_GREEN }]}>
-        <View style={s.whiteCardHeader}>
-          <MaterialCommunityIcons name="lightbulb-on-outline" size={18} color={NEON_GREEN} />
-          <Text style={[s.whiteCardTitle, { color: NEON_GREEN }]}>טיפ לימוד יומי</Text>
-        </View>
-        <Text style={[s.tipText, { color: theme.text }]}>{tip}</Text>
-      </View>
-
-      {/* ══════════════════════════════════════════════════════════════════════
           CREDIT POINTS PROGRESS
       ══════════════════════════════════════════════════════════════════════ */}
       <TouchableOpacity style={s.whiteCard} onPress={() => navigation.navigate('Grades')} activeOpacity={0.85}>
@@ -432,6 +400,39 @@ const HomeScreen = () => {
           </Text>
         )}
       </TouchableOpacity>
+
+      {/* ══════════════════════════════════════════════════════════════════════
+          RECS + TIP — side by side square cards
+      ══════════════════════════════════════════════════════════════════════ */}
+      <View style={{ flexDirection: 'row', gap: 12, marginBottom: 14 }}>
+
+        {/* Recommendations */}
+        <View style={[s.squareCard, { backgroundColor: '#fff' }]}>
+          <View style={s.whiteCardHeader}>
+            <MaterialCommunityIcons name="book-clock-outline" size={16} color="#ffa94d" />
+            <Text style={[s.whiteCardTitle, { color: '#ffa94d', fontSize: 12 }]}>המלצות לימוד</Text>
+          </View>
+          {studyRecs.length > 0 ? studyRecs.slice(0, 2).map((rec, i) => (
+            <View key={i} style={[s.taskPill, { borderColor: '#ffa94d55', backgroundColor: '#ffa94d10', marginBottom: 6 }]}>
+              <View style={{ flex: 1 }}>
+                <Text style={[s.taskPillTitle, { fontSize: 11 }]} numberOfLines={1}>{rec.course}</Text>
+                <Text style={[s.taskPillSub, { fontSize: 9 }]} numberOfLines={1}>{rec.hours} שע׳ · {rec.days} ימים</Text>
+              </View>
+            </View>
+          )) : (
+            <Text style={[s.taskPillSub, { textAlign: 'center', marginTop: 8 }]}>אין המלצות כרגע</Text>
+          )}
+        </View>
+
+        {/* Daily tip */}
+        <View style={[s.squareCard, { backgroundColor: '#fff', borderLeftWidth: 3, borderLeftColor: NEON_GREEN }]}>
+          <View style={s.whiteCardHeader}>
+            <MaterialCommunityIcons name="lightbulb-on-outline" size={16} color={NEON_GREEN} />
+            <Text style={[s.whiteCardTitle, { color: NEON_GREEN, fontSize: 12 }]}>טיפ יומי</Text>
+          </View>
+          <Text style={[s.tipText, { color: theme.text, fontSize: 12, lineHeight: 18 }]} numberOfLines={6}>{tip}</Text>
+        </View>
+      </View>
 
       {/* ══════════════════════════════════════════════════════════════════════
           STUDY TIMER
@@ -624,6 +625,7 @@ const s = StyleSheet.create({
 
   // ── White card (timer, recs, tip) ──────────────────────────────────────────
   whiteCard:       { backgroundColor: '#fff', borderRadius: 20, padding: 16, marginBottom: 14, ...CARD_SHADOW },
+  squareCard:      { flex: 1, aspectRatio: 1, borderRadius: 20, padding: 14, ...CARD_SHADOW },
   whiteCardHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 },
   whiteCardTitle:  { fontSize: 13, fontWeight: '700' },
   doneBadge:       { marginLeft: 8, backgroundColor: NEON_GREEN + '22', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10 },
