@@ -10,8 +10,7 @@ import {
   updatePassword, deleteUser,
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { auth, db, storage } from '../config/firebase';
+import { auth, db } from '../config/firebase';
 import { useCustomAlert } from '../hooks/useCustomAlert';
 import { useTheme } from '../context/ThemeContext';
 import { ThemeMode } from '../context/ThemeContext';
@@ -125,19 +124,18 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
     setUploadingPhoto(true);
     try {
       let blob: Blob;
-      try {
-        blob = await compressImage(file, 400);
-      } catch {
-        blob = file;
-      }
-      const storageRef = ref(storage, `users/${user.uid}/avatar`);
-      await uploadBytes(storageRef, blob, { contentType: 'image/jpeg' });
-      const url = await getDownloadURL(storageRef);
-      await setDoc(doc(db, 'users', user.uid), { photoURL: url }, { merge: true });
-      setPhotoURL(url);
-      onAvatarChange?.(url);
+      try { blob = await compressImage(file, 300); } catch { blob = file; }
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload  = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+      await setDoc(doc(db, 'users', user.uid), { photoURL: base64 }, { merge: true });
+      setPhotoURL(base64);
+      onAvatarChange?.(base64);
     } catch (e) {
-      console.error('avatar upload error:', e);
+      console.error('avatar save error:', e);
       showAlert('שגיאה', 'העלאת התמונה נכשלה');
     } finally { setUploadingPhoto(false); }
   };
