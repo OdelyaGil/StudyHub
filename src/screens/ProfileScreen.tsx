@@ -10,7 +10,7 @@ import {
   updatePassword, deleteUser,
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
-import { ref, uploadString, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { auth, db, storage } from '../config/firebase';
 import { useCustomAlert } from '../hooks/useCustomAlert';
 import { useTheme } from '../context/ThemeContext';
@@ -82,30 +82,49 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
     setNewCredits(rc);
   };
 
+  const compressImage = (file: File, maxPx: number): Promise<Blob> =>
+    new Promise((resolve, reject) => {
+      const img = new window.Image();
+      const objectUrl = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(objectUrl);
+        let { width, height } = img;
+        if (width > height) {
+          if (width > maxPx) { height = Math.round((height * maxPx) / width); width = maxPx; }
+        } else {
+          if (height > maxPx) { width = Math.round((width * maxPx) / height); height = maxPx; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width; canvas.height = height;
+        canvas.getContext('2d')!.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => blob ? resolve(blob) : reject(new Error('compression failed')),
+          'image/jpeg', 0.82,
+        );
+      };
+      img.onerror = reject;
+      img.src = objectUrl;
+    });
+
   const pickAndUploadPhoto = async () => {
     if (Platform.OS !== 'web') return;
     const user = auth.currentUser;
     if (!user) return;
 
-    const base64 = await new Promise<string | null>((resolve) => {
+    const file = await new Promise<File | null>((resolve) => {
       const input = document.createElement('input');
       input.type = 'file';
       input.accept = 'image/*';
-      input.onchange = (e: Event) => {
-        const file = (e.target as HTMLInputElement).files?.[0];
-        if (!file) return resolve(null);
-        const reader = new FileReader();
-        reader.onload = (ev) => resolve((ev.target?.result as string) ?? null);
-        reader.readAsDataURL(file);
-      };
+      input.onchange = (e: Event) => resolve((e.target as HTMLInputElement).files?.[0] ?? null);
       input.click();
     });
 
-    if (!base64) return;
+    if (!file) return;
     setUploadingPhoto(true);
     try {
+      const blob = await compressImage(file, 400);
       const storageRef = ref(storage, `users/${user.uid}/avatar`);
-      await uploadString(storageRef, base64, 'data_url');
+      await uploadBytes(storageRef, blob, { contentType: 'image/jpeg' });
       const url = await getDownloadURL(storageRef);
       await setDoc(doc(db, 'users', user.uid), { photoURL: url }, { merge: true });
       setPhotoURL(url);

@@ -56,7 +56,6 @@ const AppSidebar = ({ state, navigation, userName, userAvatar, onLogout, isWide,
       <View style={styles.profileCard}>
         <View style={{ flex: 1 }}>
           <Text style={styles.profileName} numberOfLines={1}>{userName || 'משתמש'}</Text>
-          <Text style={styles.profileRole}>Student</Text>
         </View>
         <View style={styles.avatar}>
           {userAvatar
