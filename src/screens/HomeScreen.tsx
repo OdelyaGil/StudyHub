@@ -401,7 +401,8 @@ const HomeScreen = () => {
       ══════════════════════════════════════════════════════════════════════ */}
       <View style={[s.whiteCard, s.tipStrip]}>
         <MaterialCommunityIcons name="lightbulb-on-outline" size={16} color={NEON_GREEN} />
-        <Text style={[s.tipStripText, { color: theme.text }]} numberOfLines={2}>{tip}</Text>
+        <Text style={{ fontSize: 12, fontWeight: '700', color: NEON_GREEN }}>טיפ יומי</Text>
+        <Text style={[s.tipStripText, { color: theme.textSub }]} numberOfLines={2}>{tip}</Text>
       </View>
 
       {/* ══════════════════════════════════════════════════════════════════════
