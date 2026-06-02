@@ -21,6 +21,9 @@ const HERO_BG    = '#1C1F2E';
 const PAGE_BG    = '#EBF0FA';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
+const HEB_DAYS   = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+const HEB_MONTHS = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+
 const STUDY_TIPS = [
   'תלמדי בסביבה שקטה ללא הפרעות — הריכוז עולה ב-40%',
   'שיטת פומודורו: 25 דקות לימוד, 5 דקות הפסקה',
@@ -112,6 +115,7 @@ const HomeScreen = () => {
   const [topics,          setTopics]         = useState<any[]>([]);
   const [requiredCredits, setRequiredCredits]= useState(0);
   const [refreshing,      setRefreshing]     = useState(false);
+  const [userName,        setUserName]       = useState('');
 
   // ── Timer ─────────────────────────────────────────────────────────────────
   const [timerRunning,  setTimerRunning]  = useState(false);
@@ -235,6 +239,7 @@ const HomeScreen = () => {
         if (snap.exists()) {
           const d = snap.data();
           setRequiredCredits(+(d.requiredCredits ?? 0));
+          setUserName(d.name || '');
         }
       }
     } catch (err) { console.log(err); }
@@ -246,6 +251,8 @@ const HomeScreen = () => {
   const today      = new Date();
   const todayISO   = toISO(today);
   const tip        = STUDY_TIPS[today.getDay()];
+  const todayLabel = `יום ${HEB_DAYS[today.getDay()]}, ${today.getDate()} ב${HEB_MONTHS[today.getMonth()]}`;
+  const firstName  = userName ? userName.split(' ')[0] : '';
 
   const activeTasks   = tasks.filter(t => !t.completed);
   const urgentTasks   = activeTasks
@@ -288,7 +295,13 @@ const HomeScreen = () => {
 
         <View style={s.heroInner}>
 
-          {/* CENTER — big average stat (centered) */}
+          {/* LEFT — greeting + date */}
+          <View style={s.heroLeft}>
+            {firstName ? <Text style={s.heroGreeting}>שלום, {firstName} 👋</Text> : null}
+            <Text style={s.heroDate}>{todayLabel}</Text>
+          </View>
+
+          {/* CENTER — big average stat */}
           <View style={s.heroCenter}>
             <Text style={[s.heroStatBig, { textShadow: `0 0 18px ${NEON_BLUE}, 0 0 36px rgba(0,229,255,0.45)` } as any]}>{avg ?? '--'}</Text>
             <Text style={s.heroStatLabel}>AVERAGE SCORE</Text>
@@ -296,6 +309,24 @@ const HomeScreen = () => {
 
           {/* RIGHT — progress ring (grades) */}
           <GlowRing pct={creditsPct > 0 ? creditsPct : avgPct} color={NEON_PINK} label="ציונים" />
+        </View>
+
+        {/* BOTTOM STATS ROW */}
+        <View style={s.heroBottomRow}>
+          <View style={s.heroBottomStat}>
+            <Text style={s.heroBottomNum}>{activeTasks.length}</Text>
+            <Text style={s.heroBottomLabel}>מטלות פעילות</Text>
+          </View>
+          <View style={s.heroBottomDivider} />
+          <View style={s.heroBottomStat}>
+            <Text style={s.heroBottomNum}>{next7Events.length}</Text>
+            <Text style={s.heroBottomLabel}>אירועים בשבוע</Text>
+          </View>
+          <View style={s.heroBottomDivider} />
+          <View style={s.heroBottomStat}>
+            <Text style={s.heroBottomNum}>{earnedCredits}</Text>
+            <Text style={s.heroBottomLabel}>נ"ז נצברו</Text>
+          </View>
         </View>
       </View>
 
@@ -532,11 +563,22 @@ const s = StyleSheet.create({
   },
   allStatsText: { fontSize: 10, fontWeight: '800', color: '#fff', letterSpacing: 0.5 },
 
-  heroInner:   { flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 10 },
-  heroLeft:    { alignItems: 'center', width: 80 },
+  heroInner:   { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 10 },
+  heroLeft:    { width: 90, justifyContent: 'center' },
+  heroGreeting:{ fontSize: 13, fontWeight: '800', color: '#fff', textAlign: 'right' },
+  heroDate:    { fontSize: 10, color: 'rgba(255,255,255,0.5)', textAlign: 'right', marginTop: 3 },
   heroCenter:  { flex: 1, alignItems: 'center' },
-  heroMetaBlock: { alignItems: 'center', width: 60 },
-  glowRingWrap:  { alignItems: 'center', width: 72 },
+  glowRingWrap:{ alignItems: 'center', width: 80 },
+
+  heroBottomRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around',
+    marginTop: 20, paddingTop: 16,
+    borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.08)',
+  },
+  heroBottomStat:    { flex: 1, alignItems: 'center' },
+  heroBottomNum:     { fontSize: 20, fontWeight: '900', color: '#fff' },
+  heroBottomLabel:   { fontSize: 9, fontWeight: '600', color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: 0.8, marginTop: 3, textAlign: 'center' },
+  heroBottomDivider: { width: 1, height: 28, backgroundColor: 'rgba(255,255,255,0.1)' },
 
   avatarGlowRing: {
     width: 68, height: 68, borderRadius: 34,
