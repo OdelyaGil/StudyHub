@@ -1,8 +1,10 @@
 import React from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, Platform, Image, Alert,
+  View, Text, StyleSheet, TouchableOpacity, Platform, Image,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useTheme } from '../context/ThemeContext';
+import { useCustomAlert } from '../hooks/useCustomAlert';
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 export const SIDEBAR_W   = 220;
@@ -42,6 +44,8 @@ interface Props {
 
 const AppSidebar = ({ state, navigation, userName, userAvatar, onLogout, isWide, isOpen, onOpen, onClose }: Props) => {
   const current = state.routes[state.index]?.name ?? 'Home';
+  const theme = useTheme();
+  const { showConfirm, alertNode } = useCustomAlert(theme.accent);
 
   const SidebarBody = () => (
     <View style={styles.body}>
@@ -95,20 +99,12 @@ const AppSidebar = ({ state, navigation, userName, userAvatar, onLogout, isWide,
       {/* Logout */}
       <TouchableOpacity
         style={styles.logoutRow}
-        onPress={() => {
-          if (Platform.OS === 'web') {
-            if ((window as any).confirm('האם אתה בטוח שברצונך להתנתק?')) onLogout?.();
-          } else {
-            Alert.alert('התנתקות', 'האם אתה בטוח שברצונך להתנתק?', [
-              { text: 'ביטול', style: 'cancel' },
-              { text: 'התנתק', style: 'destructive', onPress: () => onLogout?.() },
-            ]);
-          }
-        }}
+        onPress={() => showConfirm('התנתקות', 'האם אתה בטוח שברצונך להתנתק?', () => onLogout?.())}
       >
         <MaterialCommunityIcons name="logout" size={18} color={SUB} />
         <Text style={styles.logoutText}>התנתק</Text>
       </TouchableOpacity>
+      {alertNode}
     </View>
   );
 
