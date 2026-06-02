@@ -341,11 +341,11 @@ const HomeScreen = () => {
         {/* LEFT — Deadlines card */}
         <TouchableOpacity style={[s.contentCard, { flex: 2, marginBottom: 0 }]} onPress={() => navigation.navigate('Tasks')} activeOpacity={0.9}>
           <View style={s.cardTopRow}>
+            <Text style={s.cardMeta}>{urgentTasks.length} השבוע</Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <MaterialCommunityIcons name="clipboard-alert-outline" size={15} color={NEON_PINK} />
               <Text style={[s.whiteCardTitle, { color: NEON_PINK }]}>דדליינים</Text>
             </View>
-            <Text style={s.cardMeta}>{urgentTasks.length} השבוע</Text>
           </View>
 
           {urgentTasks.length > 0 ? urgentTasks.slice(0, 3).map(task => {
@@ -425,10 +425,12 @@ const HomeScreen = () => {
       {/* ══════════════════════════════════════════════════════════════════════
           TIP — full-width flat strip
       ══════════════════════════════════════════════════════════════════════ */}
-      <View style={[s.whiteCard, s.tipStrip]}>
-        <MaterialCommunityIcons name="lightbulb-on-outline" size={16} color={NEON_GREEN} />
-        <Text style={{ fontSize: 12, fontWeight: '700', color: NEON_GREEN }}>טיפ יומי</Text>
-        <Text style={[s.tipStripText, { color: theme.textSub }]} numberOfLines={2}>{tip}</Text>
+      <View style={[s.whiteCard, { borderLeftWidth: 3, borderLeftColor: NEON_GREEN, paddingVertical: 12 }]}>
+        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+          <MaterialCommunityIcons name="lightbulb-on-outline" size={15} color={NEON_GREEN} />
+          <Text style={{ fontSize: 12, fontWeight: '700', color: NEON_GREEN }}>טיפ יומי</Text>
+        </View>
+        <Text style={[s.tipStripText, { color: theme.textSub }]} numberOfLines={3}>{tip}</Text>
       </View>
 
       {/* ══════════════════════════════════════════════════════════════════════
@@ -554,9 +556,9 @@ const s = StyleSheet.create({
   },
   allStatsText: { fontSize: 10, fontWeight: '800', color: '#fff', letterSpacing: 0.5 },
 
-  heroInner:   { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 10 },
-  heroLeft:    { width: 90, justifyContent: 'center' },
-  heroGreeting:{ fontSize: 13, fontWeight: '800', color: '#fff', textAlign: 'right' },
+  heroInner:   { flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginTop: 4 },
+  heroLeft:    { width: 100, alignSelf: 'flex-start', paddingTop: 2 },
+  heroGreeting:{ fontSize: 17, fontWeight: '700', color: '#fff', textAlign: 'right' },
   heroDate:    { fontSize: 10, color: 'rgba(255,255,255,0.5)', textAlign: 'right', marginTop: 3 },
   heroCenter:  { flex: 1, alignItems: 'center' },
   glowRingWrap:{ alignItems: 'center', width: 80 },
@@ -682,7 +684,7 @@ const s = StyleSheet.create({
   whiteCard:    { backgroundColor: '#fff', borderRadius: 20, padding: 16, marginBottom: 14, ...CARD_SHADOW },
   tipStrip:     { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, borderLeftWidth: 3, borderLeftColor: NEON_GREEN },
   tipStripText: { flex: 1, fontSize: 13, lineHeight: 19 },
-  whiteCardHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 },
+  whiteCardHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14, justifyContent: 'flex-end' },
   whiteCardTitle:  { fontSize: 13, fontWeight: '700' },
   doneBadge:       { marginLeft: 8, backgroundColor: NEON_GREEN + '22', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10 },
   doneBadgeText:   { fontSize: 11, fontWeight: '700', color: NEON_GREEN },
