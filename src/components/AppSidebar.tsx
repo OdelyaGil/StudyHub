@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, Platform, Image,
+  View, Text, StyleSheet, TouchableOpacity, Platform, Image, Alert,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
@@ -93,7 +93,19 @@ const AppSidebar = ({ state, navigation, userName, userAvatar, onLogout, isWide,
       <View style={{ flex: 1 }} />
 
       {/* Logout */}
-      <TouchableOpacity style={styles.logoutRow} onPress={onLogout}>
+      <TouchableOpacity
+        style={styles.logoutRow}
+        onPress={() => {
+          if (Platform.OS === 'web') {
+            if ((window as any).confirm('האם אתה בטוח שברצונך להתנתק?')) onLogout?.();
+          } else {
+            Alert.alert('התנתקות', 'האם אתה בטוח שברצונך להתנתק?', [
+              { text: 'ביטול', style: 'cancel' },
+              { text: 'התנתק', style: 'destructive', onPress: () => onLogout?.() },
+            ]);
+          }
+        }}
+      >
         <MaterialCommunityIcons name="logout" size={18} color={SUB} />
         <Text style={styles.logoutText}>התנתק</Text>
       </TouchableOpacity>

@@ -45,7 +45,7 @@ type Props = {
 
 const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvatarChange }: Props) => {
   const theme = useTheme();
-  const { showAlert, showConfirm, showDestructiveConfirm, alertNode } = useCustomAlert(theme.accent);
+  const { showAlert, showDestructiveConfirm, alertNode } = useCustomAlert(theme.accent);
 
   const [userName, setUserName]   = useState('');
   const [userEmail, setUserEmail] = useState('');
@@ -194,12 +194,6 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
     const user = auth.currentUser;
     if (user) await setDoc(doc(db, 'users', user.uid), { mode: newMode }, { merge: true });
     onSetMode(newMode);
-  };
-
-  const handleLogout = () => {
-    showConfirm('התנתקות', 'האם אתה בטוח שברצונך להתנתק?', async () => {
-      await auth.signOut(); onLogout();
-    });
   };
 
   const handleDeleteAccount = () => {
@@ -369,15 +363,6 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
             )}
           </View>
         </View>
-
-        {/* Logout */}
-        <Pressable
-          style={[s.logoutBtn, { borderColor: theme.accent, backgroundColor: theme.accent + '11' }]}
-          onPress={handleLogout}
-        >
-          <MaterialCommunityIcons name="logout" size={20} color={theme.accent} />
-          <Text style={[s.logoutText, { color: theme.accent }]}>התנתקות</Text>
-        </Pressable>
 
         <Pressable style={s.deleteBtn} onPress={handleDeleteAccount}>
           <MaterialCommunityIcons name="trash-can" size={20} color="#ff4757" />
