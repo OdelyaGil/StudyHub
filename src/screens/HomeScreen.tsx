@@ -31,8 +31,6 @@ const STUDY_TIPS = [
   'לימוד בקבוצות קטנות יכול להאיר זוויות חדשות',
 ];
 
-const HEB_DAYS   = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
-const SHORT_MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const toISO = (d: Date) => {
@@ -270,14 +268,6 @@ const HomeScreen = () => {
   const urgentDayLabel = (d: number) => d === 0 ? 'היום!' : d === 1 ? 'מחר' : `${d} ימים`;
 
 
-  // Timeline: yesterday + today + 5 ahead
-  const timelineDays = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(today); d.setDate(d.getDate() + i - 1);
-    const iso = toISO(d);
-    const hasEvent = events.some(e => occursOnISO(e, iso));
-    const hasTask  = tasks.some(t => !t.completed && t.dueDate === iso);
-    return { date: d, iso, hasEvent, hasTask, isToday: iso === todayISO };
-  });
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -379,35 +369,69 @@ const HomeScreen = () => {
       </View>
 
       {/* ══════════════════════════════════════════════════════════════════════
-          HORIZONTAL TIMELINE
+          STUDY RECOMMENDATIONS
       ══════════════════════════════════════════════════════════════════════ */}
-      <View style={s.timelineSection}>
-        <Text style={s.timelineHeader}>לוח זמנים שבועי</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.timelineScroll}>
-          {timelineDays.map(({ date, iso, hasEvent, hasTask, isToday }) => (
-            <TouchableOpacity
-              key={iso}
-              style={[s.dayTab, isToday && s.dayTabActive]}
-              onPress={() => navigation.navigate('Events')}
-              activeOpacity={0.8}
-            >
-              {isToday && (
-                <View style={s.dayTabBadge}>
-                  <Text style={s.dayTabBadgeText}>היום</Text>
-                </View>
-              )}
-              <Text style={[s.dayNum, isToday && s.dayNumActive]}>{date.getDate()}</Text>
-              <Text style={[s.dayMonth, isToday && s.dayMonthActive]}>{SHORT_MONTHS[date.getMonth()]}</Text>
-              <Text style={[s.dayName, isToday && s.dayNameActive]}>
-                {HEB_DAYS[date.getDay()].slice(0, 3)}
-              </Text>
-              {(hasEvent || hasTask) && (
-                <View style={[s.dayDot, { backgroundColor: isToday ? '#fff' : hasTask ? NEON_PINK : NEON_BLUE }]} />
-              )}
-            </TouchableOpacity>
+      {studyRecs.length > 0 && (
+        <View style={s.whiteCard}>
+          <View style={s.whiteCardHeader}>
+            <MaterialCommunityIcons name="book-clock-outline" size={18} color="#ffa94d" />
+            <Text style={[s.whiteCardTitle, { color: '#ffa94d' }]}>המלצות לימוד</Text>
+          </View>
+          {studyRecs.map((rec, i) => (
+            <View key={i} style={[s.taskPill, { borderColor: '#ffa94d55', backgroundColor: '#ffa94d10' }]}>
+              <MaterialCommunityIcons name="clock-fast" size={14} color="#ffa94d" style={{ marginTop: 1 }} />
+              <View style={{ flex: 1 }}>
+                <Text style={s.taskPillTitle}>{rec.course}</Text>
+                <Text style={s.taskPillSub}>{rec.hours} שעות — "{rec.taskName}" בעוד {rec.days} ימים</Text>
+              </View>
+            </View>
           ))}
-        </ScrollView>
+        </View>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════════════════
+          MOTIVATIONAL TIP
+      ══════════════════════════════════════════════════════════════════════ */}
+      <View style={[s.whiteCard, { borderLeftWidth: 3, borderLeftColor: NEON_GREEN }]}>
+        <View style={s.whiteCardHeader}>
+          <MaterialCommunityIcons name="lightbulb-on-outline" size={18} color={NEON_GREEN} />
+          <Text style={[s.whiteCardTitle, { color: NEON_GREEN }]}>טיפ לימוד יומי</Text>
+        </View>
+        <Text style={[s.tipText, { color: theme.text }]}>{tip}</Text>
       </View>
+
+      {/* ══════════════════════════════════════════════════════════════════════
+          CREDIT POINTS PROGRESS
+      ══════════════════════════════════════════════════════════════════════ */}
+      <TouchableOpacity style={s.whiteCard} onPress={() => navigation.navigate('Grades')} activeOpacity={0.85}>
+        <View style={s.whiteCardHeader}>
+          <MaterialCommunityIcons name="school-outline" size={18} color={theme.accent} />
+          <Text style={[s.whiteCardTitle, { color: theme.accent }]}>התקדמות נקודות זכות</Text>
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
+          <Text style={{ fontSize: 36, fontWeight: '900', color: theme.text }}>{earnedCredits}</Text>
+          <Text style={{ fontSize: 14, fontWeight: '600', color: theme.textSub }}>
+            {requiredCredits > 0 ? `/ ${requiredCredits} נ"ז` : 'נ"ז נצברו'}
+          </Text>
+        </View>
+        {requiredCredits > 0 ? (
+          <>
+            <View style={[s.timerBarBg, { backgroundColor: theme.accent + '22', marginVertical: 10 }]}>
+              <View style={[s.timerBarFill, { width: `${creditsPct}%` as any, backgroundColor: theme.accent }]} />
+            </View>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              <Text style={{ fontSize: 13, fontWeight: '800', color: theme.accent }}>{creditsPct}% הושלמו</Text>
+              {creditsLeft > 0 && (
+                <Text style={{ fontSize: 12, color: theme.textSub }}>עוד {creditsLeft} נ"ז לסיום</Text>
+              )}
+            </View>
+          </>
+        ) : (
+          <Text style={{ fontSize: 12, color: theme.textSub, textAlign: 'right', marginTop: 8 }}>
+            הגדר נ"ז נדרשות בפרופיל כדי לראות את ההתקדמות
+          </Text>
+        )}
+      </TouchableOpacity>
 
       {/* ══════════════════════════════════════════════════════════════════════
           STUDY TIMER
@@ -423,11 +447,7 @@ const HomeScreen = () => {
           )}
         </View>
 
-        <Text style={[s.timerDisplay, {
-          color: timerDone ? NEON_GREEN : timerLeft > 0 && timerLeft <= 60 ? NEON_PINK : theme.text,
-          shadowColor: timerDone ? NEON_GREEN : theme.accent,
-          shadowOpacity: 0.25, shadowRadius: 8,
-        }]}>
+        <Text style={[s.timerDisplay, { color: timerDone ? NEON_GREEN : timerLeft > 0 && timerLeft <= 60 ? NEON_PINK : theme.text } as any]}>
           {timerLeft > 0 ? formatTime(timerLeft) : timerDone ? formatTime(0) : formatTime((parseInt(timerInput) || 25) * 60)}
         </Text>
         <Text style={[s.timerStatus, { color: theme.textSub }]}>
@@ -480,71 +500,6 @@ const HomeScreen = () => {
             </TouchableOpacity>
           )}
         </View>
-      </View>
-
-      {/* ══════════════════════════════════════════════════════════════════════
-          STUDY RECOMMENDATIONS
-      ══════════════════════════════════════════════════════════════════════ */}
-      {studyRecs.length > 0 && (
-        <View style={s.whiteCard}>
-          <View style={s.whiteCardHeader}>
-            <MaterialCommunityIcons name="book-clock-outline" size={18} color="#ffa94d" />
-            <Text style={[s.whiteCardTitle, { color: '#ffa94d' }]}>המלצות לימוד</Text>
-          </View>
-          {studyRecs.map((rec, i) => (
-            <View key={i} style={[s.taskPill, { borderColor: '#ffa94d55', backgroundColor: '#ffa94d10' }]}>
-              <MaterialCommunityIcons name="clock-fast" size={14} color="#ffa94d" style={{ marginTop: 1 }} />
-              <View style={{ flex: 1 }}>
-                <Text style={s.taskPillTitle}>{rec.course}</Text>
-                <Text style={s.taskPillSub}>{rec.hours} שעות — "{rec.taskName}" בעוד {rec.days} ימים</Text>
-              </View>
-            </View>
-          ))}
-        </View>
-      )}
-
-      {/* ══════════════════════════════════════════════════════════════════════
-          CREDIT POINTS PROGRESS
-      ══════════════════════════════════════════════════════════════════════ */}
-      <TouchableOpacity style={s.whiteCard} onPress={() => navigation.navigate('Grades')} activeOpacity={0.85}>
-        <View style={s.whiteCardHeader}>
-          <MaterialCommunityIcons name="school-outline" size={18} color={theme.accent} />
-          <Text style={[s.whiteCardTitle, { color: theme.accent }]}>התקדמות נקודות זכות</Text>
-        </View>
-        <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
-          <Text style={{ fontSize: 36, fontWeight: '900', color: theme.text }}>{earnedCredits}</Text>
-          <Text style={{ fontSize: 14, fontWeight: '600', color: theme.textSub }}>
-            {requiredCredits > 0 ? `/ ${requiredCredits} נ"ז` : 'נ"ז נצברו'}
-          </Text>
-        </View>
-        {requiredCredits > 0 ? (
-          <>
-            <View style={[s.timerBarBg, { backgroundColor: theme.accent + '22', marginVertical: 10 }]}>
-              <View style={[s.timerBarFill, { width: `${creditsPct}%` as any, backgroundColor: theme.accent }]} />
-            </View>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <Text style={{ fontSize: 13, fontWeight: '800', color: theme.accent }}>{creditsPct}% הושלמו</Text>
-              {creditsLeft > 0 && (
-                <Text style={{ fontSize: 12, color: theme.textSub }}>עוד {creditsLeft} נ"ז לסיום</Text>
-              )}
-            </View>
-          </>
-        ) : (
-          <Text style={{ fontSize: 12, color: theme.textSub, textAlign: 'right', marginTop: 8 }}>
-            הגדר נ"ז נדרשות בפרופיל כדי לראות את ההתקדמות
-          </Text>
-        )}
-      </TouchableOpacity>
-
-      {/* ══════════════════════════════════════════════════════════════════════
-          MOTIVATIONAL TIP
-      ══════════════════════════════════════════════════════════════════════ */}
-      <View style={[s.whiteCard, { borderLeftWidth: 3, borderLeftColor: NEON_GREEN }]}>
-        <View style={s.whiteCardHeader}>
-          <MaterialCommunityIcons name="lightbulb-on-outline" size={18} color={NEON_GREEN} />
-          <Text style={[s.whiteCardTitle, { color: NEON_GREEN }]}>טיפ לימוד יומי</Text>
-        </View>
-        <Text style={[s.tipText, { color: theme.text }]}>{tip}</Text>
       </View>
 
     </ScrollView>
