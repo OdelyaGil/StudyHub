@@ -8,12 +8,12 @@ import { useCustomAlert } from '../hooks/useCustomAlert';
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 export const SIDEBAR_W   = 220;
-const BG      = '#1B3A6B';   // dark navy
-const BG2     = '#152E56';   // darker navy (profile card, bottom card)
-const ACTIVE  = 'rgba(255,255,255,0.13)';
-const DOT     = '#4A9FFF';   // blue accent dot / icon active
-const TEXT    = '#FFFFFF';
-const SUB     = 'rgba(255,255,255,0.55)';
+const BG      = '#1E2140';
+const BG2     = '#161930';
+const ACTIVE  = 'rgba(255,255,255,0.10)';
+const DOT     = '#5B78F5';
+const TEXT    = '#E8EDF8';
+const SUB     = 'rgba(232,237,248,0.50)';
 const TOP_H   = 56;          // mobile top-bar height
 
 const NAV: { name: string; icon: React.ComponentProps<typeof MaterialCommunityIcons>['name']; label: string }[] = [

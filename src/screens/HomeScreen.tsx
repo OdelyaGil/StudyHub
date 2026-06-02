@@ -310,7 +310,7 @@ const HomeScreen = () => {
 
       {/* ── 2. Urgent Deadlines ───────────────────────────────────────────── */}
       {urgentTasks.length > 0 && (
-        <View style={[s.section, { backgroundColor: theme.surface, borderColor: theme.border, borderLeftColor: '#ff6b6b' }]}>
+        <View style={[s.section, { backgroundColor: theme.surface }]}>
           <View style={s.sectionHeader}>
             <MaterialCommunityIcons name="alert-circle" size={18} color="#ff6b6b" />
             <Text style={[s.sectionTitle, { color: '#ff6b6b' }]}>דדליינים דחופים השבוע</Text>
@@ -338,7 +338,7 @@ const HomeScreen = () => {
 
       {/* ── 3. Today's Schedule ───────────────────────────────────────────── */}
       {todayEvents.length > 0 && (
-        <View style={[s.section, { backgroundColor: theme.surface, borderColor: theme.border, borderLeftColor: '#667eea' }]}>
+        <View style={[s.section, { backgroundColor: theme.surface }]}>
           <View style={s.sectionHeader}>
             <MaterialCommunityIcons name="calendar-today" size={18} color="#667eea" />
             <Text style={[s.sectionTitle, { color: '#667eea' }]}>לוח זמנים להיום</Text>
@@ -362,7 +362,7 @@ const HomeScreen = () => {
       <View style={s.twoCardRow}>
         {/* Academic Performance */}
         <TouchableOpacity
-          style={[s.halfCard, { backgroundColor: theme.surface, borderColor: theme.border }]}
+          style={[s.halfCard, { backgroundColor: theme.surface }]}
           onPress={() => navigation.navigate('Grades')}
         >
           <Text style={[s.halfCardTitle, { color: theme.textSub }]}>ביצועים אקדמיים</Text>
@@ -384,7 +384,7 @@ const HomeScreen = () => {
 
         {/* Next 7 Days */}
         <TouchableOpacity
-          style={[s.halfCard, { backgroundColor: theme.surface, borderColor: theme.border }]}
+          style={[s.halfCard, { backgroundColor: theme.surface }]}
           onPress={() => navigation.navigate('Tasks')}
         >
           <Text style={[s.halfCardTitle, { color: theme.textSub }]}>7 ימים הבאים</Text>
@@ -405,7 +405,7 @@ const HomeScreen = () => {
       </View>
 
       {/* ── 4.5. Study Timer ──────────────────────────────────────────────── */}
-      <View style={[s.section, { backgroundColor: theme.surface, borderColor: theme.border, borderLeftColor: theme.accent }]}>
+      <View style={[s.section, { backgroundColor: theme.surface }]}>
         <View style={s.sectionHeader}>
           <MaterialCommunityIcons name="timer-outline" size={18} color={theme.accent} />
           <Text style={[s.sectionTitle, { color: theme.accent }]}>טיימר לימוד עצמי</Text>
@@ -480,7 +480,7 @@ const HomeScreen = () => {
 
       {/* ── 5. Study Recommendations ──────────────────────────────────────── */}
       {studyRecs.length > 0 && (
-        <View style={[s.section, { backgroundColor: theme.surface, borderColor: theme.border, borderLeftColor: '#ffa94d' }]}>
+        <View style={[s.section, { backgroundColor: theme.surface }]}>
           <View style={s.sectionHeader}>
             <MaterialCommunityIcons name="book-clock-outline" size={18} color="#ffa94d" />
             <Text style={[s.sectionTitle, { color: '#ffa94d' }]}>המלצות לימוד</Text>
@@ -501,7 +501,7 @@ const HomeScreen = () => {
 
       {/* ── 7. Credit Points Progress ─────────────────────────────────────── */}
       <TouchableOpacity
-        style={[s.section, { backgroundColor: theme.surface, borderColor: theme.border, borderLeftColor: theme.accent, marginBottom: 16 }]}
+        style={[s.section, { backgroundColor: theme.surface, marginBottom: 16 }]}
         onPress={() => navigation.navigate('Grades')}
         activeOpacity={0.8}
       >
@@ -533,7 +533,7 @@ const HomeScreen = () => {
       </TouchableOpacity>
 
       {/* ── 8. Motivational Tip ───────────────────────────────────────────── */}
-      <View style={[s.tipCard, { backgroundColor: theme.surface, borderColor: '#51cf66' + '55' }]}>
+      <View style={[s.tipCard, { backgroundColor: theme.surface }]}>
         <View style={s.tipHeader}>
           <MaterialCommunityIcons name="lightbulb-on-outline" size={20} color="#51cf66" />
           <Text style={[s.tipTitle, { color: '#51cf66' }]}>טיפ לימוד יומי</Text>
@@ -557,7 +557,7 @@ const s = StyleSheet.create({
   quickChipText:  { fontSize: 12, fontWeight: '700' },
 
   // Section card
-  section:        { borderRadius: 16, padding: 16, marginBottom: 14, borderWidth: 1, borderLeftWidth: 4 },
+  section:        { borderRadius: 20, padding: 16, marginBottom: 14, shadowColor: '#4A5B9A', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.10, shadowRadius: 12, elevation: 4 },
   sectionHeader:  { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
   sectionTitle:   { fontSize: 14, fontWeight: '700', textAlign: 'right' },
   seeAll:         { fontSize: 12, fontWeight: '600', textAlign: 'right', marginTop: 8 },
@@ -577,7 +577,7 @@ const s = StyleSheet.create({
 
   // Two cards
   twoCardRow:     { flexDirection: 'row', gap: 12, marginBottom: 14 },
-  halfCard:       { flex: 1, borderRadius: 16, padding: 14, borderWidth: 1, alignItems: 'center', gap: 8 },
+  halfCard:       { flex: 1, borderRadius: 20, padding: 14, alignItems: 'center', gap: 8, shadowColor: '#4A5B9A', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.10, shadowRadius: 12, elevation: 4 },
   halfCardTitle:  { fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, textAlign: 'center' },
   halfCardSub:    { fontSize: 10, textAlign: 'center' },
   halfCardEmpty:  { fontSize: 12, textAlign: 'center', marginTop: 16 },
@@ -612,7 +612,7 @@ const s = StyleSheet.create({
   creditsHint:    { fontSize: 12, textAlign: 'right', marginTop: 8 },
 
   // Tip
-  tipCard:        { borderRadius: 16, padding: 16, marginBottom: 16, borderWidth: 1 },
+  tipCard:        { borderRadius: 20, padding: 16, marginBottom: 16, shadowColor: '#4A5B9A', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.10, shadowRadius: 12, elevation: 4 },
   tipHeader:      { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
   tipTitle:       { fontSize: 13, fontWeight: '700' },
   tipText:        { fontSize: 13, lineHeight: 20, textAlign: 'right' },

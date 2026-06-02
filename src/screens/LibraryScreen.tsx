@@ -53,7 +53,7 @@ const LibraryScreen = () => {
           {CATEGORIES.map(cat => (
             <TouchableOpacity
               key={cat.key}
-              style={[s.catCard, { backgroundColor: theme.surface, borderColor: theme.border }]}
+              style={[s.catCard, { backgroundColor: theme.surface }]}
               onPress={() => openModal(cat.key)}
               activeOpacity={0.75}
             >
@@ -99,8 +99,10 @@ const s = StyleSheet.create({
   pageSubtitle: { fontSize: 13, textAlign: 'right', marginBottom: 20 },
   grid:         { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 20 },
   catCard: {
-    width: '47%', borderRadius: 16, padding: 16,
-    borderWidth: 1, alignItems: 'center', gap: 8,
+    width: '47%', borderRadius: 20, padding: 16,
+    alignItems: 'center', gap: 8,
+    shadowColor: '#4A5B9A', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.10, shadowRadius: 12, elevation: 4,
   },
   catIcon:  { width: 52, height: 52, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
   catLabel: { fontSize: 13, fontWeight: '700', textAlign: 'center' },
