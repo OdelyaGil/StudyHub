@@ -254,7 +254,8 @@ const HomeScreen = () => {
   const todayLabel = `יום ${HEB_DAYS[today.getDay()]}, ${today.getDate()} ב${HEB_MONTHS[today.getMonth()]}`;
   const firstName  = userName ? userName.split(' ')[0] : '';
 
-  const activeTasks   = tasks.filter(t => !t.completed);
+  const activeTasks    = tasks.filter(t => !t.completed);
+  const completedCnt   = tasks.filter(t => t.completed).length;
   const urgentTasks   = activeTasks
     .filter(t => { const d = daysUntil(t.dueDate); return d >= 0 && d <= 7; })
     .sort((a, b) => daysUntil(a.dueDate) - daysUntil(b.dueDate));
@@ -359,8 +360,18 @@ const HomeScreen = () => {
               </View>
             );
           }) : (
-            <View style={[s.taskPill, { borderColor: NEON_GREEN + '55', backgroundColor: NEON_GREEN + '10' }]}>
-              <Text style={[s.taskPillTitle, { color: NEON_GREEN }]}>אין דדליינים 🎉</Text>
+            <View style={s.miniStatsGrid}>
+              {[
+                { icon: 'checkbox-marked-circle-outline' as const, color: NEON_GREEN,  val: completedCnt,       label: 'הושלמו'  },
+                { icon: 'clipboard-list-outline'         as const, color: '#667eea',   val: activeTasks.length, label: 'פעילות'  },
+                { icon: 'calendar-alert-outline'         as const, color: '#ffa94d',   val: urgentTasks.length, label: 'דחופות'  },
+              ].map(item => (
+                <View key={item.label} style={s.miniStatCell}>
+                  <MaterialCommunityIcons name={item.icon} size={20} color={item.color} />
+                  <Text style={[s.miniStatNum, { color: item.color }]}>{item.val}</Text>
+                  <Text style={[s.miniStatLabel, { color: theme.textSub }]}>{item.label}</Text>
+                </View>
+              ))}
             </View>
           )}
 
@@ -594,6 +605,11 @@ const s = StyleSheet.create({
   eventsLabel:     { fontSize: 10, fontWeight: '700', color: '#9299B8', textTransform: 'uppercase', letterSpacing: 0.8 },
   eventsMeta:      { fontSize: 11, fontWeight: '600', color: '#9299B8' },
   chipsScroll:     { paddingBottom: 4, gap: 10 },
+  miniStatsGrid:  { flexDirection: 'row', justifyContent: 'space-around', marginTop: 8 },
+  miniStatCell:   { alignItems: 'center', gap: 4, flex: 1 },
+  miniStatNum:    { fontSize: 22, fontWeight: '900' },
+  miniStatLabel:  { fontSize: 10, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 },
+
   eventVertRow: {
     backgroundColor: '#fff', borderRadius: 12, padding: 10, marginBottom: 8,
     borderLeftWidth: 3, flexDirection: 'row', alignItems: 'center',
