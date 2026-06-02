@@ -240,7 +240,7 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
         <Text style={[s.emailHeader, { color: theme.textSub }]}>{userEmail}</Text>
 
         {/* Personal details */}
-        <View style={[s.card, { backgroundColor: theme.surface }]}>
+        <View style={[s.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
           <Text style={[s.sectionTitle, { color: theme.accent }]}>פרטים אישיים</Text>
 
           <View style={s.row}>
@@ -281,7 +281,7 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
         </View>
 
         {/* Theme settings */}
-        <View style={[s.card, { backgroundColor: theme.surface }]}>
+        <View style={[s.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
           <Text style={[s.sectionTitle, { color: theme.accent }]}>ערכת נושא</Text>
 
           {/* Dark / Light toggle */}
@@ -332,7 +332,7 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
         </View>
 
         {/* Academic settings */}
-        <View style={[s.card, { backgroundColor: theme.surface }]}>
+        <View style={[s.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
           <Text style={[s.sectionTitle, { color: theme.accent }]}>הגדרות אקדמיות</Text>
           <View style={s.row}>
             <MaterialCommunityIcons name="school-outline" size={20} color={theme.textSub} />
@@ -440,8 +440,7 @@ const s = StyleSheet.create({
   card: {
     width: '100%', borderRadius: 20,
     padding: 16, marginBottom: 16,
-    shadowColor: '#4A5B9A', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.10, shadowRadius: 12, elevation: 4,
+    borderWidth: 1,
   },
   sectionTitle: { fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 12, textTransform: 'uppercase', textAlign: 'right' },
   row:          { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8 },

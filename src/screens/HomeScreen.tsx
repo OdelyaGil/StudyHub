@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, Image,
+  View, Text, StyleSheet, ScrollView,
   TouchableOpacity, RefreshControl, TextInput, Vibration, Platform,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -80,8 +80,6 @@ const HomeScreen = () => {
   const [topics,          setTopics]         = useState<any[]>([]);
   const [requiredCredits, setRequiredCredits]= useState(0);
   const [refreshing,      setRefreshing]     = useState(false);
-  const [userName,        setUserName]       = useState('');
-  const [photoURL,        setPhotoURL]       = useState<string | null>(null);
 
   // ── Timer ─────────────────────────────────────────────────────────────────
   const [timerRunning,  setTimerRunning]  = useState(false);
@@ -92,11 +90,12 @@ const HomeScreen = () => {
   const doneRef        = useRef(false);
   const timerNotifId   = useRef<string | null>(null);
   const timerLeftRef   = useRef(0);
-  const timerEndTime   = useRef<number | null>(null);
+  const timerEndTime   = useRef<number | null>(null);   // exact ms timestamp when timer should finish
   const webTimeout     = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => { timerLeftRef.current = timerLeft; }, [timerLeft]);
 
+  // Register service worker + request notification permission (web only)
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof navigator === 'undefined') return;
     if ('serviceWorker' in navigator) {
@@ -106,6 +105,7 @@ const HomeScreen = () => {
     if (N && N.permission === 'default') N.requestPermission().catch(() => {});
   }, []);
 
+  // Fire a desktop notification via Service Worker (shows as OS popup even in background tab)
   const fireWebNotif = () => {
     if (Platform.OS !== 'web' || typeof navigator === 'undefined') return;
     const title = '⏰ טיימר הלימוד הסתיים!';
@@ -123,6 +123,7 @@ const HomeScreen = () => {
     }
   };
 
+  // visibilitychange: catch "timer ended while tab was hidden" when user returns
   useEffect(() => {
     if (Platform.OS !== 'web') return;
     const handler = () => {
@@ -136,6 +137,7 @@ const HomeScreen = () => {
         setTimerLeft(0);
         setTimerDone(true);
       } else {
+        // Sync display with real elapsed time (setInterval may have drifted)
         setTimerLeft(Math.ceil((timerEndTime.current - Date.now()) / 1000));
       }
     };
@@ -143,6 +145,7 @@ const HomeScreen = () => {
     return () => (document as any).removeEventListener('visibilitychange', handler);
   }, []);
 
+  // Countdown tick — clock-based so it stays accurate even when throttled in bg
   useEffect(() => {
     if (!timerRunning) return;
     doneRef.current = false;
@@ -163,11 +166,13 @@ const HomeScreen = () => {
     return () => clearInterval(id);
   }, [timerRunning]);
 
+  // On done: vibrate + in-app alert (web notification already scheduled via setTimeout)
   useEffect(() => {
     if (!timerDone) return;
     timerNotifId.current = null;
     Vibration.vibrate([0, 400, 200, 400, 200, 400]);
     showAlert('⏰ הזמן הסתיים!', 'כל הכבוד! סיימת את פגישת הלימוד שלך.');
+    // Fallback web notification in case setTimeout didn't fire
     fireWebNotif();
   }, [timerDone]);
 
@@ -182,8 +187,12 @@ const HomeScreen = () => {
     timerEndTime.current = Date.now() + secs * 1000;
     setTimerDone(false);
     setTimerRunning(true);
+
+    // Mobile: schedule native push (works even when app is closed / screen locked)
     const id = await scheduleTimerNotification(secs);
     if (id) timerNotifId.current = id;
+
+    // Web: schedule setTimeout — fires in background tab at approximately the right time
     if (Platform.OS === 'web') {
       if (webTimeout.current) clearTimeout(webTimeout.current);
       webTimeout.current = setTimeout(() => { fireWebNotif(); }, secs * 1000);
@@ -194,6 +203,7 @@ const HomeScreen = () => {
     setTimerRunning(false);
     if (timerNotifId.current) { cancelTimerNotification(timerNotifId.current); timerNotifId.current = null; }
     if (webTimeout.current)   { clearTimeout(webTimeout.current); webTimeout.current = null; }
+    // Keep timerEndTime so resume knows exactly how much is left
     if (timerEndTime.current) {
       timerLeftRef.current  = Math.max(0, Math.ceil((timerEndTime.current - Date.now()) / 1000));
       setTimerLeft(timerLeftRef.current);
@@ -223,19 +233,21 @@ const HomeScreen = () => {
         loadField('schedule'),
         loadField('topics'),
       ]);
-      setGrades(g  ?? []);
-      setTasks(t   ?? []);
-      setEvents(e  ?? []);
-      setTopics(tp ?? []);
-      scheduleAllNotifications(t ?? [], e ?? []);
+      const gr = g  ?? [];
+      const tk = t  ?? [];
+      const ev = e  ?? [];
+      const tp2 = tp ?? [];
+      setGrades(gr);
+      setTasks(tk);
+      setEvents(ev);
+      setTopics(tp2);
+      scheduleAllNotifications(tk, ev);
       const user = auth.currentUser;
       if (user) {
         const snap = await getDoc(doc(db, 'users', user.uid));
         if (snap.exists()) {
           const d = snap.data();
           setRequiredCredits(+(d.requiredCredits ?? 0));
-          setUserName(d.name || '');
-          setPhotoURL(d.photoURL || null);
         }
       }
     } catch (err) { console.log(err); }
@@ -244,12 +256,13 @@ const HomeScreen = () => {
   const onRefresh = async () => { setRefreshing(true); await loadAll(); setRefreshing(false); };
 
   // ── Derived ───────────────────────────────────────────────────────────────
-  const today      = new Date();
-  const todayISO   = toISO(today);
-  const tip        = STUDY_TIPS[today.getDay()];
-  const todayLabel = `יום ${HEB_DAYS[today.getDay()]}, ${today.getDate()} ב${HEB_MONTHS[today.getMonth()]}`;
+  const today     = new Date();
+  const todayISO  = toISO(today);
+  const tip       = STUDY_TIPS[today.getDay()];
+  const todayLabel= `יום ${HEB_DAYS[today.getDay()]}, ${today.getDate()} ב${HEB_MONTHS[today.getMonth()]}`;
 
   const activeTasks  = tasks.filter(t => !t.completed);
+  const completedCnt = tasks.filter(t => t.completed).length;
 
   const urgentTasks = activeTasks
     .filter(t => { const d = daysUntil(t.dueDate); return d >= 0 && d <= 7; })
@@ -259,17 +272,20 @@ const HomeScreen = () => {
     .filter(e => occursOnISO(e, todayISO))
     .sort((a, b) => a.startTime.localeCompare(b.startTime));
 
-  const next7Dates  = Array.from({ length: 7 }, (_, i) => {
+  const next7Dates = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(today); d.setDate(d.getDate() + i + 1); return toISO(d);
   });
   const next7Events = next7Dates.flatMap(iso => events.filter(e => occursOnISO(e, iso)));
 
-  const avg         = calcWeightedAvg(grades);
-  const topicsReview= topics.filter(t => t.needsReview).length;
-  const earnedCredits = grades.reduce((s: number, g: any) => s + (g.credits || 0), 0);
-  const creditsPct  = requiredCredits > 0 ? Math.min(100, Math.round((earnedCredits / requiredCredits) * 100)) : 0;
+  const avg        = calcWeightedAvg(grades);
+  const avgPct     = avg ? Math.min(100, Math.round(avg)) : 0;
+  const topicsReview = topics.filter(t => t.needsReview).length;
 
-  const studyRecs   = Array.from(new Set(urgentTasks.filter(t => t.course).map(t => t.course)))
+  const earnedCredits  = grades.reduce((s: number, g: any) => s + (g.credits || 0), 0);
+  const creditsPct     = requiredCredits > 0 ? Math.min(100, Math.round((earnedCredits / requiredCredits) * 100)) : 0;
+  const creditsLeft    = requiredCredits > 0 ? Math.max(0, requiredCredits - earnedCredits) : 0;
+
+  const studyRecs  = Array.from(new Set(urgentTasks.filter(t => t.course).map(t => t.course)))
     .map(course => {
       const nearest = urgentTasks.find(t => t.course === course)!;
       const days    = daysUntil(nearest.dueDate);
@@ -280,10 +296,6 @@ const HomeScreen = () => {
   const urgentDayColor = (d: number) => d === 0 ? '#ff6b6b' : d <= 2 ? '#ffa94d' : '#51cf66';
   const urgentDayLabel = (d: number) => d === 0 ? 'היום!' : d === 1 ? 'מחר' : `${d} ימים`;
 
-  const initials = userName
-    ? userName.split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2)
-    : '?';
-
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <View style={{ flex: 1, backgroundColor: theme.bg }}>
@@ -293,138 +305,107 @@ const HomeScreen = () => {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.accent} />}
     >
 
-      {/* ── HERO CARD ──────────────────────────────────────────────────────── */}
-      <View style={s.heroCard}>
-        {/* Top-left "All stats" button */}
-        <TouchableOpacity style={s.heroAllStatsBtn} onPress={() => navigation.navigate('Grades')}>
-          <MaterialCommunityIcons name="chart-box-outline" size={15} color="#fff" />
-          <Text style={s.heroAllStatsText}>סטטיסטיקות</Text>
-        </TouchableOpacity>
+      {/* ── 1. Header ──────────────────────────────────────────────────────── */}
+      <Text style={[s.dateLabel, { color: theme.textSub, marginBottom: 20 }]}>{todayLabel}</Text>
 
-        {/* Avatar + name */}
-        <View style={s.heroTop}>
-          <View style={s.heroAvatarRing}>
-            {photoURL
-              ? <Image source={{ uri: photoURL }} style={s.heroAvatar} />
-              : <View style={s.heroAvatarFallback}>
-                  <Text style={s.heroInitials}>{initials}</Text>
-                </View>
-            }
+      {/* ── 2. Urgent Deadlines ───────────────────────────────────────────── */}
+      {urgentTasks.length > 0 && (
+        <View style={[s.section, { backgroundColor: theme.surface, borderColor: theme.border, borderLeftColor: '#ff6b6b' }]}>
+          <View style={s.sectionHeader}>
+            <MaterialCommunityIcons name="alert-circle" size={18} color="#ff6b6b" />
+            <Text style={[s.sectionTitle, { color: '#ff6b6b' }]}>דדליינים דחופים השבוע</Text>
           </View>
-          <View style={{ flex: 1, paddingRight: 8 }}>
-            <Text style={s.heroName}>{userName || 'סטודנט'}</Text>
-            <Text style={s.heroSub}>{todayLabel}</Text>
-          </View>
-        </View>
-
-        {/* Stats row */}
-        <View style={s.heroStatsRow}>
-          <View style={s.heroStat}>
-            <Text style={s.heroStatVal}>{avg ?? '--'}</Text>
-            <Text style={s.heroStatLabel}>AVERAGE SCORE</Text>
-          </View>
-          <View style={s.heroStatDivider} />
-          <View style={s.heroStat}>
-            <Text style={s.heroStatVal}>{activeTasks.length}</Text>
-            <Text style={s.heroStatLabel}>TASKS</Text>
-          </View>
-          <View style={s.heroStatDivider} />
-          <View style={s.heroStat}>
-            <Text style={s.heroStatVal}>{earnedCredits}</Text>
-            <Text style={s.heroStatLabel}>CREDITS</Text>
-          </View>
-        </View>
-      </View>
-
-      {/* ── THREE COLUMNS ──────────────────────────────────────────────────── */}
-      <View style={s.threeCol}>
-
-        {/* 1 — Urgent Deadlines */}
-        <TouchableOpacity
-          style={[s.colCard, { backgroundColor: theme.surface }]}
-          onPress={() => navigation.navigate('Tasks')}
-          activeOpacity={0.85}
-        >
-          <View style={s.colHeader}>
-            <Text style={[s.colTitle, { color: theme.textSub }]}>דדליינים</Text>
-            <View style={s.colBadgeRed}>
-              <Text style={s.colBadgeRedText}>{urgentTasks.length}</Text>
-            </View>
-          </View>
-          {urgentTasks.length > 0 ? urgentTasks.slice(0, 3).map(task => {
+          {urgentTasks.slice(0, 4).map(task => {
             const d = daysUntil(task.dueDate);
             return (
-              <View key={task.id} style={s.colItem}>
-                <View style={[s.colDot, { backgroundColor: urgentDayColor(d) }]} />
+              <TouchableOpacity key={task.id} style={s.urgentRow} onPress={() => navigation.navigate('Tasks')}>
+                <View style={[s.urgentDot, { backgroundColor: urgentDayColor(d) }]} />
                 <View style={{ flex: 1 }}>
-                  <Text style={[s.colItemTitle, { color: theme.text }]} numberOfLines={1}>{task.name}</Text>
-                  <Text style={[s.colItemSub, { color: urgentDayColor(d) }]}>{urgentDayLabel(d)}</Text>
+                  <Text style={[s.urgentName, { color: theme.text }]}>{task.name}</Text>
+                  {task.course ? <Text style={[s.urgentCourse, { color: theme.textSub }]}>{task.course}</Text> : null}
                 </View>
-              </View>
+                <Text style={[s.urgentDays, { color: urgentDayColor(d) }]}>{urgentDayLabel(d)}</Text>
+              </TouchableOpacity>
             );
-          }) : (
-            <Text style={[s.colEmpty, { color: theme.textSub }]}>אין דדליינים קרובים 🎉</Text>
+          })}
+          {urgentTasks.length > 4 && (
+            <TouchableOpacity onPress={() => navigation.navigate('Tasks')}>
+              <Text style={[s.seeAll, { color: '#ff6b6b' }]}>עוד {urgentTasks.length - 4} מטלות →</Text>
+            </TouchableOpacity>
           )}
-        </TouchableOpacity>
+        </View>
+      )}
 
-        {/* 2 — Today's Schedule */}
-        <TouchableOpacity
-          style={[s.colCard, { backgroundColor: theme.surface }]}
-          onPress={() => navigation.navigate('Events')}
-          activeOpacity={0.85}
-        >
-          <View style={s.colHeader}>
-            <Text style={[s.colTitle, { color: theme.textSub }]}>לוח זמנים להיום</Text>
-            <View style={s.colBadgeBlue}>
-              <Text style={s.colBadgeBlueText}>{todayEvents.length}</Text>
-            </View>
+      {/* ── 3. Today's Schedule ───────────────────────────────────────────── */}
+      {todayEvents.length > 0 && (
+        <View style={[s.section, { backgroundColor: theme.surface, borderColor: theme.border, borderLeftColor: '#667eea' }]}>
+          <View style={s.sectionHeader}>
+            <MaterialCommunityIcons name="calendar-today" size={18} color="#667eea" />
+            <Text style={[s.sectionTitle, { color: '#667eea' }]}>לוח זמנים להיום</Text>
           </View>
-          {todayEvents.length > 0 ? todayEvents.slice(0, 3).map(ev => (
-            <View key={ev.id} style={s.colItem}>
-              <View style={[s.colBar, { backgroundColor: ev.color || '#667eea' }]} />
+          {todayEvents.map(ev => (
+            <TouchableOpacity key={ev.id} style={s.eventRow} onPress={() => navigation.navigate('Events')}>
+              <View style={[s.eventBar, { backgroundColor: ev.color || '#667eea' }]} />
               <View style={{ flex: 1 }}>
-                <Text style={[s.colItemTitle, { color: theme.text }]} numberOfLines={1}>{ev.title}</Text>
-                <Text style={[s.colItemSub, { color: '#667eea' }]}>
+                <Text style={[s.eventTitle, { color: theme.text }]}>{ev.title}</Text>
+                <Text style={[s.eventTime, { color: '#667eea' }]}>
                   {ev.startTime}{ev.endTime ? ` – ${ev.endTime}` : ''}
                 </Text>
               </View>
-            </View>
-          )) : (
-            <Text style={[s.colEmpty, { color: theme.textSub }]}>אין אירועים היום</Text>
+              <MaterialCommunityIcons name="chevron-left" size={16} color={theme.textSub} />
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+
+      {/* ── 4. Two cards side by side ─────────────────────────────────────── */}
+      <View style={s.twoCardRow}>
+        {/* Academic Performance */}
+        <TouchableOpacity
+          style={[s.halfCard, { backgroundColor: theme.surface, borderColor: theme.border }]}
+          onPress={() => navigation.navigate('Grades')}
+        >
+          <Text style={[s.halfCardTitle, { color: theme.textSub }]}>ביצועים אקדמיים</Text>
+          {avg ? (
+            <>
+              <View style={[s.circle, { borderColor: theme.accent }]}>
+                <Text style={[s.circleVal, { color: theme.accent }]}>{avg}</Text>
+                <Text style={[s.circleSubLabel, { color: theme.textSub }]}>ממוצע</Text>
+              </View>
+              <View style={[s.progressBarBg, { backgroundColor: theme.accent + '22' }]}>
+                <View style={[s.progressBarFill, { width: `${avgPct}%` as any, backgroundColor: theme.accent }]} />
+              </View>
+              <Text style={[s.halfCardSub, { color: theme.textSub }]}>{avgPct}% מהמקסימום</Text>
+            </>
+          ) : (
+            <Text style={[s.halfCardEmpty, { color: theme.textSub }]}>אין ציונים עדיין</Text>
           )}
         </TouchableOpacity>
 
-        {/* 3 — Next 7 Days */}
-        <View style={[s.colCard, { backgroundColor: theme.surface }]}>
-          <View style={s.colHeader}>
-            <Text style={[s.colTitle, { color: theme.textSub }]}>7 ימים הבאים</Text>
-          </View>
-          {[
-            { val: urgentTasks.length, label: 'מטלות',   color: '#ff6b6b', icon: 'clipboard-alert-outline' as const },
-            { val: next7Events.length, label: 'אירועים', color: '#667eea', icon: 'calendar-range' as const },
-            { val: topicsReview,       label: 'לחזרה',   color: '#ffa94d', icon: 'refresh' as const },
-          ].map(item => (
-            <View key={item.label} style={s.next7Row}>
-              <MaterialCommunityIcons name={item.icon} size={16} color={item.color} />
-              <Text style={[s.next7Val, { color: item.color }]}>{item.val}</Text>
-              <Text style={[s.next7Key, { color: theme.textSub }]}>{item.label}</Text>
-            </View>
-          ))}
-          {requiredCredits > 0 && (
-            <>
-              <View style={[s.progressBarBg, { backgroundColor: theme.accent + '22', marginTop: 14 }]}>
-                <View style={[s.progressBarFill, { width: `${creditsPct}%` as any, backgroundColor: theme.accent }]} />
+        {/* Next 7 Days */}
+        <TouchableOpacity
+          style={[s.halfCard, { backgroundColor: theme.surface, borderColor: theme.border }]}
+          onPress={() => navigation.navigate('Tasks')}
+        >
+          <Text style={[s.halfCardTitle, { color: theme.textSub }]}>7 ימים הבאים</Text>
+          <View style={s.next7List}>
+            {[
+              { val: urgentTasks.length, label: 'מטלות',   color: '#ff6b6b', icon: 'clipboard-alert-outline' },
+              { val: next7Events.length, label: 'אירועים', color: '#667eea', icon: 'calendar-range' },
+              { val: topicsReview,       label: 'לחזרה',   color: '#ffa94d', icon: 'refresh' },
+            ].map(item => (
+              <View key={item.label} style={s.next7Row}>
+                <MaterialCommunityIcons name={item.icon as any} size={14} color={item.color} />
+                <Text style={[s.next7Val, { color: item.color }]}>{item.val}</Text>
+                <Text style={[s.next7Key, { color: theme.textSub }]}>{item.label}</Text>
               </View>
-              <Text style={[s.colItemSub, { color: theme.textSub, textAlign: 'right', marginTop: 5 }]}>
-                {creditsPct}% נ"ז הושלמו
-              </Text>
-            </>
-          )}
-        </View>
+            ))}
+          </View>
+        </TouchableOpacity>
       </View>
 
-      {/* ── Study Timer ───────────────────────────────────────────────────── */}
-      <View style={[s.section, { backgroundColor: theme.surface }]}>
+      {/* ── 4.5. Study Timer ──────────────────────────────────────────────── */}
+      <View style={[s.section, { backgroundColor: theme.surface, borderColor: theme.border, borderLeftColor: theme.accent }]}>
         <View style={s.sectionHeader}>
           <MaterialCommunityIcons name="timer-outline" size={18} color={theme.accent} />
           <Text style={[s.sectionTitle, { color: theme.accent }]}>טיימר לימוד עצמי</Text>
@@ -435,17 +416,22 @@ const HomeScreen = () => {
           )}
         </View>
 
+        {/* Time display */}
         <Text style={[s.timerDisplay, { color: timerDone ? '#51cf66' : timerLeft > 0 && timerLeft <= 60 ? '#ff6b6b' : theme.text }]}>
           {timerLeft > 0 ? formatTime(timerLeft) : timerDone ? formatTime(0) : formatTime((parseInt(timerInput) || 25) * 60)}
         </Text>
+
+        {/* Status label */}
         <Text style={[s.timerStatus, { color: theme.textSub }]}>
           {timerRunning ? 'לומד...' : timerDone ? 'כל הכבוד!' : timerLeft > 0 ? 'בהפסקה' : 'מוכן להתחיל'}
         </Text>
 
+        {/* Progress bar */}
         <View style={[s.progressBarBg, { backgroundColor: theme.accent + '22', marginVertical: 12 }]}>
           <View style={[s.progressBarFill, { width: `${timerPct}%` as any, backgroundColor: timerDone ? '#51cf66' : theme.accent }]} />
         </View>
 
+        {/* Duration input — only when idle */}
         {!timerRunning && timerLeft === 0 && (
           <View style={s.timerInputRow}>
             <Text style={[s.timerInputLabel, { color: theme.textSub }]}>משך (דקות):</Text>
@@ -471,10 +457,11 @@ const HomeScreen = () => {
           </View>
         )}
 
+        {/* Controls */}
         <View style={s.timerControls}>
           {!timerRunning ? (
             <TouchableOpacity style={[s.timerStartBtn, { backgroundColor: theme.accent }]} onPress={handleTimerStart}>
-              <MaterialCommunityIcons name="play" size={18} color={theme.bg} />
+              <MaterialCommunityIcons name={timerLeft > 0 ? 'play' : 'play'} size={18} color={theme.bg} />
               <Text style={[s.timerStartText, { color: theme.bg }]}>{timerLeft > 0 ? 'המשך' : 'התחל'}</Text>
             </TouchableOpacity>
           ) : (
@@ -491,9 +478,9 @@ const HomeScreen = () => {
         </View>
       </View>
 
-      {/* ── Study Recommendations ─────────────────────────────────────────── */}
+      {/* ── 5. Study Recommendations ──────────────────────────────────────── */}
       {studyRecs.length > 0 && (
-        <View style={[s.section, { backgroundColor: theme.surface }]}>
+        <View style={[s.section, { backgroundColor: theme.surface, borderColor: theme.border, borderLeftColor: '#ffa94d' }]}>
           <View style={s.sectionHeader}>
             <MaterialCommunityIcons name="book-clock-outline" size={18} color="#ffa94d" />
             <Text style={[s.sectionTitle, { color: '#ffa94d' }]}>המלצות לימוד</Text>
@@ -512,8 +499,41 @@ const HomeScreen = () => {
         </View>
       )}
 
-      {/* ── Motivational Tip ──────────────────────────────────────────────── */}
-      <View style={[s.tipCard, { backgroundColor: theme.surface }]}>
+      {/* ── 7. Credit Points Progress ─────────────────────────────────────── */}
+      <TouchableOpacity
+        style={[s.section, { backgroundColor: theme.surface, borderColor: theme.border, borderLeftColor: theme.accent, marginBottom: 16 }]}
+        onPress={() => navigation.navigate('Grades')}
+        activeOpacity={0.8}
+      >
+        <View style={s.sectionHeader}>
+          <MaterialCommunityIcons name="school-outline" size={18} color={theme.accent} />
+          <Text style={[s.sectionTitle, { color: theme.accent }]}>התקדמות נקודות זכות</Text>
+        </View>
+        <View style={s.creditsRow}>
+          <Text style={[s.creditsEarned, { color: theme.text }]}>{earnedCredits}</Text>
+          <Text style={[s.creditsSlash, { color: theme.textSub }]}>
+            {requiredCredits > 0 ? ` / ${requiredCredits} נ"ז` : ' נ"ז נצברו'}
+          </Text>
+        </View>
+        {requiredCredits > 0 ? (
+          <>
+            <View style={[s.progressBarBg, { backgroundColor: theme.accent + '22', marginVertical: 10 }]}>
+              <View style={[s.progressBarFill, { width: `${creditsPct}%` as any, backgroundColor: theme.accent }]} />
+            </View>
+            <View style={s.creditsMeta}>
+              <Text style={[s.creditsPct, { color: theme.accent }]}>{creditsPct}% הושלמו</Text>
+              {creditsLeft > 0 && (
+                <Text style={[s.creditsLeft, { color: theme.textSub }]}>עוד {creditsLeft} נ"ז לסיום</Text>
+              )}
+            </View>
+          </>
+        ) : (
+          <Text style={[s.creditsHint, { color: theme.textSub }]}>הגדר נ"ז נדרשות בפרופיל כדי לראות את ההתקדמות</Text>
+        )}
+      </TouchableOpacity>
+
+      {/* ── 8. Motivational Tip ───────────────────────────────────────────── */}
+      <View style={[s.tipCard, { backgroundColor: theme.surface, borderColor: '#51cf66' + '55' }]}>
         <View style={s.tipHeader}>
           <MaterialCommunityIcons name="lightbulb-on-outline" size={20} color="#51cf66" />
           <Text style={[s.tipTitle, { color: '#51cf66' }]}>טיפ לימוד יומי</Text>
@@ -528,110 +548,81 @@ const HomeScreen = () => {
 };
 
 // ── Styles ────────────────────────────────────────────────────────────────────
-const CARD_SHADOW = {
-  shadowColor: '#4A5B9A' as string,
-  shadowOffset: { width: 0, height: 4 },
-  shadowOpacity: 0.10,
-  shadowRadius: 12,
-  elevation: 4,
-};
-
 const s = StyleSheet.create({
-  // ── Hero card ──────────────────────────────────────────────────────────────
-  heroCard: {
-    borderRadius: 24, padding: 20, marginBottom: 20,
-    backgroundColor: '#1E2140',
-    shadowColor: '#5B78F5', shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.30, shadowRadius: 24, elevation: 10,
-  },
-  heroTop: {
-    flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 20,
-    marginTop: 8,
-  },
-  heroAvatarRing: {
-    width: 64, height: 64, borderRadius: 32,
-    borderWidth: 2.5, borderColor: '#5B78F5',
-    justifyContent: 'center', alignItems: 'center',
-    overflow: 'hidden',
-    shadowColor: '#5B78F5', shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5, shadowRadius: 10,
-  },
-  heroAvatar:         { width: 60, height: 60, borderRadius: 30 },
-  heroAvatarFallback: {
-    width: 60, height: 60, borderRadius: 30,
-    backgroundColor: 'rgba(91,120,245,0.2)',
-    justifyContent: 'center', alignItems: 'center',
-  },
-  heroInitials:    { fontSize: 22, fontWeight: '800', color: '#5B78F5' },
-  heroName:        { fontSize: 17, fontWeight: '800', color: '#FFFFFF', textAlign: 'right' },
-  heroSub:         { fontSize: 12, color: 'rgba(232,237,248,0.55)', textAlign: 'right', marginTop: 3 },
-  heroAllStatsBtn: {
-    position: 'absolute', top: 16, left: 16,
-    flexDirection: 'row', alignItems: 'center', gap: 5,
-    backgroundColor: '#5B78F5',
-    paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12,
-    shadowColor: '#5B78F5', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4, shadowRadius: 8,
-  },
-  heroAllStatsText: { fontSize: 11, fontWeight: '700', color: '#FFFFFF' },
-  heroStatsRow: {
-    flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center',
-    paddingTop: 16,
-    borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.10)',
-  },
-  heroStat:         { alignItems: 'center', flex: 1 },
-  heroStatVal:      { fontSize: 26, fontWeight: '900', color: '#FFFFFF' },
-  heroStatLabel:    { fontSize: 9, fontWeight: '700', color: 'rgba(232,237,248,0.45)', textTransform: 'uppercase', letterSpacing: 1, marginTop: 4 },
-  heroStatDivider:  { width: 1, height: 38, backgroundColor: 'rgba(255,255,255,0.10)' },
+  // Header
+  headerRow:      { flexDirection: 'row', alignItems: 'center', marginBottom: 20, gap: 12 },
+  greeting:       { fontSize: 20, fontWeight: '800', textAlign: 'right' },
+  dateLabel:      { fontSize: 12, marginTop: 2, textAlign: 'right' },
+  quickChip:      { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1 },
+  quickChipText:  { fontSize: 12, fontWeight: '700' },
 
-  // ── Three-column grid ──────────────────────────────────────────────────────
-  threeCol: { flexDirection: 'row', gap: 12, marginBottom: 16 },
-  colCard: {
-    flex: 1, borderRadius: 20, padding: 14, minHeight: 190,
-    ...CARD_SHADOW,
-  },
-  colHeader: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end',
-    gap: 6, marginBottom: 12,
-  },
-  colTitle:         { fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.8, flex: 1, textAlign: 'right' },
-  colBadgeRed:      { backgroundColor: 'rgba(255,107,107,0.15)', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 10 },
-  colBadgeRedText:  { fontSize: 10, fontWeight: '700', color: '#ff6b6b' },
-  colBadgeBlue:     { backgroundColor: 'rgba(102,126,234,0.15)', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 10 },
-  colBadgeBlueText: { fontSize: 10, fontWeight: '700', color: '#667eea' },
-  colItem:          { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
-  colDot:           { width: 8, height: 8, borderRadius: 4 },
-  colBar:           { width: 3, height: 36, borderRadius: 2 },
-  colItemTitle:     { fontSize: 12, fontWeight: '700', textAlign: 'right' },
-  colItemSub:       { fontSize: 10, fontWeight: '600', marginTop: 1, textAlign: 'right' },
-  colEmpty:         { fontSize: 12, textAlign: 'center', marginTop: 24, lineHeight: 20 },
+  // Section card
+  section:        { borderRadius: 16, padding: 16, marginBottom: 14, borderWidth: 1, borderLeftWidth: 4 },
+  sectionHeader:  { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
+  sectionTitle:   { fontSize: 14, fontWeight: '700', textAlign: 'right' },
+  seeAll:         { fontSize: 12, fontWeight: '600', textAlign: 'right', marginTop: 8 },
 
-  // ── Section card ───────────────────────────────────────────────────────────
-  section:       { borderRadius: 20, padding: 16, marginBottom: 14, ...CARD_SHADOW },
-  sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
-  sectionTitle:  { fontSize: 14, fontWeight: '700', textAlign: 'right' },
+  // Urgent rows
+  urgentRow:      { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
+  urgentDot:      { width: 10, height: 10, borderRadius: 5 },
+  urgentName:     { fontSize: 13, fontWeight: '700', textAlign: 'right' },
+  urgentCourse:   { fontSize: 11, textAlign: 'right', marginTop: 1 },
+  urgentDays:     { fontSize: 12, fontWeight: '800', minWidth: 50, textAlign: 'right' },
 
-  // ── Next 7 days (inside col card) ──────────────────────────────────────────
-  next7Row:  { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
-  next7Val:  { fontSize: 16, fontWeight: '800', minWidth: 24, textAlign: 'right' },
-  next7Key:  { fontSize: 12 },
+  // Events
+  eventRow:       { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 },
+  eventBar:       { width: 4, height: 40, borderRadius: 2 },
+  eventTitle:     { fontSize: 13, fontWeight: '700', textAlign: 'right' },
+  eventTime:      { fontSize: 11, fontWeight: '600', marginTop: 2, textAlign: 'right' },
 
-  // ── Progress bar ───────────────────────────────────────────────────────────
-  progressBarBg:   { height: 6, width: '100%', borderRadius: 3, overflow: 'hidden' },
-  progressBarFill: { height: 6, borderRadius: 3 },
+  // Two cards
+  twoCardRow:     { flexDirection: 'row', gap: 12, marginBottom: 14 },
+  halfCard:       { flex: 1, borderRadius: 16, padding: 14, borderWidth: 1, alignItems: 'center', gap: 8 },
+  halfCardTitle:  { fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, textAlign: 'center' },
+  halfCardSub:    { fontSize: 10, textAlign: 'center' },
+  halfCardEmpty:  { fontSize: 12, textAlign: 'center', marginTop: 16 },
+  circle:         { width: 72, height: 72, borderRadius: 36, borderWidth: 3, justifyContent: 'center', alignItems: 'center' },
+  circleVal:      { fontSize: 20, fontWeight: '800' },
+  circleSubLabel: { fontSize: 9, fontWeight: '600' },
+  progressBarBg:  { height: 6, width: '100%', borderRadius: 3, overflow: 'hidden' },
+  progressBarFill:{ height: 6, borderRadius: 3 },
+  next7List:      { gap: 8, width: '100%' },
+  next7Row:       { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  next7Val:       { fontSize: 16, fontWeight: '800', minWidth: 24, textAlign: 'right' },
+  next7Key:       { fontSize: 12 },
 
-  // ── Study recommendations ──────────────────────────────────────────────────
-  studyRow:    { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 10 },
-  studyCourse: { fontSize: 13, fontWeight: '700', textAlign: 'right' },
-  studySub:    { fontSize: 11, textAlign: 'right', marginTop: 2 },
+  // Study recs
+  studyRow:       { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 10 },
+  studyCourse:    { fontSize: 13, fontWeight: '700', textAlign: 'right' },
+  studySub:       { fontSize: 11, textAlign: 'right', marginTop: 2 },
 
-  // ── Motivational tip ───────────────────────────────────────────────────────
-  tipCard:   { borderRadius: 20, padding: 16, marginBottom: 16, ...CARD_SHADOW },
-  tipHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
-  tipTitle:  { fontSize: 13, fontWeight: '700' },
-  tipText:   { fontSize: 13, lineHeight: 20, textAlign: 'right' },
+  // Stats grid
+  statsGrid:      { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 16 },
+  statMini:       { width: '47%', borderRadius: 14, padding: 14, alignItems: 'center', gap: 4, borderWidth: 1 },
+  statMiniVal:    { fontSize: 22, fontWeight: '800' },
+  statMiniLabel:  { fontSize: 10, fontWeight: '600', textAlign: 'center' },
 
-  // ── Timer ──────────────────────────────────────────────────────────────────
+  // Credits progress
+  creditsRow:     { flexDirection: 'row', alignItems: 'baseline', gap: 4 },
+  creditsEarned:  { fontSize: 36, fontWeight: '900' },
+  creditsSlash:   { fontSize: 14, fontWeight: '600' },
+  creditsMeta:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  creditsPct:     { fontSize: 13, fontWeight: '800' },
+  creditsLeft:    { fontSize: 12 },
+  creditsHint:    { fontSize: 12, textAlign: 'right', marginTop: 8 },
+
+  // Tip
+  tipCard:        { borderRadius: 16, padding: 16, marginBottom: 16, borderWidth: 1 },
+  tipHeader:      { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
+  tipTitle:       { fontSize: 13, fontWeight: '700' },
+  tipText:        { fontSize: 13, lineHeight: 20, textAlign: 'right' },
+
+  // Actions
+  actionsRow:     { flexDirection: 'row', gap: 12 },
+  actionBtn:      { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, borderRadius: 14 },
+  actionBtnText:  { fontSize: 13, fontWeight: '700' },
+
+  // Timer
   timerDisplay:    { fontSize: 52, fontWeight: '900', textAlign: 'center', letterSpacing: 2, marginTop: 4 },
   timerStatus:     { fontSize: 12, fontWeight: '600', textAlign: 'center', marginTop: 2, textTransform: 'uppercase', letterSpacing: 1 },
   timerDoneBadge:  { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10, borderWidth: 1, marginLeft: 8 },

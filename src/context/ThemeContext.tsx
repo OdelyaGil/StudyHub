@@ -18,12 +18,12 @@ export const buildTheme = (mode: ThemeMode, accent: string): AppTheme => {
   return {
     mode,
     accent,
-    bg:      dark ? '#12152D' : '#EBF0FA',
-    surface: dark ? '#1E2140' : '#FFFFFF',
-    border:  dark ? '#2D3160' : '#E8EDF5',
-    text:    dark ? '#E8EDF8' : '#1A2052',
-    textSub: dark ? '#8890B4' : '#9299B8',
-    tabBg:   dark ? '#1E2140' : '#FFFFFF',
+    bg:      dark ? '#0A0A0F' : '#F4F4F8',
+    surface: dark ? 'rgba(255,255,255,0.06)' : '#FFFFFF',
+    border:  dark ? accent + '55' : '#E0E0E0',
+    text:    dark ? '#FFFFFF' : '#1A1A2E',
+    textSub: dark ? '#7A7A9A' : '#666680',
+    tabBg:   dark ? '#0D0D1A' : '#FFFFFF',
   };
 };
 

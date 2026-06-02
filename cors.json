@@ -1,0 +1,17 @@
+[
+  {
+    "origin": [
+      "https://study-hub-coral-seven.vercel.app",
+      "http://localhost:8081",
+      "http://localhost:19006"
+    ],
+    "method": ["GET", "POST", "PUT", "DELETE", "HEAD"],
+    "maxAgeSeconds": 3600,
+    "responseHeader": [
+      "Content-Type",
+      "Authorization",
+      "Content-Length",
+      "x-goog-resumable"
+    ]
+  }
+]
