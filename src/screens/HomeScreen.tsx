@@ -331,68 +331,74 @@ const HomeScreen = () => {
       </View>
 
       {/* ══════════════════════════════════════════════════════════════════════
-          DEADLINES — full-width card
+          DEADLINES (left) + TODAY EVENTS vertical (right)
       ══════════════════════════════════════════════════════════════════════ */}
-      <TouchableOpacity style={s.contentCard} onPress={() => navigation.navigate('Tasks')} activeOpacity={0.9}>
-        <View style={s.cardTopRow}>
-          <Text style={s.cardLabel}>דדליינים</Text>
-          <Text style={s.cardMeta}>{urgentTasks.length} השבוע</Text>
-        </View>
+      <View style={s.cardsRow}>
 
-        {urgentTasks.length > 0 ? urgentTasks.slice(0, 3).map(task => {
-          const d = daysUntil(task.dueDate);
-          const col = urgentDayColor(d);
-          return (
-            <View key={task.id} style={[s.taskPill, { borderColor: col + '55', backgroundColor: col + '10' }]}>
-              <View style={{ flex: 1 }}>
-                <Text style={s.taskPillTitle} numberOfLines={1}>{task.name}</Text>
-                {task.course ? <Text style={s.taskPillSub}>{task.course}</Text> : null}
-              </View>
-              <View style={[s.taskPillBadge, { backgroundColor: col + '22' }]}>
-                <Text style={[s.taskPillBadgeText, { color: col }]}>{urgentDayLabel(d)}</Text>
-              </View>
-            </View>
-          );
-        }) : (
-          <View style={[s.taskPill, { borderColor: NEON_GREEN + '55', backgroundColor: NEON_GREEN + '10' }]}>
-            <Text style={[s.taskPillTitle, { color: NEON_GREEN }]}>אין דדליינים קרובים 🎉</Text>
+        {/* LEFT — Deadlines card */}
+        <TouchableOpacity style={[s.contentCard, { flex: 2, marginBottom: 0 }]} onPress={() => navigation.navigate('Tasks')} activeOpacity={0.9}>
+          <View style={s.cardTopRow}>
+            <Text style={s.cardLabel}>דדליינים</Text>
+            <Text style={s.cardMeta}>{urgentTasks.length} השבוע</Text>
           </View>
-        )}
 
-        {urgentTasks.length > 3 && (
-          <Text style={s.cardMore}>עוד {urgentTasks.length - 3} מטלות →</Text>
-        )}
-      </TouchableOpacity>
-
-      {/* ══════════════════════════════════════════════════════════════════════
-          TODAY EVENTS — horizontal scrolling chips
-      ══════════════════════════════════════════════════════════════════════ */}
-      <View style={s.eventsSection}>
-        <View style={s.eventsHeaderRow}>
-          <Text style={s.eventsLabel}>אירועים היום</Text>
-          <Text style={s.eventsMeta}>{todayEvents.length} היום</Text>
-        </View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.chipsScroll}>
-          {todayEvents.length > 0 ? todayEvents.map(ev => (
-            <TouchableOpacity
-              key={ev.id}
-              style={[s.eventChip, { borderColor: (ev.color || NEON_BLUE) + '66', backgroundColor: (ev.color || NEON_BLUE) + '12' }]}
-              onPress={() => navigation.navigate('Events')}
-              activeOpacity={0.8}
-            >
-              <View style={[s.eventChipDot, { backgroundColor: ev.color || NEON_BLUE }]} />
-              <Text style={[s.eventChipTime, { color: ev.color || NEON_BLUE }]}>
-                {ev.startTime}{ev.endTime ? ` – ${ev.endTime}` : ''}
-              </Text>
-              <Text style={s.eventChipTitle} numberOfLines={2}>{ev.title}</Text>
-            </TouchableOpacity>
-          )) : (
-            <View style={[s.eventChip, { borderColor: '#E8EDF5', backgroundColor: '#fff' }]}>
-              <View style={[s.eventChipDot, { backgroundColor: '#ccc' }]} />
-              <Text style={[s.eventChipTitle, { color: '#aaa' }]}>אין אירועים היום</Text>
+          {urgentTasks.length > 0 ? urgentTasks.slice(0, 3).map(task => {
+            const d = daysUntil(task.dueDate);
+            const col = urgentDayColor(d);
+            return (
+              <View key={task.id} style={[s.taskPill, { borderColor: col + '55', backgroundColor: col + '10' }]}>
+                <View style={{ flex: 1 }}>
+                  <Text style={s.taskPillTitle} numberOfLines={1}>{task.name}</Text>
+                  {task.course ? <Text style={s.taskPillSub}>{task.course}</Text> : null}
+                </View>
+                <View style={[s.taskPillBadge, { backgroundColor: col + '22' }]}>
+                  <Text style={[s.taskPillBadgeText, { color: col }]}>{urgentDayLabel(d)}</Text>
+                </View>
+              </View>
+            );
+          }) : (
+            <View style={[s.taskPill, { borderColor: NEON_GREEN + '55', backgroundColor: NEON_GREEN + '10' }]}>
+              <Text style={[s.taskPillTitle, { color: NEON_GREEN }]}>אין דדליינים 🎉</Text>
             </View>
           )}
-        </ScrollView>
+
+          {urgentTasks.length > 3 && (
+            <Text style={s.cardMore}>עוד {urgentTasks.length - 3} →</Text>
+          )}
+        </TouchableOpacity>
+
+        {/* RIGHT — Events vertical (no card, floating rows) */}
+        <View style={{ flex: 3 }}>
+          <View style={[s.eventsHeaderRow, { marginBottom: 8 }]}>
+            <Text style={s.eventsLabel}>אירועים היום</Text>
+            <Text style={s.eventsMeta}>{todayEvents.length} היום</Text>
+          </View>
+
+          {todayEvents.length > 0 ? todayEvents.slice(0, 4).map(ev => (
+            <TouchableOpacity
+              key={ev.id}
+              style={[s.eventVertRow, { borderLeftColor: ev.color || NEON_BLUE }]}
+              onPress={() => navigation.navigate('Events')}
+              activeOpacity={0.85}
+            >
+              <View style={{ flex: 1 }}>
+                <Text style={s.eventTitle} numberOfLines={1}>{ev.title}</Text>
+                <Text style={[s.eventTime, { color: ev.color || NEON_BLUE }]}>
+                  {ev.startTime}{ev.endTime ? ` – ${ev.endTime}` : ''}
+                </Text>
+              </View>
+              <MaterialCommunityIcons name="chevron-left" size={14} color="#ccc" />
+            </TouchableOpacity>
+          )) : (
+            <View style={[s.eventVertRow, { borderLeftColor: '#E8EDF5' }]}>
+              <Text style={[s.eventTitle, { color: '#aaa' }]}>אין אירועים היום</Text>
+            </View>
+          )}
+
+          {todayEvents.length > 4 && (
+            <Text style={s.cardMore}>עוד {todayEvents.length - 4} →</Text>
+          )}
+        </View>
       </View>
 
       {/* ══════════════════════════════════════════════════════════════════════
@@ -584,6 +590,13 @@ const s = StyleSheet.create({
   eventsLabel:     { fontSize: 10, fontWeight: '700', color: '#9299B8', textTransform: 'uppercase', letterSpacing: 0.8 },
   eventsMeta:      { fontSize: 11, fontWeight: '600', color: '#9299B8' },
   chipsScroll:     { paddingBottom: 4, gap: 10 },
+  eventVertRow: {
+    backgroundColor: '#fff', borderRadius: 12, padding: 10, marginBottom: 8,
+    borderLeftWidth: 3, flexDirection: 'row', alignItems: 'center',
+    shadowColor: '#4A5B9A', shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.07, shadowRadius: 8, elevation: 2,
+  },
+
   eventChip: {
     borderRadius: 16, borderWidth: 1,
     paddingHorizontal: 14, paddingVertical: 12,
