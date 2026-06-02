@@ -84,7 +84,7 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
 
   const compressImage = (file: File, maxPx: number): Promise<Blob> =>
     new Promise((resolve, reject) => {
-      const img = new window.Image();
+      const img = document.createElement('img');
       const objectUrl = URL.createObjectURL(file);
       img.onload = () => {
         URL.revokeObjectURL(objectUrl);
@@ -96,13 +96,15 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
         }
         const canvas = document.createElement('canvas');
         canvas.width = width; canvas.height = height;
-        canvas.getContext('2d')!.drawImage(img, 0, 0, width, height);
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return reject(new Error('no canvas context'));
+        ctx.drawImage(img, 0, 0, width, height);
         canvas.toBlob(
-          (blob) => blob ? resolve(blob) : reject(new Error('compression failed')),
+          (blob) => blob ? resolve(blob) : reject(new Error('toBlob failed')),
           'image/jpeg', 0.82,
         );
       };
-      img.onerror = reject;
+      img.onerror = () => { URL.revokeObjectURL(objectUrl); reject(new Error('img load failed')); };
       img.src = objectUrl;
     });
 
@@ -122,15 +124,22 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
     if (!file) return;
     setUploadingPhoto(true);
     try {
-      const blob = await compressImage(file, 400);
+      let blob: Blob;
+      try {
+        blob = await compressImage(file, 400);
+      } catch {
+        blob = file;
+      }
       const storageRef = ref(storage, `users/${user.uid}/avatar`);
       await uploadBytes(storageRef, blob, { contentType: 'image/jpeg' });
       const url = await getDownloadURL(storageRef);
       await setDoc(doc(db, 'users', user.uid), { photoURL: url }, { merge: true });
       setPhotoURL(url);
       onAvatarChange?.(url);
-    } catch { showAlert('שגיאה', 'העלאת התמונה נכשלה'); }
-    finally { setUploadingPhoto(false); }
+    } catch (e) {
+      console.error('avatar upload error:', e);
+      showAlert('שגיאה', 'העלאת התמונה נכשלה');
+    } finally { setUploadingPhoto(false); }
   };
 
   const handleSaveCredits = async () => {
