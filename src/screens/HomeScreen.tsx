@@ -341,7 +341,7 @@ const HomeScreen = () => {
         {/* LEFT — Deadlines card */}
         <TouchableOpacity style={[s.contentCard, { flex: 2, marginBottom: 0 }]} onPress={() => navigation.navigate('Tasks')} activeOpacity={0.9}>
           <View style={s.cardTopRow}>
-            <Text style={s.cardLabel}>דדליינים</Text>
+            <Text style={s.cardMeta}>דדליינים</Text>
             <Text style={s.cardMeta}>{urgentTasks.length} השבוע</Text>
           </View>
 
