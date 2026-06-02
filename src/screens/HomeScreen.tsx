@@ -259,6 +259,8 @@ const HomeScreen = () => {
     .filter(t => { const d = daysUntil(t.dueDate); return d >= 0 && d <= 7; })
     .sort((a, b) => daysUntil(a.dueDate) - daysUntil(b.dueDate));
   const todayEvents   = events.filter(e => occursOnISO(e, todayISO)).sort((a, b) => a.startTime.localeCompare(b.startTime));
+  const nowStr         = `${String(today.getHours()).padStart(2,'0')}:${String(today.getMinutes()).padStart(2,'0')}`;
+  const upcomingEvents = todayEvents.filter(ev => (ev.endTime || ev.startTime) >= nowStr);
   const next7Dates    = Array.from({ length: 7 }, (_, i) => { const d = new Date(today); d.setDate(d.getDate() + i + 1); return toISO(d); });
   const next7Events   = next7Dates.flatMap(iso => events.filter(e => occursOnISO(e, iso)));
   const avg           = calcWeightedAvg(grades);
@@ -374,7 +376,7 @@ const HomeScreen = () => {
             <Text style={s.eventsMeta}>{todayEvents.length} היום</Text>
           </View>
 
-          {todayEvents.length > 0 ? todayEvents.slice(0, 4).map(ev => (
+          {upcomingEvents.length > 0 ? upcomingEvents.slice(0, 4).map(ev => (
             <TouchableOpacity
               key={ev.id}
               style={[s.eventVertRow, { borderLeftColor: ev.color || NEON_BLUE }]}
@@ -391,12 +393,14 @@ const HomeScreen = () => {
             </TouchableOpacity>
           )) : (
             <View style={[s.eventVertRow, { borderLeftColor: '#E8EDF5' }]}>
-              <Text style={[s.eventTitle, { color: '#aaa' }]}>אין אירועים היום</Text>
+              <Text style={[s.eventTitle, { color: '#aaa' }]}>
+                {todayEvents.length > 0 ? 'כל האירועים להיום הסתיימו ✓' : 'אין אירועים היום'}
+              </Text>
             </View>
           )}
 
-          {todayEvents.length > 4 && (
-            <Text style={s.cardMore}>עוד {todayEvents.length - 4} →</Text>
+          {upcomingEvents.length > 4 && (
+            <Text style={s.cardMore}>עוד {upcomingEvents.length - 4} →</Text>
           )}
         </View>
       </View>
