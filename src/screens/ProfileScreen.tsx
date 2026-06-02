@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Pressable,
   TextInput, Modal, ActivityIndicator,
-  KeyboardAvoidingView, Platform, Switch,
+  KeyboardAvoidingView, Platform, Switch, Image,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import {
@@ -10,7 +10,8 @@ import {
   updatePassword, deleteUser,
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
-import { auth, db } from '../config/firebase';
+import { ref, uploadString, getDownloadURL } from 'firebase/storage';
+import { auth, db, storage } from '../config/firebase';
 import { useCustomAlert } from '../hooks/useCustomAlert';
 import { useTheme } from '../context/ThemeContext';
 import { ThemeMode } from '../context/ThemeContext';
@@ -40,9 +41,10 @@ type Props = {
   onSetAccent: (c: string) => void;
   onSetMode: (m: ThemeMode) => void;
   onLogout: () => void;
+  onAvatarChange?: (url: string) => void;
 };
 
-const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout }: Props) => {
+const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvatarChange }: Props) => {
   const theme = useTheme();
   const { showAlert, showConfirm, showDestructiveConfirm, alertNode } = useCustomAlert(theme.accent);
 
@@ -54,6 +56,9 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout }: Props
   const [requiredCredits, setRequiredCredits] = useState('');
   const [editingCredits, setEditingCredits]   = useState(false);
   const [newCredits, setNewCredits]           = useState('');
+
+  const [photoURL,        setPhotoURL]        = useState<string | null>(null);
+  const [uploadingPhoto,  setUploadingPhoto]  = useState(false);
 
   const [showPassModal, setShowPassModal] = useState(false);
   const [currentPass, setCurrentPass]     = useState('');
@@ -71,9 +76,42 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout }: Props
     setUserName(data.name || '');
     setUserEmail(data.email || user.email || '');
     setNewName(data.name || '');
+    setPhotoURL(data.photoURL || null);
     const rc = data.requiredCredits ? String(data.requiredCredits) : '';
     setRequiredCredits(rc);
     setNewCredits(rc);
+  };
+
+  const pickAndUploadPhoto = async () => {
+    if (Platform.OS !== 'web') return;
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const base64 = await new Promise<string | null>((resolve) => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.onchange = (e: Event) => {
+        const file = (e.target as HTMLInputElement).files?.[0];
+        if (!file) return resolve(null);
+        const reader = new FileReader();
+        reader.onload = (ev) => resolve((ev.target?.result as string) ?? null);
+        reader.readAsDataURL(file);
+      };
+      input.click();
+    });
+
+    if (!base64) return;
+    setUploadingPhoto(true);
+    try {
+      const storageRef = ref(storage, `users/${user.uid}/avatar`);
+      await uploadString(storageRef, base64, 'data_url');
+      const url = await getDownloadURL(storageRef);
+      await setDoc(doc(db, 'users', user.uid), { photoURL: url }, { merge: true });
+      setPhotoURL(url);
+      onAvatarChange?.(url);
+    } catch { showAlert('שגיאה', 'העלאת התמונה נכשלה'); }
+    finally { setUploadingPhoto(false); }
   };
 
   const handleSaveCredits = async () => {
@@ -162,11 +200,22 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout }: Props
       <ScrollView contentContainerStyle={s.content}>
 
         {/* Avatar */}
-        <View style={[s.avatarCircle, { borderColor: theme.accent, backgroundColor: theme.accent + '22' },
-          isDark && { shadowColor: theme.accent, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.6, shadowRadius: 20, elevation: 8 }
-        ]}>
-          <Text style={[s.avatarText, { color: theme.accent }]}>{initials}</Text>
-        </View>
+        <Pressable style={s.avatarWrapper} onPress={pickAndUploadPhoto}>
+          <View style={[s.avatarCircle, { borderColor: theme.accent, backgroundColor: theme.accent + '22' },
+            isDark && { shadowColor: theme.accent, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.6, shadowRadius: 20, elevation: 8 }
+          ]}>
+            {photoURL
+              ? <Image source={{ uri: photoURL }} style={s.avatarImage} />
+              : <Text style={[s.avatarText, { color: theme.accent }]}>{initials}</Text>
+            }
+          </View>
+          <View style={[s.cameraOverlay, { backgroundColor: theme.accent, borderColor: theme.bg }]}>
+            {uploadingPhoto
+              ? <ActivityIndicator size="small" color="#000" />
+              : <MaterialCommunityIcons name="camera" size={14} color="#000" />
+            }
+          </View>
+        </Pressable>
         <Text style={[s.nameHeader, { color: theme.text }]}>{userName}</Text>
         <Text style={[s.emailHeader, { color: theme.textSub }]}>{userEmail}</Text>
 
@@ -358,13 +407,23 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout }: Props
 const s = StyleSheet.create({
   container:     { flex: 1 },
   content:       { alignItems: 'center', padding: 20, paddingBottom: 40 },
+  avatarWrapper: {
+    width: 90, height: 90,
+    marginTop: 20, marginBottom: 12,
+  },
   avatarCircle: {
     width: 90, height: 90, borderRadius: 45,
     justifyContent: 'center', alignItems: 'center',
-    marginTop: 20, marginBottom: 12,
+    borderWidth: 2, overflow: 'hidden',
+  },
+  avatarImage: { width: 90, height: 90, borderRadius: 45 },
+  avatarText:  { fontSize: 32, fontWeight: '800' },
+  cameraOverlay: {
+    position: 'absolute', bottom: 0, right: 0,
+    width: 26, height: 26, borderRadius: 13,
+    justifyContent: 'center', alignItems: 'center',
     borderWidth: 2,
   },
-  avatarText:  { fontSize: 32, fontWeight: '800' },
   nameHeader:  { fontSize: 20, fontWeight: '700', marginBottom: 4 },
   emailHeader: { fontSize: 13, marginBottom: 24 },
   card: {

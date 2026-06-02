@@ -29,13 +29,18 @@ const DashboardScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout }: Pro
   const isWide = Platform.OS === 'web' && width >= 720;
 
   const [userName,     setUserName]     = useState('');
+  const [userAvatar,   setUserAvatar]   = useState<string | null>(null);
   const [sidebarOpen,  setSidebarOpen]  = useState(false);
 
   useEffect(() => {
     const user = auth.currentUser;
     if (!user) return;
     getDoc(doc(db, 'users', user.uid)).then(snap => {
-      if (snap.exists()) setUserName(snap.data().name || '');
+      if (snap.exists()) {
+        const data = snap.data();
+        setUserName(data.name || '');
+        setUserAvatar(data.photoURL || null);
+      }
     });
   }, []);
 
@@ -43,13 +48,14 @@ const DashboardScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout }: Pro
     <AppSidebar
       {...props}
       userName={userName}
+      userAvatar={userAvatar ?? undefined}
       onLogout={onLogout}
       isWide={isWide}
       isOpen={sidebarOpen}
       onOpen={() => setSidebarOpen(true)}
       onClose={() => setSidebarOpen(false)}
     />
-  ), [userName, onLogout, isWide, sidebarOpen]);
+  ), [userName, userAvatar, onLogout, isWide, sidebarOpen]);
 
   return (
     <ThemeContext.Provider value={theme}>
@@ -75,6 +81,7 @@ const DashboardScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout }: Pro
               onSetAccent={onSetAccent}
               onSetMode={onSetMode}
               onLogout={onLogout}
+              onAvatarChange={(url) => setUserAvatar(url)}
             />
           )}
         </Tab.Screen>

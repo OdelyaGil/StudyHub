@@ -61,7 +61,6 @@ const LibraryScreen = () => {
                 <MaterialCommunityIcons name={cat.icon as any} size={28} color={theme.accent} />
               </View>
               <Text style={[s.catLabel, { color: theme.text }]}>{cat.label}</Text>
-              <Text style={[s.catSub, { color: theme.accent }]}>פעיל</Text>
             </TouchableOpacity>
           ))}
         </View>

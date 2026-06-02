@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, Platform,
+  View, Text, StyleSheet, TouchableOpacity, Platform, Image,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
@@ -29,17 +29,18 @@ const SCREEN_TITLE: Record<string, string> = {
 };
 
 interface Props {
-  state:       any;
-  navigation:  any;
-  userName?:   string;
-  onLogout?:   () => void;
-  isWide:      boolean;
-  isOpen:      boolean;
-  onOpen:      () => void;
-  onClose:     () => void;
+  state:        any;
+  navigation:   any;
+  userName?:    string;
+  userAvatar?:  string;
+  onLogout?:    () => void;
+  isWide:       boolean;
+  isOpen:       boolean;
+  onOpen:       () => void;
+  onClose:      () => void;
 }
 
-const AppSidebar = ({ state, navigation, userName, onLogout, isWide, isOpen, onOpen, onClose }: Props) => {
+const AppSidebar = ({ state, navigation, userName, userAvatar, onLogout, isWide, isOpen, onOpen, onClose }: Props) => {
   const current = state.routes[state.index]?.name ?? 'Home';
 
   const SidebarBody = () => (
@@ -53,12 +54,15 @@ const AppSidebar = ({ state, navigation, userName, onLogout, isWide, isOpen, onO
 
       {/* Profile card */}
       <View style={styles.profileCard}>
-        <View style={styles.avatar}>
-          <MaterialCommunityIcons name="account" size={28} color={BG} />
-        </View>
         <View style={{ flex: 1 }}>
           <Text style={styles.profileName} numberOfLines={1}>{userName || 'משתמש'}</Text>
           <Text style={styles.profileRole}>Student</Text>
+        </View>
+        <View style={styles.avatar}>
+          {userAvatar
+            ? <Image source={{ uri: userAvatar }} style={styles.avatarImage} />
+            : <MaterialCommunityIcons name="account" size={28} color={BG} />
+          }
         </View>
       </View>
 
@@ -155,7 +159,9 @@ const styles = StyleSheet.create({
     width: 40, height: 40, borderRadius: 20,
     backgroundColor: '#FFFFFF',
     justifyContent: 'center', alignItems: 'center',
+    overflow: 'hidden',
   },
+  avatarImage: { width: 40, height: 40, borderRadius: 20 },
   profileName: { fontSize: 13, fontWeight: '700', color: TEXT },
   profileRole: { fontSize: 11, color: SUB, marginTop: 2 },
 
