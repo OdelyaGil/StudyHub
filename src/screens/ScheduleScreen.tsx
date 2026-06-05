@@ -435,7 +435,7 @@ const ScheduleScreen = () => {
     const timeRange  = ev.allDay ? 'כל היום' : ev.endTime ? `${ev.startTime} – ${ev.endTime}` : ev.startTime;
     const dateRange  = ev.endDate ? `${fmtDate(ev.date)} – ${fmtDate(ev.endDate)}` : null;
     return (
-      <View key={ev.id} style={[styles.eventItem, { borderRightColor: ev.color, backgroundColor: surface, borderWidth: 1, borderColor: borderClr }, darkShadow as any]}>
+      <View key={ev.id} style={[styles.eventItem, { borderRightColor: ev.color, borderRightWidth: 4, borderTopWidth: 1, borderBottomWidth: 1, borderLeftWidth: 1, borderTopColor: borderClr, borderBottomColor: borderClr, borderLeftColor: borderClr, backgroundColor: surface }, darkShadow as any]}>
         <View style={styles.eventBody}>
           <Text style={[styles.eventTitle, { color: textColor }]}>{ev.title}</Text>
           <View style={styles.eventMeta}>
