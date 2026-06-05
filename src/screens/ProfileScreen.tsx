@@ -535,9 +535,9 @@ const s = StyleSheet.create({
   saveBtn:      { borderRadius: 10, paddingVertical: 13, alignItems: 'center' },
   saveBtnText:  { fontSize: 15, fontWeight: '700' },
 
-  gradientGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 16, marginTop: 4 },
-  gradientItem: { alignItems: 'center', gap: 5 },
-  gradientPill: { width: 40, height: 40, borderRadius: 20 },
+  gradientGrid: { flexDirection: 'row', justifyContent: 'space-around', paddingVertical: 8 },
+  gradientItem: { alignItems: 'center', gap: 6 },
+  gradientPill: { width: 40, height: 40, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(0,0,0,0.08)' },
 });
 
 export default ProfileScreen;
