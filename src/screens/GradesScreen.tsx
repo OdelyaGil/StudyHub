@@ -62,8 +62,12 @@ const GradesScreen = ({ onClose }: { onClose?: () => void }) => {
   const tabBg    = themeObj.tabBg;
   const textColor = themeObj.text;
   const textSub  = themeObj.textSub;
-  const borderClr = themeObj.border;
-  const light    = theme + '22';
+  const borderClr  = themeObj.border;
+  const isDark     = themeObj.mode === 'dark';
+  const darkShadow: object = isDark
+    ? (Platform.select({ web: { boxShadow: `0 4px 20px ${theme}30, 0 1px 6px rgba(0,0,0,0.5)` } as any, default: { shadowColor: theme, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.18, shadowRadius: 12, elevation: 6 } }) ?? {})
+    : {};
+  const light      = theme + '22';
   const { showAlert, showConfirm, showDestructiveConfirm, alertNode } = useCustomAlert(theme);
 
   const [grades, setGrades]         = useState<Grade[]>([]);
@@ -251,7 +255,7 @@ const GradesScreen = ({ onClose }: { onClose?: () => void }) => {
   const GradeItem = ({ item }: { item: Grade }) => {
     const itemCriteria = item.criteria ?? [];
     return (
-      <View style={[styles.gradeItem, { borderRightColor: theme, backgroundColor: surface, borderWidth: 1, borderColor: borderClr }]}>
+      <View style={[styles.gradeItem, { borderRightColor: theme, backgroundColor: surface, borderWidth: 1, borderColor: borderClr }, darkShadow as any]}>
         <View style={styles.gradeInfo}>
           <Text style={[styles.gradeName, { color: textColor }]}>{item.name}</Text>
           <Text style={[styles.gradeMeta, { color: textSub }]}>

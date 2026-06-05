@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView,
-  TouchableOpacity, Modal,
+  TouchableOpacity, Modal, Platform,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
@@ -36,6 +36,10 @@ const ACTIVE_KEYS: ActiveModal[] = ['topics', 'summaries', 'flashcards', 'links'
 
 const LibraryScreen = () => {
   const theme = useTheme();
+  const isDark = theme.mode === 'dark';
+  const darkShadow: object = isDark
+    ? (Platform.select({ web: { boxShadow: `0 4px 20px ${theme.accent}30, 0 1px 6px rgba(0,0,0,0.5)` } as any, default: { shadowColor: theme.accent, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.18, shadowRadius: 12, elevation: 6 } }) ?? {})
+    : {};
   const [modal, setModal] = useState<ActiveModal>(null);
 
   const openModal = (key: string) => {
@@ -53,7 +57,7 @@ const LibraryScreen = () => {
           {CATEGORIES.map(cat => (
             <TouchableOpacity
               key={cat.key}
-              style={[s.catCard, { backgroundColor: theme.surface, borderColor: theme.border }]}
+              style={[s.catCard, { backgroundColor: theme.surface, borderColor: theme.border }, darkShadow as any]}
               onPress={() => openModal(cat.key)}
               activeOpacity={0.75}
             >

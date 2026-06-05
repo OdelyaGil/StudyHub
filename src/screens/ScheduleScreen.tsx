@@ -167,8 +167,12 @@ const ScheduleScreen = () => {
   const tabBg     = themeObj.tabBg;
   const textColor = themeObj.text;
   const textSub   = themeObj.textSub;
-  const borderClr = themeObj.border;
-  const light     = theme + '22';
+  const borderClr  = themeObj.border;
+  const isDark     = themeObj.mode === 'dark';
+  const darkShadow: object = isDark
+    ? (Platform.select({ web: { boxShadow: `0 4px 20px ${theme}30, 0 1px 6px rgba(0,0,0,0.5)` } as any, default: { shadowColor: theme, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.18, shadowRadius: 12, elevation: 6 } }) ?? {})
+    : {};
+  const light      = theme + '22';
   const { showAlert, showDestructiveConfirm, alertNode } = useCustomAlert(theme);
   const todayDate = new Date();
   const todayISO  = toISO(todayDate);
@@ -431,7 +435,7 @@ const ScheduleScreen = () => {
     const timeRange  = ev.allDay ? 'כל היום' : ev.endTime ? `${ev.startTime} – ${ev.endTime}` : ev.startTime;
     const dateRange  = ev.endDate ? `${fmtDate(ev.date)} – ${fmtDate(ev.endDate)}` : null;
     return (
-      <View key={ev.id} style={[styles.eventItem, { borderRightColor: ev.color, backgroundColor: surface, borderWidth: 1, borderColor: borderClr }]}>
+      <View key={ev.id} style={[styles.eventItem, { borderRightColor: ev.color, backgroundColor: surface, borderWidth: 1, borderColor: borderClr }, darkShadow as any]}>
         <View style={styles.eventBody}>
           <Text style={[styles.eventTitle, { color: textColor }]}>{ev.title}</Text>
           <View style={styles.eventMeta}>

@@ -227,6 +227,9 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
 
   const isDark = mode === 'dark';
   const accents = isDark ? DARK_ACCENTS : LIGHT_ACCENTS;
+  const darkShadow: object = isDark
+    ? (Platform.select({ web: { boxShadow: `0 4px 20px ${theme.accent}30, 0 1px 6px rgba(0,0,0,0.5)` } as any, default: { shadowColor: theme.accent, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.18, shadowRadius: 12, elevation: 6 } }) ?? {})
+    : {};
 
   return (
     <View style={[s.container, { backgroundColor: theme.bg }]}>
@@ -253,7 +256,7 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
         <Text style={[s.emailHeader, { color: theme.textSub }]}>{userEmail}</Text>
 
         {/* Personal details */}
-        <View style={[s.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+        <View style={[s.card, { backgroundColor: theme.surface, borderColor: theme.border }, darkShadow as any]}>
           <Text style={[s.sectionTitle, { color: theme.accent }]}>פרטים אישיים</Text>
 
           <View style={s.row}>
@@ -294,7 +297,7 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
         </View>
 
         {/* Theme settings */}
-        <View style={[s.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+        <View style={[s.card, { backgroundColor: theme.surface, borderColor: theme.border }, darkShadow as any]}>
           <Text style={[s.sectionTitle, { color: theme.accent }]}>ערכת נושא</Text>
 
           {/* Dark / Light toggle */}
@@ -378,7 +381,7 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
         </View>
 
         {/* Academic settings */}
-        <View style={[s.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+        <View style={[s.card, { backgroundColor: theme.surface, borderColor: theme.border }, darkShadow as any]}>
           <Text style={[s.sectionTitle, { color: theme.accent }]}>הגדרות אקדמיות</Text>
           <View style={s.row}>
             <MaterialCommunityIcons name="school-outline" size={20} color={theme.textSub} />

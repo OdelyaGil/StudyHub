@@ -174,13 +174,17 @@ const TaskItem: React.FC<TaskItemProps> = ({ item, onToggle, onDelete, onEdit, o
   const tabBg    = themeObj.tabBg;
   const textColor = themeObj.text;
   const textSub  = themeObj.textSub;
+  const isDark   = themeObj.mode === 'dark';
+  const darkShadow: object = isDark
+    ? (Platform.select({ web: { boxShadow: `0 4px 20px ${theme}30, 0 1px 6px rgba(0,0,0,0.5)` } as any, default: { shadowColor: theme, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.18, shadowRadius: 12, elevation: 6 } }) ?? {})
+    : {};
   const [filesExpanded, setFilesExpanded] = useState(false);
   const daysLeft = getDaysLeft(item.dueDate);
   const priorityColor = theme;
   const files: TaskFile[] = (item as any).files ?? [];
 
   return (
-    <View style={[styles.taskItem, { borderRightColor: theme, backgroundColor: surface, opacity: item.completed ? 0.5 : 1, borderWidth: 1, borderColor: themeObj.border }]}>
+    <View style={[styles.taskItem, { borderRightColor: theme, backgroundColor: surface, opacity: item.completed ? 0.5 : 1, borderWidth: 1, borderColor: themeObj.border }, darkShadow as any]}>
       {/* Checkbox */}
       <View style={styles.taskCheckBox}>
         <TouchableOpacity
