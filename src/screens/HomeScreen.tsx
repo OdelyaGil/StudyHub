@@ -453,7 +453,7 @@ const HomeScreen = () => {
             </View>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {studyRecs.map((rec, i) => (
-                <View key={i} style={[s.taskPill, { flex: 1, minWidth: 140, borderColor: '#ffa94d55', backgroundColor: '#ffa94d08' }]}>
+                <View key={i} style={[s.taskPill, { flex: 1, minWidth: 140, borderColor: theme.accent + '55', backgroundColor: theme.accent + '08' }]}>
                   <View style={{ flex: 1 }}>
                     <Text style={s.taskPillTitle} numberOfLines={1}>{rec.course}</Text>
                     <Text style={s.taskPillSub}>{rec.hours} שע׳ · {rec.taskName} · {rec.days} ימים</Text>
