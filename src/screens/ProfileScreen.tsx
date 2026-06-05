@@ -17,15 +17,14 @@ import { useTheme } from '../context/ThemeContext';
 import { ThemeMode } from '../context/ThemeContext';
 
 const GRADIENTS: { name: string; colors: [string, string] }[] = [
-  { name: 'AURORA',  colors: ['#A9F1DF', '#FFBBBB'] },
-  { name: 'EMERALD', colors: ['#D8B5FF', '#1EAE98'] },
-  { name: 'LIME',    colors: ['#BFF098', '#6FD6FF'] },
-  { name: 'PEACH',   colors: ['#C6EA8D', '#FE90AF'] },
-  { name: 'SUNSET',  colors: ['#F1EAB9', '#FF8C8C'] },
-  { name: 'DUSK',    colors: ['#EA8D8D', '#A890FE'] },
-  { name: 'OCEAN',   colors: ['#00B7FF', '#FFFFC7'] },
-  { name: 'CANDY',   colors: ['#FCA5F1', '#B5FFFF'] },
-  { name: 'ROSE',    colors: ['#D74177', '#FFE98A'] },
+  { name: 'MIDNIGHT OCEAN', colors: ['#1E0F75', '#3785D8'] },
+  { name: 'DEEP BLUE',      colors: ['#1C1DAB', '#ADC6E5'] },
+  { name: 'SKY FADE',       colors: ['#3785D8', '#E0EEFF'] },
+  { name: 'MIST BLOOM',     colors: ['#ADC6E5', '#BF8CE1'] },
+  { name: 'PURPLE DAWN',    colors: ['#BF8CE1', '#E893C5'] },
+  { name: 'SUNSET BLUSH',   colors: ['#E893C5', '#EBB2C3'] },
+  { name: 'PETAL SOFT',     colors: ['#EBB2C3', '#F5E0EA'] },
+  { name: 'PEARL DRIFT',    colors: ['#CBD8E8', '#F0F4FA'] },
 ];
 
 const DARK_ACCENTS = [
