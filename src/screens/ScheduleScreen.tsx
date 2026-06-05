@@ -19,6 +19,7 @@ import { loadField, saveField } from '../utils/firestore';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCustomAlert } from '../hooks/useCustomAlert';
 import { useTheme } from '../context/ThemeContext';
+import { toISO } from '../utils/helpers';
 
 interface CalendarEvent {
   id: number;
@@ -69,12 +70,6 @@ const GRID_ROWS = 6;
 const CELL_H    = Math.floor((USABLE_H * 0.70 - CAL_TOP_H - DAY_ROW_H) / GRID_ROWS);
 
 // ── Date helpers ──────────────────────────────────────────────────────────────
-const toISO = (d: Date) => {
-  const y   = d.getFullYear();
-  const m   = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-};
 
 const isValidDate = (s: string) => /^\d{4}-\d{2}-\d{2}$/.test(s);
 

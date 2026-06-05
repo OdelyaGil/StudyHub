@@ -20,6 +20,7 @@ import { Picker } from '@react-native-picker/picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useCustomAlert } from '../hooks/useCustomAlert';
 import { useTheme } from '../context/ThemeContext';
+import { occursOnISO } from '../utils/helpers';
 
 // ── Date helpers ─────────────────────────────────────────────────────────────
 const HEBREW_MONTHS = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
@@ -75,24 +76,6 @@ const timeToMin = (t: string) => {
 };
 const minToTime = (m: number) =>
   `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
-
-const occursOnISO = (event: any, iso: string): boolean => {
-  if (!event?.date || iso < event.date) return false;
-  if (event.recurrenceEndDate && iso > event.recurrenceEndDate) return false;
-  switch (event.recurrence) {
-    case 'none':    return iso === event.date;
-    case 'daily':   return true;
-    case 'weekly': {
-      const diff = Math.round(
-        (new Date(iso + 'T12:00:00').getTime() - new Date(event.date + 'T12:00:00').getTime()) / 86400000,
-      );
-      return diff % 7 === 0;
-    }
-    case 'monthly': return iso.slice(8) === event.date.slice(8);
-    case 'yearly':  return iso.slice(5) === event.date.slice(5);
-    default:        return false;
-  }
-};
 
 // ── Types ────────────────────────────────────────────────────────────────────
 interface TaskFile {

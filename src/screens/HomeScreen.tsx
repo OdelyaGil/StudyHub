@@ -12,6 +12,7 @@ import { auth, db } from '../config/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { scheduleAllNotifications, scheduleTimerNotification, cancelTimerNotification } from '../utils/notifications';
 import { useCustomAlert } from '../hooks/useCustomAlert';
+import { toISO, daysUntil, occursOnISO, hexToRgba } from '../utils/helpers';
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const PAGE_BG    = '#EEF0F9';   // light lavender-white
@@ -21,13 +22,6 @@ const NEON_PINK  = '#EF5B8A';
 const NEON_BLUE  = '#00C8E8';
 const NEON_GREEN = '#00BFA5';
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-const hexToRgba = (hex: string, a: number) => {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return `rgba(${r},${g},${b},${a})`;
-};
 
 // ── Neumorphic shadows ────────────────────────────────────────────────────────
 // outer raised shadow — rgba so it works on any background (solid or gradient)
@@ -62,34 +56,6 @@ const STUDY_TIPS = [
   'לימוד בקבוצות קטנות יכול להאיר זוויות חדשות',
 ];
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-const toISO = (d: Date) => {
-  const y   = d.getFullYear();
-  const m   = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-};
-
-const daysUntil = (iso: string) =>
-  Math.ceil((new Date(iso + 'T23:59:59').getTime() - Date.now()) / 86400000);
-
-const occursOnISO = (event: any, iso: string): boolean => {
-  if (!event?.date || iso < event.date) return false;
-  if (event.recurrenceEndDate && iso > event.recurrenceEndDate) return false;
-  switch (event.recurrence) {
-    case 'none':    return iso === event.date;
-    case 'daily':   return true;
-    case 'weekly': {
-      const diff = Math.round(
-        (new Date(iso + 'T12:00:00').getTime() - new Date(event.date + 'T12:00:00').getTime()) / 86400000
-      );
-      return diff % 7 === 0;
-    }
-    case 'monthly': return iso.slice(8) === event.date.slice(8);
-    case 'yearly':  return iso.slice(5) === event.date.slice(5);
-    default:        return false;
-  }
-};
 
 const calcWeightedAvg = (grades: any[]) => {
   const valid = grades.filter(g => g.value > 0 && g.credits > 0);
@@ -478,7 +444,7 @@ const HomeScreen = () => {
           </TouchableOpacity>
 
           {/* RIGHT — Events */}
-          <View style={[s.lightCard, { flex: 2, marginBottom: 0, backgroundColor: cardBg, height: 160 }, neuCard as any, cardBorder as any]}>
+          <View style={[s.lightCard, { flex: 2, marginBottom: 0, backgroundColor: cardBg }, neuCard as any, cardBorder as any]}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 6, marginBottom: upcomingEvents.length > 0 ? 8 : 0 }}>
                 <MaterialCommunityIcons name="calendar-today" size={15} color={theme.accent} />
                 <Text style={[s.cardTitle, { color: theme.accent }]}>אירועים היום</Text>

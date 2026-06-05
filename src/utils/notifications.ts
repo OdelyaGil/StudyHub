@@ -1,6 +1,7 @@
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import { Platform } from 'react-native';
+import { toISO, occursOnISO } from './helpers';
 
 // ── Setup handler (must be at module level) ───────────────────────────────────
 try {
@@ -33,32 +34,6 @@ export const requestNotificationPermission = async (): Promise<boolean> => {
     }
     return true;
   } catch (_) { return false; }
-};
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-const toISO = (d: Date) => {
-  const y   = d.getFullYear();
-  const m   = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-};
-
-const occursOnISO = (event: any, iso: string): boolean => {
-  if (!event?.date || iso < event.date) return false;
-  if (event.recurrenceEndDate && iso > event.recurrenceEndDate) return false;
-  switch (event.recurrence) {
-    case 'none':    return iso === event.date;
-    case 'daily':   return true;
-    case 'weekly': {
-      const diff = Math.round(
-        (new Date(iso + 'T12:00:00').getTime() - new Date(event.date + 'T12:00:00').getTime()) / 86400000
-      );
-      return diff % 7 === 0;
-    }
-    case 'monthly': return iso.slice(8) === event.date.slice(8);
-    case 'yearly':  return iso.slice(5) === event.date.slice(5);
-    default:        return false;
-  }
 };
 
 // ── Timer notification ────────────────────────────────────────────────────────
