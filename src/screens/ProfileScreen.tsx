@@ -537,7 +537,7 @@ const s = StyleSheet.create({
 
   gradientGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 16, marginTop: 4 },
   gradientItem: { alignItems: 'center', gap: 5 },
-  gradientPill: { width: 64, height: 64, borderRadius: 32 },
+  gradientPill: { width: 40, height: 40, borderRadius: 20 },
 });
 
 export default ProfileScreen;
