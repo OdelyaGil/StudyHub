@@ -21,6 +21,14 @@ const NEON_PINK  = '#EF5B8A';
 const NEON_BLUE  = '#00C8E8';
 const NEON_GREEN = '#00BFA5';
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+const hexToRgba = (hex: string, a: number) => {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r},${g},${b},${a})`;
+};
+
 // ── Neumorphic shadows ────────────────────────────────────────────────────────
 // outer raised shadow — rgba so it works on any background (solid or gradient)
 const NEU_OUTER = Platform.select<object>({
@@ -562,9 +570,9 @@ const HomeScreen = () => {
 
   return hasGradient ? (
     <LinearGradient
-      colors={theme.accentGradient!}
+      colors={theme.accentGradient!.map(c => hexToRgba(c, 0.6)) as [string, string]}
       start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
+      end={{ x: 0, y: 1 }}
       style={{ flex: 1 }}
     >
       {scrollContent}
