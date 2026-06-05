@@ -318,7 +318,7 @@ const HomeScreen = () => {
       <LinearGradient
         colors={heroGradColors}
         start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+        end={{ x: 0, y: 1 }}
         style={[s.heroCard, hasGradient && (NEU_OUTER as any)]}
       >
         <View style={s.heroInner}>
