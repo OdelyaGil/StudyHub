@@ -579,7 +579,7 @@ const HomeScreen = () => {
       {alertNode}
     </LinearGradient>
   ) : (
-    <View style={{ flex: 1, backgroundColor: PAGE_BG }}>
+    <View style={{ flex: 1, backgroundColor: theme.bg }}>
       {scrollContent}
       {alertNode}
     </View>
