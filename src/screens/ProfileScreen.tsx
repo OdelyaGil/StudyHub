@@ -4,6 +4,7 @@ import {
   TextInput, Modal, ActivityIndicator,
   KeyboardAvoidingView, Platform, Switch, Image,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import {
   EmailAuthProvider, reauthenticateWithCredential,
@@ -14,6 +15,18 @@ import { auth, db } from '../config/firebase';
 import { useCustomAlert } from '../hooks/useCustomAlert';
 import { useTheme } from '../context/ThemeContext';
 import { ThemeMode } from '../context/ThemeContext';
+
+const GRADIENTS: { name: string; colors: [string, string] }[] = [
+  { name: 'AURORA',  colors: ['#A9F1DF', '#FFBBBB'] },
+  { name: 'EMERALD', colors: ['#D8B5FF', '#1EAE98'] },
+  { name: 'LIME',    colors: ['#BFF098', '#6FD6FF'] },
+  { name: 'PEACH',   colors: ['#C6EA8D', '#FE90AF'] },
+  { name: 'SUNSET',  colors: ['#F1EAB9', '#FF8C8C'] },
+  { name: 'DUSK',    colors: ['#EA8D8D', '#A890FE'] },
+  { name: 'OCEAN',   colors: ['#00B7FF', '#FFFFC7'] },
+  { name: 'CANDY',   colors: ['#FCA5F1', '#B5FFFF'] },
+  { name: 'ROSE',    colors: ['#D74177', '#FFE98A'] },
+];
 
 const DARK_ACCENTS = [
   { name: 'CRYSTAL CLEAR',    color: '#92F1EC' },
@@ -329,6 +342,39 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
               </Pressable>
             ))}
           </View>
+
+          {/* Gradients */}
+          <View style={[s.divider, { backgroundColor: theme.border, marginVertical: 12 }]} />
+          <Text style={[s.subLabel, { color: theme.textSub }]}>גרדיאנטים</Text>
+          <View style={s.gradientGrid}>
+            {GRADIENTS.map(g => {
+              const key = `gradient:${g.colors[0]},${g.colors[1]}`;
+              const isSelected = accent === key;
+              return (
+                <Pressable key={key} onPress={() => handleSelectAccent(key)} style={s.gradientItem}>
+                  <LinearGradient
+                    colors={g.colors}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={[
+                      s.gradientPill,
+                      isSelected && { borderWidth: 2.5, borderColor: '#fff' },
+                      isSelected && isDark && {
+                        shadowColor: g.colors[0],
+                        shadowOffset: { width: 0, height: 0 },
+                        shadowOpacity: 0.8,
+                        shadowRadius: 8,
+                        elevation: 6,
+                      },
+                    ]}
+                  />
+                  <Text style={[s.accentName, { color: isSelected ? theme.accent : theme.textSub }]}>
+                    {g.name}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
         </View>
 
         {/* Academic settings */}
@@ -483,6 +529,10 @@ const s = StyleSheet.create({
   },
   saveBtn:      { borderRadius: 10, paddingVertical: 13, alignItems: 'center' },
   saveBtnText:  { fontSize: 15, fontWeight: '700' },
+
+  gradientGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 4 },
+  gradientItem: { width: '47%', alignItems: 'center', gap: 5 },
+  gradientPill: { width: '100%', height: 44, borderRadius: 22 },
 });
 
 export default ProfileScreen;

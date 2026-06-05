@@ -3,8 +3,9 @@ import { createContext, useContext } from 'react';
 export type ThemeMode = 'dark' | 'light';
 
 export interface AppTheme {
-  mode:       ThemeMode;
-  accent:     string;
+  mode:           ThemeMode;
+  accent:         string;                    // always a flat hex (for text/icons/borders)
+  accentGradient: [string, string] | null;   // null = solid color, otherwise gradient pair
   bg:         string;
   surface:    string;
   border:     string;
@@ -60,11 +61,18 @@ function heroGlowColor(accent: string): string {
   return hslToHex((h + 120) % 360, 80, 72);
 }
 
-export const buildTheme = (mode: ThemeMode, accent: string): AppTheme => {
-  const dark = mode === 'dark';
+export const buildTheme = (mode: ThemeMode, rawAccent: string): AppTheme => {
+  const dark     = mode === 'dark';
+  const isGrad   = rawAccent.startsWith('gradient:');
+  const gradArr  = isGrad
+    ? (rawAccent.replace('gradient:', '').split(',') as [string, string])
+    : null;
+  const accent   = isGrad ? gradArr![0] : rawAccent;
+
   return {
     mode,
     accent,
+    accentGradient: gradArr,
     bg:         dark ? '#0A0A0F' : '#D9D9ED',
     surface:    dark ? 'rgba(255,255,255,0.06)' : '#FFFFFF',
     border:     dark ? accent + '55' : '#E8E4F4',

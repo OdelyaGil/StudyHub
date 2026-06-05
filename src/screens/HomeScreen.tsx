@@ -3,6 +3,7 @@ import {
   View, Text, StyleSheet, ScrollView,
   TouchableOpacity, RefreshControl, TextInput, Vibration, Platform,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { loadField } from '../utils/firestore';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -304,7 +305,12 @@ const HomeScreen = () => {
       >
 
         {/* ══ HERO CARD ══════════════════════════════════════════════════════ */}
-        <View style={[s.heroCard, { backgroundColor: theme.accent }]}>
+        <LinearGradient
+          colors={theme.accentGradient ?? [theme.accent, theme.accent]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={s.heroCard}
+        >
           <View style={s.heroInner}>
             {/* LEFT — greeting */}
             <View style={s.heroLeft}>
@@ -317,7 +323,7 @@ const HomeScreen = () => {
               <Text style={s.heroStatLabel}>AVERAGE SCORE</Text>
             </View>
             {/* RIGHT — ring */}
-            <GlowRing pct={ringPct} color="#FFFFFF" label="ציונים" bgColor={theme.accent} />
+            <GlowRing pct={ringPct} color="#FFFFFF" label="ציונים" bgColor={theme.accentGradient?.[0] ?? theme.accent} />
           </View>
 
           <View style={s.heroBottomRow}>
@@ -336,7 +342,7 @@ const HomeScreen = () => {
               <Text style={s.heroBottomLabel}>נ״ז נצברו</Text>
             </View>
           </View>
-        </View>
+        </LinearGradient>
 
         {/* ══ TWO-COLUMN ROW ════════════════════════════════════════════════ */}
         <View style={s.cardsRow}>
