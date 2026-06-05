@@ -99,7 +99,7 @@ const LibraryScreen = () => {
 
 const s = StyleSheet.create({
   container:    { flex: 1 },
-  pageTitle:    { fontSize: 22, fontWeight: '800', textAlign: 'right', marginBottom: 4 },
+  pageTitle:    { fontSize: 22, fontWeight: '700', textAlign: 'right', marginBottom: 4 },
   pageSubtitle: { fontSize: 13, textAlign: 'right', marginBottom: 20 },
   grid:         { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 20 },
   catCard: {

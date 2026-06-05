@@ -296,7 +296,7 @@ const st = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 10,
     paddingHorizontal: 20, marginBottom: 20,
   },
-  logoText:    { flex: 1, fontSize: 19, fontWeight: '800', letterSpacing: 0.3 },
+  logoText:    { flex: 1, fontSize: 19, fontWeight: '700', letterSpacing: 0.3 },
   collapseBtn: { padding: 2 },
 
   profileCard: {
