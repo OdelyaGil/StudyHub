@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Platform, useWindowDimensions } from 'react-native';
+import { Platform, StyleSheet, useWindowDimensions } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { auth, db } from './src/config/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import ThemeContext, { buildTheme, ThemeMode } from './src/context/ThemeContext';
@@ -60,15 +61,31 @@ const DashboardScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout }: Pro
     />
   ), [userName, userAvatar, onLogout, isWide, sidebarOpen, sidebarCollapsed]);
 
+  const hexToRgba = (hex: string, a: number) => {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r},${g},${b},${a})`;
+  };
+
   return (
     <ThemeContext.Provider value={theme}>
+      {theme.accentGradient && (
+        <LinearGradient
+          colors={theme.accentGradient.map(c => hexToRgba(c, 0.6)) as [string, string]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
+          style={StyleSheet.absoluteFillObject}
+        />
+      )}
       <Tab.Navigator
         tabBar={renderTabBar}
-        sceneContainerStyle={
+        sceneContainerStyle={[
           isWide
             ? { marginLeft: sidebarCollapsed ? SIDEBAR_W_COLLAPSED : SIDEBAR_W }
-            : { paddingTop: TOP_H }
-        }
+            : { paddingTop: TOP_H },
+          { backgroundColor: theme.accentGradient ? 'transparent' : theme.bg },
+        ]}
         screenOptions={{ headerShown: false }}
       >
         <Tab.Screen name="Home"    component={HomeScreen} />
