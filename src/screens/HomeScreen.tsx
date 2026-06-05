@@ -308,7 +308,7 @@ const HomeScreen = () => {
           <View style={s.heroInner}>
             {/* LEFT — greeting */}
             <View style={s.heroLeft}>
-              {firstName ? <Text style={s.heroGreeting}>שלום, {firstName} 🧡</Text> : null}
+              {firstName ? <Text style={s.heroGreeting}>שלום, {firstName} 🤍</Text> : null}
               <Text style={s.heroDate}>{todayLabel}</Text>
             </View>
             {/* CENTER — average */}
@@ -350,8 +350,8 @@ const HomeScreen = () => {
             <View style={s.cardTopRow}>
               <Text style={s.cardMeta}>{urgentTasks.length} השבוע</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <MaterialCommunityIcons name="clipboard-alert-outline" size={15} color={SOFT_TEAL} />
-                <Text style={[s.cardTitle, { color: SOFT_TEAL }]}>דדליינים</Text>
+                <MaterialCommunityIcons name="clipboard-alert-outline" size={15} color={theme.accent} />
+                <Text style={[s.cardTitle, { color: theme.accent }]}>דדליינים</Text>
               </View>
             </View>
 
@@ -398,8 +398,8 @@ const HomeScreen = () => {
             <View style={[s.eventsHeaderRow, { marginBottom: 8 }]}>
               <Text style={s.eventsMeta}>{todayEvents.length} ימים</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <MaterialCommunityIcons name="calendar-today" size={15} color={NEON_BLUE} />
-                <Text style={[s.cardTitle, { color: NEON_BLUE }]}>אירועים היום</Text>
+                <MaterialCommunityIcons name="calendar-today" size={15} color={theme.accent} />
+                <Text style={[s.cardTitle, { color: theme.accent }]}>אירועים היום</Text>
               </View>
             </View>
 
@@ -433,10 +433,10 @@ const HomeScreen = () => {
         </View>
 
         {/* ══ TIP STRIP ═════════════════════════════════════════════════════ */}
-        <View style={[s.lightCard, { borderLeftWidth: 3, borderLeftColor: SOFT_TEAL, paddingVertical: 12 }]}>
+        <View style={[s.lightCard, { borderLeftWidth: 3, borderLeftColor: theme.accent, paddingVertical: 12 }]}>
           <View style={{ flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-            <MaterialCommunityIcons name="lightbulb-on-outline" size={15} color={SOFT_TEAL} />
-            <Text style={{ fontSize: 12, fontWeight: '700', color: SOFT_TEAL }}>טיפ יומי</Text>
+            <MaterialCommunityIcons name="lightbulb-on-outline" size={15} color={theme.accent} />
+            <Text style={{ fontSize: 12, fontWeight: '700', color: theme.accent }}>טיפ יומי</Text>
           </View>
           <Text style={[s.tipText, { color: '#6B6B8A' }]} numberOfLines={3}>{tip}</Text>
         </View>
@@ -447,8 +447,8 @@ const HomeScreen = () => {
             <View style={s.cardTopRow}>
               <View />
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <MaterialCommunityIcons name="book-clock-outline" size={16} color="#ffa94d" />
-                <Text style={[s.cardTitle, { color: '#ffa94d' }]}>המלצות לימוד</Text>
+                <MaterialCommunityIcons name="book-clock-outline" size={16} color={theme.accent} />
+                <Text style={[s.cardTitle, { color: theme.accent }]}>המלצות לימוד</Text>
               </View>
             </View>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
@@ -469,8 +469,8 @@ const HomeScreen = () => {
           <View style={s.cardTopRow}>
             <View />
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <MaterialCommunityIcons name="timer-outline" size={18} color={SOFT_TEAL} />
-              <Text style={[s.cardTitle, { color: SOFT_TEAL }]}>טיימר ללימוד עצמי</Text>
+              <MaterialCommunityIcons name="timer-outline" size={18} color={theme.accent} />
+              <Text style={[s.cardTitle, { color: theme.accent }]}>טיימר ללימוד עצמי</Text>
               {timerDone && (
                 <View style={s.doneBadge}>
                   <Text style={s.doneBadgeText}>✓ הסתיים</Text>
