@@ -473,7 +473,7 @@ const ScheduleScreen = () => {
     return (
       <TouchableOpacity
         key={m}
-        style={[styles.miniMonth, { backgroundColor: surface, borderColor: isCurrentMonth ? theme : borderClr }]}
+        style={[styles.miniMonth, { backgroundColor: surface, borderColor: isCurrentMonth ? theme : borderClr }, darkShadow as any]}
         onPress={() => { setMonth(m); setYear(y); setViewMode('month'); }}
         activeOpacity={0.8}
       >
@@ -531,7 +531,7 @@ const ScheduleScreen = () => {
       {/* ─── DAY VIEW ────────────────────────────────────────────────────── */}
       {viewMode === 'day' && (
         <>
-          <View style={[styles.navBar, { borderBottomColor: borderClr }]}>
+          <View style={[styles.navBar, { borderBottomColor: borderClr }, darkShadow as any]}>
             <TouchableOpacity onPress={() => setSelectedDate(addDays(selectedDate, -1))} style={styles.navBtn}>
               <MaterialCommunityIcons name="chevron-right" size={24} color={theme} />
             </TouchableOpacity>
@@ -558,7 +558,7 @@ const ScheduleScreen = () => {
       {/* ─── WEEK VIEW ───────────────────────────────────────────────────── */}
       {viewMode === 'week' && (
         <>
-          <View style={[styles.navBar, { borderBottomColor: borderClr }]}>
+          <View style={[styles.navBar, { borderBottomColor: borderClr }, darkShadow as any]}>
             <TouchableOpacity onPress={() => setSelectedDate(addDays(wkStart, -7))} style={styles.navBtn}>
               <MaterialCommunityIcons name="chevron-right" size={24} color={theme} />
             </TouchableOpacity>
@@ -608,7 +608,7 @@ const ScheduleScreen = () => {
       {/* ─── MONTH VIEW ──────────────────────────────────────────────────── */}
       {viewMode === 'month' && (
         <>
-          <View style={[styles.calBlock, { backgroundColor: surface, borderBottomColor: borderClr }]}>
+          <View style={[styles.calBlock, { backgroundColor: surface, borderBottomColor: borderClr }, darkShadow as any]}>
             <View style={styles.calHeader}>
               <TouchableOpacity onPress={goToPrev} style={styles.navBtn}>
                 <MaterialCommunityIcons name="chevron-right" size={24} color={theme} />
@@ -682,7 +682,7 @@ const ScheduleScreen = () => {
       {/* ─── YEAR VIEW ───────────────────────────────────────────────────── */}
       {viewMode === 'year' && (
         <>
-          <View style={[styles.navBar, { borderBottomColor: borderClr }]}>
+          <View style={[styles.navBar, { borderBottomColor: borderClr }, darkShadow as any]}>
             <TouchableOpacity onPress={() => setYear(y => y - 1)} style={styles.navBtn}>
               <MaterialCommunityIcons name="chevron-right" size={24} color={theme} />
             </TouchableOpacity>
