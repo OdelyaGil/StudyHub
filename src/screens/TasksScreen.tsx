@@ -180,7 +180,7 @@ const TaskItem: React.FC<TaskItemProps> = ({ item, onToggle, onDelete, onEdit, o
   const files: TaskFile[] = (item as any).files ?? [];
 
   return (
-    <View style={[styles.taskItem, { borderRightColor: theme, backgroundColor: surface, opacity: item.completed ? 0.5 : 1 }]}>
+    <View style={[styles.taskItem, { borderRightColor: theme, backgroundColor: surface, opacity: item.completed ? 0.5 : 1, borderWidth: 1, borderColor: borderClr }]}>
       {/* Checkbox */}
       <View style={styles.taskCheckBox}>
         <TouchableOpacity

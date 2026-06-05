@@ -251,7 +251,7 @@ const GradesScreen = ({ onClose }: { onClose?: () => void }) => {
   const GradeItem = ({ item }: { item: Grade }) => {
     const itemCriteria = item.criteria ?? [];
     return (
-      <View style={[styles.gradeItem, { borderRightColor: theme, backgroundColor: surface }]}>
+      <View style={[styles.gradeItem, { borderRightColor: theme, backgroundColor: surface, borderWidth: 1, borderColor: borderClr }]}>
         <View style={styles.gradeInfo}>
           <Text style={[styles.gradeName, { color: textColor }]}>{item.name}</Text>
           <Text style={[styles.gradeMeta, { color: textSub }]}>

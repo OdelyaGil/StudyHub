@@ -486,7 +486,7 @@ const s = StyleSheet.create({
   card: {
     width: '100%', borderRadius: 20,
     padding: 16, marginBottom: 16,
-    borderWidth: 0,
+    borderWidth: 1,
     shadowColor: '#3D1568',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.11,
