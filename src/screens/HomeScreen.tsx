@@ -527,7 +527,7 @@ const HomeScreen = () => {
 
           <Text style={[
             s.timerDisplay,
-            { color: timerDone ? NEON_GREEN : timerLeft > 0 && timerLeft <= 60 ? NEON_PINK : cardText },
+            { color: timerDone ? NEON_GREEN : cardText },
           ]}>
             {timerLeft > 0 ? formatTime(timerLeft) : timerDone ? formatTime(0) : formatTime((parseInt(timerInput) || 25) * 60)}
           </Text>
