@@ -321,20 +321,28 @@ const GradesScreen = ({ onClose }: { onClose?: () => void }) => {
 
         {/* ── Simulation button ────────────────────────────────────────── */}
         <TouchableOpacity
-          style={[styles.simToggleBtn, { borderColor: theme, backgroundColor: simMode ? theme : 'transparent' }]}
-          onPress={() => { setSimMode(v => !v); if (simMode) setSimCourses([]); }}
+          style={[styles.simToggleBtn, { borderColor: theme, backgroundColor: 'transparent', display: simMode ? 'none' : 'flex' }]}
+          onPress={() => setSimMode(true)}
           activeOpacity={0.8}
         >
-          <MaterialCommunityIcons name="calculator-variant-outline" size={18} color={simMode ? bg : theme} />
-          <Text style={[styles.simToggleText, { color: simMode ? bg : theme }]}>
-            {simMode ? 'סגור סימולציה' : 'סימולציה — חשב ממוצע עתידי'}
+          <MaterialCommunityIcons name="calculator-variant-outline" size={18} color={theme} />
+          <Text style={[styles.simToggleText, { color: theme }]}>
+            סימולציה — חשב ממוצע עתידי
           </Text>
         </TouchableOpacity>
 
         {/* ── Simulation panel ─────────────────────────────────────────── */}
         {simMode && (
           <View style={[styles.simPanel, { backgroundColor: surface, borderColor: theme + '55' }]}>
-            <Text style={[styles.simPanelTitle, { color: textColor }]}>סימולציה</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <TouchableOpacity
+                onPress={() => { setSimMode(false); setSimCourses([]); }}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <MaterialCommunityIcons name="close" size={20} color={textSub} />
+              </TouchableOpacity>
+              <Text style={[styles.simPanelTitle, { color: textColor }]}>סימולציה</Text>
+            </View>
             <Text style={[styles.simPanelSub, { color: textSub }]}>
               הוסיפי קורסים היפותטיים וראי איך הממוצע ישתנה
             </Text>
