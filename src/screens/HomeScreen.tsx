@@ -539,7 +539,7 @@ const HomeScreen = () => {
           <View style={[s.timerBarBg, NEU_INSET as any]}>
             <View style={[s.timerBarFill, {
               width: `${timerPct}%` as any,
-              backgroundColor: timerDone ? NEON_GREEN : SOFT_TEAL,
+              backgroundColor: timerDone ? NEON_GREEN : theme.accent,
             }]} />
           </View>
 
@@ -550,10 +550,10 @@ const HomeScreen = () => {
                 return (
                   <TouchableOpacity
                     key={m}
-                    style={[s.presetBtn, NEU_OUTER as any, { backgroundColor: cardBg }, active && { borderColor: SOFT_TEAL, borderWidth: 1.5 }]}
+                    style={[s.presetBtn, neuCard as any, cardBorder as any, { backgroundColor: cardBg }, active && { borderColor: theme.accent, borderWidth: 1.5 }]}
                     onPress={() => setTimerInput(String(m))}
                   >
-                    <Text style={[s.presetText, { color: active ? SOFT_TEAL : '#9299B8' }]}>{m}</Text>
+                    <Text style={[s.presetText, { color: active ? theme.accent : cardSubText }]}>{m}</Text>
                   </TouchableOpacity>
                 );
               })}
@@ -569,18 +569,18 @@ const HomeScreen = () => {
 
           <View style={s.timerBtns}>
             {!timerRunning ? (
-              <TouchableOpacity style={[s.timerStartBtn, { backgroundColor: SOFT_TEAL }]} onPress={handleTimerStart}>
+              <TouchableOpacity style={[s.timerStartBtn, { backgroundColor: theme.accent }]} onPress={handleTimerStart}>
                 <MaterialCommunityIcons name="play" size={18} color="#fff" />
                 <Text style={s.timerStartText}>{timerLeft > 0 ? 'המשך' : 'התחל'}</Text>
               </TouchableOpacity>
             ) : (
-              <TouchableOpacity style={[s.timerPauseBtn, { borderColor: SOFT_TEAL }]} onPress={handleTimerPause}>
-                <MaterialCommunityIcons name="pause" size={18} color={SOFT_TEAL} />
-                <Text style={[s.timerPauseText, { color: SOFT_TEAL }]}>השהה</Text>
+              <TouchableOpacity style={[s.timerPauseBtn, { borderColor: theme.accent }]} onPress={handleTimerPause}>
+                <MaterialCommunityIcons name="pause" size={18} color={theme.accent} />
+                <Text style={[s.timerPauseText, { color: theme.accent }]}>השהה</Text>
               </TouchableOpacity>
             )}
             {(timerLeft > 0 || timerDone) && (
-              <TouchableOpacity style={[s.timerResetBtn, NEU_OUTER as any, { backgroundColor: cardBg }]} onPress={handleTimerReset}>
+              <TouchableOpacity style={[s.timerResetBtn, neuCard as any, cardBorder as any, { backgroundColor: cardBg }]} onPress={handleTimerReset}>
                 <MaterialCommunityIcons name="restart" size={18} color="#9299B8" />
               </TouchableOpacity>
             )}
