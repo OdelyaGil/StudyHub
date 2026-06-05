@@ -5,6 +5,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from './src/config/firebase';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import LoginScreen from './LoginScreen';
 import DashboardScreen from './DashboardScreen';
 import { ThemeMode } from './src/context/ThemeContext';
@@ -17,6 +18,13 @@ export default function App() {
   const [isLoading, setIsLoading]   = useState(true);
   const [accent, setAccent]         = useState('#00FFFF');
   const [mode, setMode]             = useState<ThemeMode>('dark');
+  const [savedAccent, setSavedAccent] = useState<string | undefined>(undefined);
+  const [savedMode,   setSavedMode]   = useState<ThemeMode | undefined>(undefined);
+
+  useEffect(() => {
+    AsyncStorage.getItem('savedAccent').then(v => { if (v) { setAccent(v); setSavedAccent(v); } });
+    AsyncStorage.getItem('savedMode').then(v => { if (v) { setMode(v as ThemeMode); setSavedMode(v as ThemeMode); } });
+  }, []);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -47,7 +55,7 @@ export default function App() {
         <Stack.Navigator screenOptions={{ headerShown: false, animation: 'none' }}>
           {!isLoggedIn ? (
             <Stack.Screen name="Login">
-              {(props) => <LoginScreen {...props} onLogin={() => setIsLoggedIn(true)} />}
+              {(props) => <LoginScreen {...props} onLogin={() => setIsLoggedIn(true)} savedAccent={savedAccent} savedMode={savedMode} />}
             </Stack.Screen>
           ) : (
             <Stack.Screen name="Dashboard">

@@ -15,6 +15,7 @@ import { auth, db } from '../config/firebase';
 import { useCustomAlert } from '../hooks/useCustomAlert';
 import { useTheme } from '../context/ThemeContext';
 import { ThemeMode } from '../context/ThemeContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const GRADIENTS: { name: string; colors: [string, string] }[] = [
   { name: 'MIDNIGHT OCEAN', colors: ['#1E0F75', '#3785D8'] },
@@ -201,6 +202,7 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
   const handleSelectAccent = async (color: string) => {
     const user = auth.currentUser;
     if (user) await setDoc(doc(db, 'users', user.uid), { accent: color }, { merge: true });
+    await AsyncStorage.setItem('savedAccent', color);
     onSetAccent(color);
   };
 
@@ -208,6 +210,7 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
     const newMode: ThemeMode = val ? 'dark' : 'light';
     const user = auth.currentUser;
     if (user) await setDoc(doc(db, 'users', user.uid), { mode: newMode }, { merge: true });
+    await AsyncStorage.setItem('savedMode', newMode);
     onSetMode(newMode);
   };
 

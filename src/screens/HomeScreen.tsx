@@ -118,7 +118,12 @@ const GlowRing = ({ pct, color, label, bgColor }: { pct: number; color: string; 
             } as any
           : { borderColor: color, borderWidth: 4 }
       ]}>
-        <View style={[s.glowRingInner, { backgroundColor: bgColor }]}>
+        <View style={[
+          s.glowRingInner,
+          Platform.OS === 'web'
+            ? { background: `radial-gradient(circle, ${bgColor} 30%, ${color}18 100%)` } as any
+            : { backgroundColor: bgColor }
+        ]}>
           <Text style={[s.glowRingPct, { color }]}>{pct > 0 ? `${pct}%` : '--'}</Text>
         </View>
       </View>
@@ -441,46 +446,42 @@ const HomeScreen = () => {
           </TouchableOpacity>
 
           {/* RIGHT — Events */}
-          <View style={{ flex: 3 }}>
-            <View style={[s.eventsHeaderRow, { marginBottom: 8 }]}>
-              <Text style={s.eventsMeta}>{todayEvents.length} ימים</Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <View style={[s.lightCard, { flex: 2, marginBottom: 0, backgroundColor: cardBg, height: 160 }, neuCard as any, cardBorder as any]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 6, marginBottom: upcomingEvents.length > 0 ? 8 : 0 }}>
                 <MaterialCommunityIcons name="calendar-today" size={15} color={theme.accent} />
                 <Text style={[s.cardTitle, { color: theme.accent }]}>אירועים היום</Text>
               </View>
-            </View>
 
-            {upcomingEvents.length > 0 ? upcomingEvents.slice(0, 4).map(ev => (
-              <TouchableOpacity
-                key={ev.id}
-                style={[s.eventVertRow, { borderLeftColor: ev.color || NEON_BLUE, backgroundColor: cardBg }, neuCard as any, cardBorder as any]}
-                onPress={() => navigation.navigate('Events')}
-                activeOpacity={0.85}
-              >
-                <View style={{ flex: 1 }}>
-                  <Text style={[s.eventTitle, { color: cardText }]} numberOfLines={1}>{ev.title}</Text>
-                  <Text style={[s.eventTime, { color: ev.color || NEON_BLUE }]}>
-                    {ev.startTime}{ev.endTime ? ` – ${ev.endTime}` : ''}
-                  </Text>
-                </View>
-                <MaterialCommunityIcons name="chevron-left" size={14} color={cardSubText} />
-              </TouchableOpacity>
-            )) : (
-              <View style={[s.eventVertRow, { borderLeftColor: '#E8EDF5', backgroundColor: cardBg }, neuCard as any, cardBorder as any]}>
+              {upcomingEvents.length > 0 ? (
+                <ScrollView nestedScrollEnabled showsVerticalScrollIndicator={false}>
+                  {upcomingEvents.map((ev, i) => (
+                    <TouchableOpacity
+                      key={ev.id}
+                      style={[{ flexDirection: 'row', alignItems: 'center', paddingVertical: 4, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: theme.border }]}
+                      onPress={() => navigation.navigate('Events')}
+                      activeOpacity={0.85}
+                    >
+                      <View style={{ width: 3, height: 28, borderRadius: 2, backgroundColor: ev.color || NEON_BLUE, marginRight: 8 }} />
+                      <View style={{ flex: 1 }}>
+                        <Text style={[s.eventTitle, { color: cardText }]} numberOfLines={1}>{ev.title}</Text>
+                        <Text style={[s.eventTime, { color: ev.color || NEON_BLUE }]}>
+                          {ev.startTime}{ev.endTime ? ` – ${ev.endTime}` : ''}
+                        </Text>
+                      </View>
+                      <MaterialCommunityIcons name="chevron-left" size={14} color={cardSubText} />
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              ) : (
                 <Text style={[s.eventTitle, { color: cardSubText }]}>
                   {todayEvents.length > 0 ? 'כל האירועים להיום הסתיימו ✓' : 'אין אירועים היום'}
                 </Text>
-              </View>
-            )}
-
-            {upcomingEvents.length > 4 && (
-              <Text style={s.cardMore}>עוד {upcomingEvents.length - 4} →</Text>
-            )}
+              )}
           </View>
         </View>
 
         {/* ══ TIP STRIP ═════════════════════════════════════════════════════ */}
-        <View style={[s.lightCard, { borderLeftWidth: 3, borderLeftColor: theme.accent, paddingVertical: 12, backgroundColor: cardBg }, neuCard as any, cardBorder as any]}>
+        <View style={[s.lightCard, { paddingVertical: 12, backgroundColor: cardBg }, neuCard as any, cardBorder as any]}>
           <View style={{ flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: 6, marginBottom: 8 }}>
             <MaterialCommunityIcons name="lightbulb-on-outline" size={15} color={theme.accent} />
             <Text style={{ fontSize: 12, fontWeight: '700', color: theme.accent }}>טיפ יומי</Text>
