@@ -22,13 +22,13 @@ const NEON_BLUE  = '#00C8E8';
 const NEON_GREEN = '#00BFA5';
 
 // ── Neumorphic shadows ────────────────────────────────────────────────────────
-// outer raised shadow for light-bg cards
+// outer raised shadow — rgba so it works on any background (solid or gradient)
 const NEU_OUTER = Platform.select<object>({
-  web: { boxShadow: '8px 8px 22px #C0C3D8, -6px -6px 18px #FFFFFF' } as any,
+  web: { boxShadow: '8px 8px 22px rgba(0,0,0,0.13), -6px -6px 18px rgba(255,255,255,0.88)' } as any,
   default: {
-    shadowColor: '#B0B3C8',
+    shadowColor: '#000',
     shadowOffset: { width: 5, height: 5 },
-    shadowOpacity: 0.7,
+    shadowOpacity: 0.13,
     shadowRadius: 14,
     elevation: 8,
   },
@@ -36,7 +36,7 @@ const NEU_OUTER = Platform.select<object>({
 
 // inset pressed for search / progress bars
 const NEU_INSET = Platform.select<object>({
-  web: { boxShadow: 'inset 4px 4px 10px #C0C3D8, inset -3px -3px 8px #FFFFFF' } as any,
+  web: { boxShadow: 'inset 4px 4px 10px rgba(0,0,0,0.1), inset -3px -3px 8px rgba(255,255,255,0.85)' } as any,
   default: {},
 });
 
@@ -296,53 +296,63 @@ const HomeScreen = () => {
   const urgentDayLabel = (d: number) => d === 0 ? 'היום!' : d === 1 ? 'מחר' : `${d} ימים`;
 
   // ── Render ────────────────────────────────────────────────────────────────
-  return (
-    <View style={{ flex: 1, backgroundColor: PAGE_BG }}>
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={SOFT_TEAL} />}
+  const hasGradient  = !!theme.accentGradient;
+  // hero colors: white card on gradient bg, accent card on plain bg
+  const heroTxt      = hasGradient ? theme.text            : '#FFFFFF';
+  const heroSub      = hasGradient ? theme.textSub         : 'rgba(255,255,255,0.5)';
+  const heroDivider  = hasGradient ? 'rgba(0,0,0,0.08)'   : 'rgba(255,255,255,0.18)';
+  const heroRingBg   = hasGradient ? '#FFFFFF'             : (theme.accentGradient?.[0] ?? theme.accent);
+  const heroRingClr  = hasGradient ? theme.accent          : '#FFFFFF';
+  const heroGradColors = (hasGradient
+    ? (['#FFFFFF', '#FFFFFF'] as [string, string])
+    : ([theme.accent, theme.accent] as [string, string]));
+
+  const scrollContent = (
+    <ScrollView
+      style={{ flex: 1 }}
+      contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={SOFT_TEAL} />}
+    >
+
+      {/* ══ HERO CARD ══════════════════════════════════════════════════════ */}
+      <LinearGradient
+        colors={heroGradColors}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[s.heroCard, hasGradient && (NEU_OUTER as any)]}
       >
-
-        {/* ══ HERO CARD ══════════════════════════════════════════════════════ */}
-        <LinearGradient
-          colors={theme.accentGradient ?? [theme.accent, theme.accent]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={s.heroCard}
-        >
-          <View style={s.heroInner}>
-            {/* LEFT — greeting */}
-            <View style={s.heroLeft}>
-              {firstName ? <Text style={s.heroGreeting}>שלום, {firstName} 🤍</Text> : null}
-              <Text style={s.heroDate}>{todayLabel}</Text>
-            </View>
-            {/* CENTER — average */}
-            <View style={s.heroCenter}>
-              <Text style={s.heroStatBig}>{avg ?? '--'}</Text>
-              <Text style={s.heroStatLabel}>AVERAGE SCORE</Text>
-            </View>
-            {/* RIGHT — ring */}
-            <GlowRing pct={ringPct} color="#FFFFFF" label="ציונים" bgColor={theme.accentGradient?.[0] ?? theme.accent} />
+        <View style={s.heroInner}>
+          {/* LEFT — greeting */}
+          <View style={s.heroLeft}>
+            {firstName ? <Text style={[s.heroGreeting, { color: heroTxt }]}>שלום, {firstName} 🤍</Text> : null}
+            <Text style={[s.heroDate, { color: heroSub }]}>{todayLabel}</Text>
           </View>
-
-          <View style={s.heroBottomRow}>
-            <View style={s.heroBottomStat}>
-              <Text style={s.heroBottomNum}>{activeTasks.length}</Text>
-              <Text style={s.heroBottomLabel}>מטלות פעילות</Text>
-            </View>
-            <View style={s.heroBottomDivider} />
-            <View style={s.heroBottomStat}>
-              <Text style={s.heroBottomNum}>{next7Events.length}</Text>
-              <Text style={s.heroBottomLabel}>אירועים בשבוע</Text>
-            </View>
-            <View style={s.heroBottomDivider} />
-            <View style={s.heroBottomStat}>
-              <Text style={s.heroBottomNum}>{earnedCredits}</Text>
-              <Text style={s.heroBottomLabel}>נ״ז נצברו</Text>
-            </View>
+          {/* CENTER — average */}
+          <View style={s.heroCenter}>
+            <Text style={[s.heroStatBig, { color: heroTxt }]}>{avg ?? '--'}</Text>
+            <Text style={[s.heroStatLabel, { color: heroSub }]}>AVERAGE SCORE</Text>
           </View>
-        </LinearGradient>
+          {/* RIGHT — ring */}
+          <GlowRing pct={ringPct} color={heroRingClr} label="ציונים" bgColor={heroRingBg} />
+        </View>
+
+        <View style={[s.heroBottomRow, { borderTopColor: heroDivider }]}>
+          <View style={s.heroBottomStat}>
+            <Text style={[s.heroBottomNum, { color: heroTxt }]}>{activeTasks.length}</Text>
+            <Text style={[s.heroBottomLabel, { color: heroSub }]}>מטלות פעילות</Text>
+          </View>
+          <View style={[s.heroBottomDivider, { backgroundColor: heroDivider }]} />
+          <View style={s.heroBottomStat}>
+            <Text style={[s.heroBottomNum, { color: heroTxt }]}>{next7Events.length}</Text>
+            <Text style={[s.heroBottomLabel, { color: heroSub }]}>אירועים בשבוע</Text>
+          </View>
+          <View style={[s.heroBottomDivider, { backgroundColor: heroDivider }]} />
+          <View style={s.heroBottomStat}>
+            <Text style={[s.heroBottomNum, { color: heroTxt }]}>{earnedCredits}</Text>
+            <Text style={[s.heroBottomLabel, { color: heroSub }]}>נ״ז נצברו</Text>
+          </View>
+        </View>
+      </LinearGradient>
 
         {/* ══ TWO-COLUMN ROW ════════════════════════════════════════════════ */}
         <View style={s.cardsRow}>
@@ -547,7 +557,22 @@ const HomeScreen = () => {
           </View>
         </View>
 
-      </ScrollView>
+    </ScrollView>
+  );
+
+  return hasGradient ? (
+    <LinearGradient
+      colors={theme.accentGradient!}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={{ flex: 1 }}
+    >
+      {scrollContent}
+      {alertNode}
+    </LinearGradient>
+  ) : (
+    <View style={{ flex: 1, backgroundColor: PAGE_BG }}>
+      {scrollContent}
       {alertNode}
     </View>
   );
