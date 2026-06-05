@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   View, Text, StyleSheet, ScrollView,
-  TouchableOpacity, RefreshControl, TextInput, Vibration, Platform,
+  TouchableOpacity, RefreshControl, TextInput, Vibration, Platform, AppState,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -195,6 +195,25 @@ const HomeScreen = () => {
     };
     (document as any).addEventListener('visibilitychange', handler);
     return () => (document as any).removeEventListener('visibilitychange', handler);
+  }, []);
+
+  // Mobile equivalent of the web visibilitychange handler: when the app
+  // returns to foreground the interval may have been paused, so recalculate
+  // remaining time (or fire completion) based on the absolute end timestamp.
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+    const sub = AppState.addEventListener('change', (nextState) => {
+      if (nextState !== 'active') return;
+      if (!timerEndTime.current || doneRef.current) return;
+      const remaining = Math.ceil((timerEndTime.current - Date.now()) / 1000);
+      if (remaining <= 0) {
+        doneRef.current = true; timerEndTime.current = null;
+        setTimerRunning(false); setTimerLeft(0); setTimerDone(true);
+      } else {
+        setTimerLeft(remaining);
+      }
+    });
+    return () => sub.remove();
   }, []);
 
   useEffect(() => {

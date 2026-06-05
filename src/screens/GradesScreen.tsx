@@ -47,6 +47,8 @@ interface Grade {
 const SEMESTERS = ['א', 'ב', 'קיץ'];
 const YEARS     = ['שנה א', 'שנה ב', 'שנה ג', 'שנה ד'];
 
+const genId = () => genId() * 10000 + Math.floor(Math.random() * 10000);
+
 // Accept both "30" and "0.3" as 30%
 const normalizePct = (val: string): number => {
   const n = Number(val);
@@ -140,7 +142,7 @@ const GradesScreen = ({ onClose }: { onClose?: () => void }) => {
     if (!name)              return showAlert('שגיאה', 'הזיני שם קורס');
     if (!credits || credits <= 0) return showAlert('שגיאה', 'הזיני נקודות זכות תקינות');
     if (!grade || grade < 0 || grade > 100) return showAlert('שגיאה', 'הזיני ציון בין 0 ל-100');
-    setSimCourses(prev => [...prev, { id: Date.now(), name, credits, grade, included: true }]);
+    setSimCourses(prev => [...prev, { id: genId(), name, credits, grade, included: true }]);
     setSimName(''); setSimCredits(''); setSimGrade('');
     setSimModalVisible(false);
   };
@@ -168,7 +170,7 @@ const GradesScreen = ({ onClose }: { onClose?: () => void }) => {
     if (pctUsed + pct > 100)
       return showAlert('שגיאה', `נותרו רק ${100 - pctUsed}% לחלוקה`);
 
-    setCriteria([...criteria, { id: Date.now(), name: critName.trim(), percentage: pct, grade: critGrade }]);
+    setCriteria([...criteria, { id: genId(), name: critName.trim(), percentage: pct, grade: critGrade }]);
     setCritName(''); setCritPct(''); setCritGrade('');
     setShowCritForm(false);
   };
@@ -201,7 +203,7 @@ const GradesScreen = ({ onClose }: { onClose?: () => void }) => {
   // ── Save (add or edit) ────────────────────────────────────────────────────
   const doSave = async (gradeValue: number) => {
     const gradeObj: Grade = {
-      id: editingId ?? Date.now(),
+      id: editingId ?? genId(),
       name: courseName.trim(),
       credits: Number(credits),
       value: gradeValue,
@@ -348,17 +350,25 @@ const GradesScreen = ({ onClose }: { onClose?: () => void }) => {
             </Text>
 
             {/* Simulated avg result */}
-            {simAvg && (
-              <View style={[styles.simResult, { backgroundColor: theme + '22', borderColor: theme + '55' }]}>
-                <Text style={[styles.simResultLabel, { color: textSub }]}>ממוצע צפוי</Text>
-                <Text style={[styles.simResultValue, { color: theme }]}>{simAvg}</Text>
-                <Text style={[styles.simResultLabel, { color: textSub }]}>
-                  {parseFloat(simAvg) > parseFloat(calcWeightedAvg(grades) as string)
-                    ? `▲ עלייה מ-${calcWeightedAvg(grades)}`
-                    : `▼ ירידה מ-${calcWeightedAvg(grades)}`}
-                </Text>
-              </View>
-            )}
+            {simAvg && simAvg !== '-' && (() => {
+              const currentAvg = calcWeightedAvg(grades);
+              const delta = currentAvg !== '-'
+                ? parseFloat(simAvg) - parseFloat(currentAvg)
+                : null;
+              return (
+                <View style={[styles.simResult, { backgroundColor: theme + '22', borderColor: theme + '55' }]}>
+                  <Text style={[styles.simResultLabel, { color: textSub }]}>ממוצע צפוי</Text>
+                  <Text style={[styles.simResultValue, { color: theme }]}>{simAvg}</Text>
+                  {delta !== null && (
+                    <Text style={[styles.simResultLabel, { color: textSub }]}>
+                      {delta >= 0
+                        ? `▲ עלייה מ-${currentAvg}`
+                        : `▼ ירידה מ-${currentAvg}`}
+                    </Text>
+                  )}
+                </View>
+              );
+            })()}
 
             {/* Sim courses list */}
             {simCourses.map(c => (

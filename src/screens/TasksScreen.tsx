@@ -45,10 +45,14 @@ const buildDateISO = (day: number, month: number, year: number): string => {
   return `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 };
 
-const todayISO = (() => {
+const getTodayISO = () => {
   const n = new Date();
   return buildDateISO(n.getDate(), n.getMonth() + 1, n.getFullYear());
-})();
+};
+
+// Collision-safe ID: timestamp × 10 000 + random suffix keeps id as number
+// while making same-millisecond duplicates statistically impossible.
+const genId = () => Date.now() * 10000 + Math.floor(Math.random() * 10000);
 
 const fmtEstimate = (totalMinutes: number): string => {
   if (!totalMinutes) return '';
@@ -275,7 +279,7 @@ const TasksScreen = () => {
   // Form state
   const [taskName, setTaskName] = useState('');
   const [taskCourse, setTaskCourse] = useState('');
-  const [taskDueDate, setTaskDueDate] = useState(todayISO);
+  const [taskDueDate, setTaskDueDate] = useState(getTodayISO);
   const [taskPriority, setTaskPriority] = useState('בינונית');
   const [taskEstimateHours, setTaskEstimateHours] = useState(0);
   const [taskEstimateMinutes, setTaskEstimateMinutes] = useState(0);
@@ -314,7 +318,7 @@ const TasksScreen = () => {
           }))
           .sort((a, b) => a.start - b.start);
 
-        let cursor = iso === todayISO
+        let cursor = iso === getTodayISO()
           ? Math.max(DAY_START, now.getHours() * 60 + now.getMinutes() + 15)
           : DAY_START;
 
@@ -350,7 +354,7 @@ const TasksScreen = () => {
       const duration     = estimateMins > 0 ? estimateMins : 60;
       const endMin       = Math.min(pickerStartMin + duration, pickerSlot.endMin);
       const newEvent = {
-        id:         Date.now(),
+        id:         genId(),
         title:      taskName.trim() || 'עבודה על מטלה',
         date:       pickerSlot.iso,
         startTime:  minToTime(pickerStartMin),
@@ -394,7 +398,7 @@ const TasksScreen = () => {
   const resetForm = () => {
     setTaskName('');
     setTaskCourse('');
-    setTaskDueDate(todayISO);
+    setTaskDueDate(getTodayISO());
     setTaskPriority('בינונית');
     setTaskEstimateHours(0);
     setTaskEstimateMinutes(0);
@@ -405,7 +409,7 @@ const TasksScreen = () => {
     setEditingTaskId(task.id);
     setTaskName(task.name);
     setTaskCourse(task.course ?? '');
-    setTaskDueDate(task.dueDate ?? todayISO);
+    setTaskDueDate(task.dueDate ?? getTodayISO());
     setTaskPriority(task.priority ?? 'בינונית');
     setTaskEstimateHours(Math.floor((task.estimate ?? 0) / 60));
     setTaskEstimateMinutes((task.estimate ?? 0) % 60);
@@ -502,7 +506,7 @@ const TasksScreen = () => {
     if (editingTaskId !== null) {
       updatedTasks = tasks.map(t => t.id === editingTaskId ? { ...t, ...taskData } : t);
     } else {
-      updatedTasks = [...tasks, { id: Date.now(), ...taskData, completed: false }];
+      updatedTasks = [...tasks, { id: genId(), ...taskData, completed: false }];
     }
 
     setTasks(updatedTasks);
