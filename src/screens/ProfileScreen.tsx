@@ -29,22 +29,25 @@ const GRADIENTS: { name: string; colors: [string, string] }[] = [
 ];
 
 const DARK_ACCENTS = [
-  { name: 'CRYSTAL CLEAR',    color: '#92F1EC' },
-  { name: 'TROPICAL SEA',    color: '#35AEAC' },
-  { name: 'PALM SPLASH',    color: '#19887F' },
-  { name: 'DEEP SKY',    color: '#076DDF' },
-  { name: 'BRIGHT AZURE',    color: '#3C92FF' },
-
+  { name: 'MIDNIGHT',     color: '#1E0F75' },
+  { name: 'ROYAL NAVY',   color: '#1C1DAB' },
+  { name: 'OCEAN BLUE',   color: '#3785D8' },
+  { name: 'ICE BLUE',     color: '#ADC6E5' },
+  { name: 'LAVENDER',     color: '#BF8CE1' },
+  { name: 'FLAMINGO',     color: '#E893C5' },
+  { name: 'ROSE QUARTZ',  color: '#EBB2C3' },
+  { name: 'SILVER MIST',  color: '#CBD8E8' },
 ];
 
-
 const LIGHT_ACCENTS = [
-  { name: 'CRYSTAL CLEAR',    color: '#92F1EC' },
-  { name: 'TROPICAL SEA',    color: '#35AEAC' },
-  { name: 'PALM SPLASH',    color: '#19887F' },
-  { name: 'DEEP SKY',    color: '#076DDF' },
-  { name: 'BRIGHT AZURE',    color: '#3C92FF' },
-
+  { name: 'MIDNIGHT',     color: '#1E0F75' },
+  { name: 'ROYAL NAVY',   color: '#1C1DAB' },
+  { name: 'OCEAN BLUE',   color: '#3785D8' },
+  { name: 'ICE BLUE',     color: '#ADC6E5' },
+  { name: 'LAVENDER',     color: '#BF8CE1' },
+  { name: 'FLAMINGO',     color: '#E893C5' },
+  { name: 'ROSE QUARTZ',  color: '#EBB2C3' },
+  { name: 'SILVER MIST',  color: '#CBD8E8' },
 ];
 
 type Props = {
