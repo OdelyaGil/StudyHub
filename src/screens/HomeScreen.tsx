@@ -245,7 +245,8 @@ const HomeScreen = () => {
     if (webTimeout.current)   { clearTimeout(webTimeout.current); webTimeout.current = null; }
   };
 
-  const timerPct = timerTotal > 0 ? Math.round(((timerTotal - timerLeft) / timerTotal) * 100) : 0;
+  const timerPct    = timerTotal > 0 ? Math.round(((timerTotal - timerLeft) / timerTotal) * 100) : 0;
+  const timerBarPct = timerLeft > 0 && timerPct < 2 ? 2 : timerPct;  // always show a visible sliver
 
   useFocusEffect(useCallback(() => { loadAll(); }, []));
 
@@ -538,7 +539,7 @@ const HomeScreen = () => {
 
           <View style={[s.timerBarBg, NEU_INSET as any]}>
             <View style={[s.timerBarFill, {
-              width: `${timerPct}%` as any,
+              width: `${timerBarPct}%` as any,
               backgroundColor: timerDone ? NEON_GREEN : theme.accent,
             }]} />
           </View>
