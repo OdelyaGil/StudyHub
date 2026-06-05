@@ -104,7 +104,7 @@ const s = StyleSheet.create({
   grid:         { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 20 },
   catCard: {
     width: '47%', borderRadius: 20, padding: 18,
-    borderWidth: 0, alignItems: 'center', gap: 10,
+    borderWidth: 1, alignItems: 'center', gap: 10,
     shadowColor: '#3D1568',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.11,
