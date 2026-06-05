@@ -305,6 +305,9 @@ const HomeScreen = () => {
 
   // ── Render ────────────────────────────────────────────────────────────────
   const hasGradient  = !!theme.accentGradient && theme.mode === 'light';
+  const cardBg       = theme.surface;   // dark: rgba(255,255,255,0.06), light: #FFFFFF
+  const cardText     = theme.text;
+  const cardSubText  = theme.textSub;
   // hero colors: white card on gradient bg, accent card on plain bg
   const heroTxt      = hasGradient ? theme.text            : '#FFFFFF';
   const heroSub      = hasGradient ? theme.textSub         : 'rgba(255,255,255,0.5)';
@@ -367,12 +370,12 @@ const HomeScreen = () => {
 
           {/* LEFT — Deadlines */}
           <TouchableOpacity
-            style={[s.lightCard, { flex: 2, marginBottom: 0 }]}
+            style={[s.lightCard, { flex: 2, marginBottom: 0, backgroundColor: cardBg }]}
             onPress={() => navigation.navigate('Tasks')}
             activeOpacity={0.9}
           >
             <View style={s.cardTopRow}>
-              <Text style={s.cardMeta}>{urgentTasks.length} השבוע</Text>
+              <Text style={[s.cardMeta, { color: cardSubText }]}>{urgentTasks.length} השבוע</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <MaterialCommunityIcons name="clipboard-alert-outline" size={15} color={theme.accent} />
                 <Text style={[s.cardTitle, { color: theme.accent }]}>דדליינים</Text>
@@ -385,8 +388,8 @@ const HomeScreen = () => {
               return (
                 <View key={task.id} style={[s.taskPill, { borderColor: col + '55', backgroundColor: col + '10' }]}>
                   <View style={{ flex: 1 }}>
-                    <Text style={s.taskPillTitle} numberOfLines={1}>{task.name}</Text>
-                    {task.course ? <Text style={s.taskPillSub}>{task.course}</Text> : null}
+                    <Text style={[s.taskPillTitle, { color: cardText }]} numberOfLines={1}>{task.name}</Text>
+                    {task.course ? <Text style={[s.taskPillSub, { color: cardSubText }]}>{task.course}</Text> : null}
                   </View>
                   <View style={[s.taskPillBadge, { backgroundColor: col + '22' }]}>
                     <Text style={[s.taskPillBadgeText, { color: col }]}>{urgentDayLabel(d)}</Text>
@@ -430,21 +433,21 @@ const HomeScreen = () => {
             {upcomingEvents.length > 0 ? upcomingEvents.slice(0, 4).map(ev => (
               <TouchableOpacity
                 key={ev.id}
-                style={[s.eventVertRow, { borderLeftColor: ev.color || NEON_BLUE }]}
+                style={[s.eventVertRow, { borderLeftColor: ev.color || NEON_BLUE, backgroundColor: cardBg }]}
                 onPress={() => navigation.navigate('Events')}
                 activeOpacity={0.85}
               >
                 <View style={{ flex: 1 }}>
-                  <Text style={s.eventTitle} numberOfLines={1}>{ev.title}</Text>
+                  <Text style={[s.eventTitle, { color: cardText }]} numberOfLines={1}>{ev.title}</Text>
                   <Text style={[s.eventTime, { color: ev.color || NEON_BLUE }]}>
                     {ev.startTime}{ev.endTime ? ` – ${ev.endTime}` : ''}
                   </Text>
                 </View>
-                <MaterialCommunityIcons name="chevron-left" size={14} color="#ccc" />
+                <MaterialCommunityIcons name="chevron-left" size={14} color={cardSubText} />
               </TouchableOpacity>
             )) : (
-              <View style={[s.eventVertRow, { borderLeftColor: '#E8EDF5' }]}>
-                <Text style={[s.eventTitle, { color: '#aaa' }]}>
+              <View style={[s.eventVertRow, { borderLeftColor: '#E8EDF5', backgroundColor: cardBg }]}>
+                <Text style={[s.eventTitle, { color: cardSubText }]}>
                   {todayEvents.length > 0 ? 'כל האירועים להיום הסתיימו ✓' : 'אין אירועים היום'}
                 </Text>
               </View>
@@ -457,17 +460,17 @@ const HomeScreen = () => {
         </View>
 
         {/* ══ TIP STRIP ═════════════════════════════════════════════════════ */}
-        <View style={[s.lightCard, { borderLeftWidth: 3, borderLeftColor: theme.accent, paddingVertical: 12 }]}>
+        <View style={[s.lightCard, { borderLeftWidth: 3, borderLeftColor: theme.accent, paddingVertical: 12, backgroundColor: cardBg }]}>
           <View style={{ flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: 6, marginBottom: 8 }}>
             <MaterialCommunityIcons name="lightbulb-on-outline" size={15} color={theme.accent} />
             <Text style={{ fontSize: 12, fontWeight: '700', color: theme.accent }}>טיפ יומי</Text>
           </View>
-          <Text style={[s.tipText, { color: '#6B6B8A' }]} numberOfLines={3}>{tip}</Text>
+          <Text style={[s.tipText, { color: cardSubText }]} numberOfLines={3}>{tip}</Text>
         </View>
 
         {/* ══ STUDY RECS ════════════════════════════════════════════════════ */}
         {studyRecs.length > 0 && (
-          <View style={s.lightCard}>
+          <View style={[s.lightCard, { backgroundColor: cardBg }]}>
             <View style={s.cardTopRow}>
               <View />
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -479,8 +482,8 @@ const HomeScreen = () => {
               {studyRecs.map((rec, i) => (
                 <View key={i} style={[s.taskPill, { flex: 1, minWidth: 140, borderColor: theme.accent + '55', backgroundColor: theme.accent + '08' }]}>
                   <View style={{ flex: 1 }}>
-                    <Text style={s.taskPillTitle} numberOfLines={1}>{rec.course}</Text>
-                    <Text style={s.taskPillSub}>{rec.hours} שע׳ · {rec.taskName} · {rec.days} ימים</Text>
+                    <Text style={[s.taskPillTitle, { color: cardText }]} numberOfLines={1}>{rec.course}</Text>
+                    <Text style={[s.taskPillSub, { color: cardSubText }]}>{rec.hours} שע׳ · {rec.taskName} · {rec.days} ימים</Text>
                   </View>
                 </View>
               ))}
@@ -489,7 +492,7 @@ const HomeScreen = () => {
         )}
 
         {/* ══ TIMER ═════════════════════════════════════════════════════════ */}
-        <View style={s.lightCard}>
+        <View style={[s.lightCard, { backgroundColor: cardBg }]}>
           <View style={s.cardTopRow}>
             <View />
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -505,7 +508,7 @@ const HomeScreen = () => {
 
           <Text style={[
             s.timerDisplay,
-            { color: timerDone ? NEON_GREEN : timerLeft > 0 && timerLeft <= 60 ? NEON_PINK : '#1A2052' },
+            { color: timerDone ? NEON_GREEN : timerLeft > 0 && timerLeft <= 60 ? NEON_PINK : cardText },
           ]}>
             {timerLeft > 0 ? formatTime(timerLeft) : timerDone ? formatTime(0) : formatTime((parseInt(timerInput) || 25) * 60)}
           </Text>
@@ -528,7 +531,7 @@ const HomeScreen = () => {
                 return (
                   <TouchableOpacity
                     key={m}
-                    style={[s.presetBtn, NEU_OUTER as any, active && { borderColor: SOFT_TEAL, borderWidth: 1.5 }]}
+                    style={[s.presetBtn, NEU_OUTER as any, { backgroundColor: cardBg }, active && { borderColor: SOFT_TEAL, borderWidth: 1.5 }]}
                     onPress={() => setTimerInput(String(m))}
                   >
                     <Text style={[s.presetText, { color: active ? SOFT_TEAL : '#9299B8' }]}>{m}</Text>
@@ -536,7 +539,7 @@ const HomeScreen = () => {
                 );
               })}
               <TextInput
-                style={[s.timerInput, NEU_INSET as any]}
+                style={[s.timerInput, NEU_INSET as any, { backgroundColor: cardBg, color: cardText }]}
                 value={timerInput}
                 onChangeText={v => setTimerInput(v.replace(/[^0-9]/g, ''))}
                 keyboardType="number-pad" maxLength={3} textAlign="center"
@@ -558,7 +561,7 @@ const HomeScreen = () => {
               </TouchableOpacity>
             )}
             {(timerLeft > 0 || timerDone) && (
-              <TouchableOpacity style={[s.timerResetBtn, NEU_OUTER as any]} onPress={handleTimerReset}>
+              <TouchableOpacity style={[s.timerResetBtn, NEU_OUTER as any, { backgroundColor: cardBg }]} onPress={handleTimerReset}>
                 <MaterialCommunityIcons name="restart" size={18} color="#9299B8" />
               </TouchableOpacity>
             )}
