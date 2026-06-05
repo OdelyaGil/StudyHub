@@ -70,7 +70,7 @@ const DashboardScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout }: Pro
 
   return (
     <ThemeContext.Provider value={theme}>
-      {theme.accentGradient && (
+      {theme.accentGradient && theme.mode === 'light' && (
         <LinearGradient
           colors={theme.accentGradient.map(c => hexToRgba(c, 0.6)) as [string, string]}
           start={{ x: 0, y: 0 }}
@@ -84,7 +84,7 @@ const DashboardScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout }: Pro
           isWide
             ? { marginLeft: sidebarCollapsed ? SIDEBAR_W_COLLAPSED : SIDEBAR_W }
             : { paddingTop: TOP_H },
-          { backgroundColor: theme.accentGradient ? 'transparent' : theme.bg },
+          { backgroundColor: (theme.accentGradient && theme.mode === 'light') ? 'transparent' : theme.bg },
         ]}
         screenOptions={{ headerShown: false }}
       >

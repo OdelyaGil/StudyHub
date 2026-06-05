@@ -73,7 +73,7 @@ export const buildTheme = (mode: ThemeMode, rawAccent: string): AppTheme => {
     mode,
     accent,
     accentGradient: gradArr,
-    bg:         gradArr ? 'transparent' : (dark ? '#0A0A0F' : '#D9D9ED'),
+    bg:         (gradArr && !dark) ? 'transparent' : (dark ? '#0A0A0F' : '#D9D9ED'),
     surface:    dark ? 'rgba(255,255,255,0.06)' : '#FFFFFF',
     border:     dark ? accent + '55' : '#E8E4F4',
     text:       dark ? '#FFFFFF' : '#1A1A2E',
