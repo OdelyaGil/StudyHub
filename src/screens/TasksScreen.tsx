@@ -12,6 +12,7 @@ import {
   Linking,
   KeyboardAvoidingView,
   ActivityIndicator,
+  Vibration,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { loadField, saveField, appendToArrayField } from '../utils/firestore';
@@ -21,6 +22,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useCustomAlert } from '../hooks/useCustomAlert';
 import { useTheme } from '../context/ThemeContext';
 import { occursOnISO } from '../utils/helpers';
+import { Swipeable } from 'react-native-gesture-handler';
 
 // ── Date helpers ─────────────────────────────────────────────────────────────
 const HEBREW_MONTHS = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
@@ -169,7 +171,7 @@ const TaskItem: React.FC<TaskItemProps> = ({ item, onToggle, onDelete, onEdit, o
   const priorityColor = theme;
   const files: TaskFile[] = (item as any).files ?? [];
 
-  return (
+  const card = (
     <View style={[styles.taskItem, { borderRightColor: theme, backgroundColor: surface, opacity: item.completed ? 0.5 : 1, borderWidth: 1, borderColor: themeObj.border }, darkShadow as any]}>
       {/* Checkbox */}
       <View style={styles.taskCheckBox}>
@@ -242,6 +244,20 @@ const TaskItem: React.FC<TaskItemProps> = ({ item, onToggle, onDelete, onEdit, o
       </View>
     </View>
   );
+  if (Platform.OS === 'web') return card;
+  return (
+    <Swipeable
+      overshootRight={false}
+      renderRightActions={() => (
+        <TouchableOpacity style={styles.swipeDeleteBtn} onPress={() => onDelete(item.id)}>
+          <MaterialCommunityIcons name="trash-can-outline" size={22} color="#fff" />
+          <Text style={styles.swipeDeleteText}>מחק</Text>
+        </TouchableOpacity>
+      )}
+    >
+      {card}
+    </Swipeable>
+  );
 };
 
 // ── TasksScreen ───────────────────────────────────────────────────────────────
@@ -258,6 +274,8 @@ const TasksScreen = () => {
   const { showAlert, showDestructiveConfirm, alertNode } = useCustomAlert(theme);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
 
   // Form state
@@ -370,7 +388,7 @@ const TasksScreen = () => {
     try {
       const data = await loadField('tasks');
       if (data) setTasks(data);
-    } catch (e) { console.log(e); }
+    } catch (e) { console.log(e); } finally { setIsLoading(false); }
   };
 
   const onRefresh = async () => {
@@ -472,13 +490,17 @@ const TasksScreen = () => {
   };
 
   const handleSaveTask = async () => {
-    if (!taskName || !taskDueDate) {
-      showAlert('שגיאה', 'אנא מלא את כל השדות הנדרשים');
+    if (!taskName.trim()) {
+      showAlert('שגיאה', 'אנא הזיני שם למטלה');
+      return;
+    }
+    if (!taskDueDate) {
+      showAlert('שגיאה', 'אנא בחרי תאריך הגשה');
       return;
     }
 
     const taskData = {
-      name: taskName,
+      name: taskName.trim(),
       course: taskCourse,
       dueDate: taskDueDate,
       priority: taskPriority,
@@ -494,13 +516,16 @@ const TasksScreen = () => {
     }
 
     setTasks(updatedTasks);
+    setSaving(true);
     try {
       await saveField('tasks', updatedTasks);
       const isEdit = editingTaskId !== null;
       closeModal();
       showAlert('הצלחה', isEdit ? 'המטלה עודכנה בהצלחה' : 'המטלה נשמרה בהצלחה');
     } catch (e) {
-      showAlert('שגיאה', 'שמירת המטלה נכשלה');
+      showAlert('שגיאה', 'שמירת המטלה נכשלה. בדקי את החיבור לאינטרנט ונסי שוב.');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -511,6 +536,7 @@ const TasksScreen = () => {
   };
 
   const handleDeleteTask = (id: number) => {
+    Vibration.vibrate(40);
     showDestructiveConfirm('מחק מטלה', 'האם אתה בטוח שברצונך למחוק את המטלה?', 'מחק', async () => {
       const updatedTasks = tasks.filter(t => t.id !== id);
       setTasks(updatedTasks);
@@ -533,7 +559,11 @@ const TasksScreen = () => {
         style={styles.scrollView}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme} />}
       >
-        {tasks.length > 0 ? (
+        {isLoading ? (
+          <View style={styles.emptyState}>
+            <ActivityIndicator size="large" color={theme} />
+          </View>
+        ) : tasks.length > 0 ? (
           <View style={styles.section}>
             {sortedTasks.map((item, idx) => (
               <React.Fragment key={item.id}>
@@ -550,8 +580,9 @@ const TasksScreen = () => {
           </View>
         ) : (
           <View style={styles.emptyState}>
-            <MaterialCommunityIcons name="checkbox-multiple-marked" size={60} color={textSub} />
-            <Text style={[styles.emptyStateText, { color: textSub }]}>אין מטלות עדיין</Text>
+            <MaterialCommunityIcons name="checkbox-multiple-marked-outline" size={64} color={textSub} />
+            <Text style={[styles.emptyStateText, { color: textColor }]}>אין מטלות עדיין</Text>
+            <Text style={[styles.emptyStateSub, { color: textSub }]}>הוסיפי מטלה חדשה עם הכפתור למטה</Text>
           </View>
         )}
       </ScrollView>
@@ -574,7 +605,7 @@ const TasksScreen = () => {
               </TouchableOpacity>
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false}>
+            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
 
               {/* Task name */}
               <View style={styles.formGroup}>
@@ -745,10 +776,15 @@ const TasksScreen = () => {
                 )}
               </View>
 
-              <TouchableOpacity style={[styles.submitBtn, { backgroundColor: theme }]} onPress={handleSaveTask}>
-                <Text style={styles.submitBtnText}>
-                  {editingTaskId !== null ? 'עדכן מטלה' : 'הוסף מטלה'}
-                </Text>
+              <TouchableOpacity
+                style={[styles.submitBtn, { backgroundColor: theme, opacity: saving ? 0.6 : 1 }]}
+                onPress={handleSaveTask}
+                disabled={saving}
+              >
+                {saving
+                  ? <ActivityIndicator size="small" color="#fff" />
+                  : <Text style={styles.submitBtnText}>{editingTaskId !== null ? 'עדכן מטלה' : 'הוסף מטלה'}</Text>
+                }
               </TouchableOpacity>
 
             </ScrollView>
@@ -918,7 +954,10 @@ const styles = StyleSheet.create({
 
   // Empty state
   emptyState:     { alignItems: 'center', justifyContent: 'center', paddingVertical: 60 },
-  emptyStateText: { fontSize: 14, color: '#999', marginTop: 12 },
+  emptyStateText: { fontSize: 16, fontWeight: '600', marginTop: 12 },
+  emptyStateSub:  { fontSize: 13, marginTop: 6, opacity: 0.7 },
+  swipeDeleteBtn: { backgroundColor: '#ff4757', justifyContent: 'center', alignItems: 'center', width: 72, borderRadius: 10, marginLeft: 8 },
+  swipeDeleteText: { color: '#fff', fontSize: 11, marginTop: 3 },
 
   // FAB
   fab: {

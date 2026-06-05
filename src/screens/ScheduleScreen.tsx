@@ -545,7 +545,11 @@ const ScheduleScreen = () => {
           </View>
           <ScrollView style={styles.eventsScroll} contentContainerStyle={styles.eventsContent}>
             {selectedEvts.length === 0 ? (
-              <Text style={[styles.noEventsText, { color: textSub }]}>אין אירועים ביום זה. לחץ + להוספה</Text>
+              <View style={{ alignItems: 'center', paddingVertical: 24 }}>
+                <MaterialCommunityIcons name="calendar-blank-outline" size={40} color={textSub} />
+                <Text style={[styles.noEventsText, { color: textSub }]}>אין אירועים ביום זה</Text>
+                <Text style={{ color: textSub, fontSize: 12, marginTop: 4, opacity: 0.7 }}>לחץ על + כדי להוסיף</Text>
+              </View>
             ) : (
               selectedEvts.map(ev => renderEventItem(ev))
             )}
@@ -671,7 +675,11 @@ const ScheduleScreen = () => {
               אירועים ל-{fmtDate(selectedDate)}
             </Text>
             {selectedEvts.length === 0 ? (
-              <Text style={[styles.noEventsText, { color: textSub }]}>אין אירועים ביום זה. לחץ + להוספה</Text>
+              <View style={{ alignItems: 'center', paddingVertical: 24 }}>
+                <MaterialCommunityIcons name="calendar-blank-outline" size={40} color={textSub} />
+                <Text style={[styles.noEventsText, { color: textSub }]}>אין אירועים ביום זה</Text>
+                <Text style={{ color: textSub, fontSize: 12, marginTop: 4, opacity: 0.7 }}>לחץ על + כדי להוסיף</Text>
+              </View>
             ) : (
               selectedEvts.map(ev => renderEventItem(ev))
             )}

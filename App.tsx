@@ -11,6 +11,7 @@ import LoginScreen from './LoginScreen';
 import DashboardScreen from './DashboardScreen';
 import { ThemeMode } from './src/context/ThemeContext';
 import { requestNotificationPermission } from './src/utils/notifications';
+import ErrorBoundary from './src/components/ErrorBoundary';
 
 const Stack = createNativeStackNavigator();
 
@@ -55,6 +56,7 @@ export default function App() {
   );
 
   return (
+    <ErrorBoundary>
     <GestureHandlerRootView style={{ flex: 1 }}>
       <NavigationContainer>
         <Stack.Navigator screenOptions={{ headerShown: false, animation: 'none' }}>
@@ -79,5 +81,6 @@ export default function App() {
         </Stack.Navigator>
       </NavigationContainer>
     </GestureHandlerRootView>
+    </ErrorBoundary>
   );
 }

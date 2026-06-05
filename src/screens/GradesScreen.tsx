@@ -11,6 +11,8 @@ import {
   Pressable,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
+  Vibration,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { loadField, saveField } from '../utils/firestore';
@@ -18,6 +20,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCustomAlert } from '../hooks/useCustomAlert';
 import { useTheme } from '../context/ThemeContext';
+import { Swipeable } from 'react-native-gesture-handler';
 
 const darken = (hex: string, f = 0.75) => {
   const r = Math.round(parseInt(hex.slice(1,3),16) * f);
@@ -47,7 +50,7 @@ interface Grade {
 const SEMESTERS = ['א', 'ב', 'קיץ'];
 const YEARS     = ['שנה א', 'שנה ב', 'שנה ג', 'שנה ד'];
 
-const genId = () => genId() * 10000 + Math.floor(Math.random() * 10000);
+const genId = () => Date.now() * 10000 + Math.floor(Math.random() * 10000);
 
 // Accept both "30" and "0.3" as 30%
 const normalizePct = (val: string): number => {
@@ -74,6 +77,8 @@ const GradesScreen = ({ onClose }: { onClose?: () => void }) => {
 
   const [grades, setGrades]         = useState<Grade[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [isLoading, setIsLoading]   = useState(true);
+  const [saving, setSaving]         = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingId, setEditingId]   = useState<number | null>(null);
 
@@ -104,7 +109,7 @@ const GradesScreen = ({ onClose }: { onClose?: () => void }) => {
     try {
       const data = await loadField('grades');
       if (data) setGrades(data);
-    } catch (e) { console.log(e); }
+    } catch (e) { console.log(e); } finally { setIsLoading(false); }
   };
 
   const onRefresh = async () => {
@@ -221,11 +226,13 @@ const GradesScreen = ({ onClose }: { onClose?: () => void }) => {
       : [...grades, gradeObj];
 
     setGrades(updated);
+    setSaving(true);
     try {
       await saveField('grades', updated);
       resetForm();
       setModalVisible(false);
-    } catch { showAlert('שגיאה', 'שמירת הציון נכשלה'); }
+    } catch { showAlert('שגיאה', 'שמירת הציון נכשלה. בדקי את החיבור לאינטרנט ונסי שוב.'); }
+    finally { setSaving(false); }
   };
 
   const handleSaveGrade = async () => {
@@ -250,6 +257,7 @@ const GradesScreen = ({ onClose }: { onClose?: () => void }) => {
   };
 
   const handleDeleteGrade = (id: number) => {
+    Vibration.vibrate(40);
     showDestructiveConfirm('מחק ציון', 'האם אתה בטוח שברצונך למחוק את הציון?', 'מחק', async () => {
       const updated = grades.filter((g) => g.id !== id);
       setGrades(updated);
@@ -260,7 +268,7 @@ const GradesScreen = ({ onClose }: { onClose?: () => void }) => {
   // ── Grade list item ───────────────────────────────────────────────────────
   const GradeItem = ({ item }: { item: Grade }) => {
     const itemCriteria = item.criteria ?? [];
-    return (
+    const card = (
       <View style={[styles.gradeItem, { borderRightColor: theme, backgroundColor: surface, borderWidth: 1, borderColor: borderClr }, darkShadow as any]}>
         <View style={styles.gradeInfo}>
           <Text style={[styles.gradeName, { color: textColor }]}>{item.name}</Text>
@@ -290,6 +298,20 @@ const GradesScreen = ({ onClose }: { onClose?: () => void }) => {
           </View>
         </View>
       </View>
+    );
+    if (Platform.OS === 'web') return card;
+    return (
+      <Swipeable
+        overshootRight={false}
+        renderRightActions={() => (
+          <TouchableOpacity style={styles.swipeDeleteBtn} onPress={() => handleDeleteGrade(item.id)}>
+            <MaterialCommunityIcons name="trash-can-outline" size={22} color="#fff" />
+            <Text style={styles.swipeDeleteText}>מחק</Text>
+          </TouchableOpacity>
+        )}
+      >
+        {card}
+      </Swipeable>
     );
   };
 
@@ -415,7 +437,11 @@ const GradesScreen = ({ onClose }: { onClose?: () => void }) => {
           </View>
         )}
 
-        {grades.length > 0 ? (
+        {isLoading ? (
+          <View style={styles.emptyState}>
+            <ActivityIndicator size="large" color={theme} />
+          </View>
+        ) : grades.length > 0 ? (
           YEARS.map((yr) => {
             const semOrder: Record<string, number> = { 'א': 0, 'ב': 1, 'קיץ': 2 };
             const yearGrades = grades
@@ -446,8 +472,9 @@ const GradesScreen = ({ onClose }: { onClose?: () => void }) => {
           })
         ) : (
           <View style={styles.emptyState}>
-            <MaterialCommunityIcons name="file-document-outline" size={60} color={textSub} />
-            <Text style={[styles.emptyStateText, { color: textSub }]}>אין ציונים עדיין</Text>
+            <MaterialCommunityIcons name="school-outline" size={64} color={textSub} />
+            <Text style={[styles.emptyStateText, { color: textColor }]}>אין ציונים עדיין</Text>
+            <Text style={[styles.emptyStateSub, { color: textSub }]}>הוסיפי קורס עם כפתור + למטה</Text>
           </View>
         )}
       </ScrollView>
@@ -564,8 +591,15 @@ const GradesScreen = ({ onClose }: { onClose?: () => void }) => {
                 </View>
               )}
 
-              <TouchableOpacity style={[styles.submitBtn, { backgroundColor: theme }]} onPress={handleSaveGrade}>
-                <Text style={styles.submitBtnText}>{editingId !== null ? 'שמור שינויים' : 'הוסף ציון'}</Text>
+              <TouchableOpacity
+                style={[styles.submitBtn, { backgroundColor: theme, opacity: saving ? 0.6 : 1 }]}
+                onPress={handleSaveGrade}
+                disabled={saving}
+              >
+                {saving
+                  ? <ActivityIndicator size="small" color="#fff" />
+                  : <Text style={styles.submitBtnText}>{editingId !== null ? 'שמור שינויים' : 'הוסף ציון'}</Text>
+                }
               </TouchableOpacity>
             </ScrollView>
           </View>
@@ -668,7 +702,10 @@ const styles = StyleSheet.create({
   gradeActions:      { flexDirection: 'row', gap: 2 },
   actionBtn:         { padding: 5 },
   emptyState:        { alignItems: 'center', justifyContent: 'center', paddingVertical: 60 },
-  emptyStateText:    { fontSize: 14, color: '#999', marginTop: 12 },
+  emptyStateText:    { fontSize: 16, fontWeight: '600', marginTop: 12 },
+  emptyStateSub:     { fontSize: 13, marginTop: 6, opacity: 0.7 },
+  swipeDeleteBtn:    { backgroundColor: '#ff4757', justifyContent: 'center', alignItems: 'center', width: 72, borderRadius: 10, marginLeft: 8 },
+  swipeDeleteText:   { color: '#fff', fontSize: 11, marginTop: 3 },
   fab: {
     position: 'absolute', bottom: 20, right: 20,
     width: 56, height: 56, borderRadius: 28,
