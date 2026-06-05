@@ -15,7 +15,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { loadField, saveField } from '../utils/firestore';
+import { loadField, saveField, appendToArrayField } from '../utils/firestore';
 import * as DocumentPicker from 'expo-document-picker';
 import { Picker } from '@react-native-picker/picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -349,7 +349,6 @@ const TasksScreen = () => {
       const estimateMins = taskEstimateHours * 60 + taskEstimateMinutes;
       const duration     = estimateMins > 0 ? estimateMins : 60;
       const endMin       = Math.min(pickerStartMin + duration, pickerSlot.endMin);
-      const schedule: any[] = (await loadField('schedule')) ?? [];
       const newEvent = {
         id:         Date.now(),
         title:      taskName.trim() || 'עבודה על מטלה',
@@ -359,7 +358,7 @@ const TasksScreen = () => {
         color:      '#4CAFAE',
         recurrence: 'none',
       };
-      await saveField('schedule', [...schedule, newEvent]);
+      await appendToArrayField('schedule', newEvent);
       setAddedSlotKeys(prev => new Set(prev).add(key));
       setPickerSlot(null);
       showAlert('נוסף ללוח הזמנים', `${newEvent.title}\n${newEvent.date.split('-').reverse().join('/')}  ${newEvent.startTime}–${newEvent.endTime}`);
@@ -426,11 +425,20 @@ const TasksScreen = () => {
       if (result.canceled || !result.assets) return;
 
       const newFiles: TaskFile[] = [];
+      const MAX_FILE  = 100 * 1024;   // 100 KB per file (base64 ≈ 133 KB)
+      const MAX_TOTAL = 300 * 1024;   // 300 KB total to stay well under Firestore 1 MB limit
+      let runningTotal = taskFiles.reduce((s, f) => s + (f.size ?? 0), 0);
+
       for (const asset of result.assets) {
-        if ((asset.size ?? 0) > 2 * 1024 * 1024) {
-          showAlert('קובץ גדול מדי', `"${asset.name}" גדול מ-2MB ולא ניתן לשמור אותו`);
+        if ((asset.size ?? 0) > MAX_FILE) {
+          showAlert('קובץ גדול מדי', `"${asset.name}" גדול מ-100KB ולא ניתן לשמור אותו.\nטיפ: דחוס את הקובץ לפני הצירוף.`);
           continue;
         }
+        if (runningTotal + (asset.size ?? 0) > MAX_TOTAL) {
+          showAlert('מגבלת גודל', 'סך הקבצים המצורפים חרג מהמגבלה המותרת (300KB סה"כ).');
+          break;
+        }
+        runningTotal += (asset.size ?? 0);
         if (Platform.OS === 'web') {
           try {
             const res = await fetch(asset.uri);

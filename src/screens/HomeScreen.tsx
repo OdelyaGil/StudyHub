@@ -261,7 +261,15 @@ const HomeScreen = () => {
         loadField('grades'), loadField('tasks'), loadField('schedule'),
       ]);
       setGrades(g ?? []); setTasks(t ?? []); setEvents(e ?? []);
-      scheduleAllNotifications(t ?? [], e ?? []);
+      await scheduleAllNotifications(t ?? [], e ?? []);
+      // scheduleAllNotifications cancels ALL scheduled notifications before
+      // rescheduling task/event reminders. If the study timer was running its
+      // push notification was silently cancelled — re-register it here.
+      if (timerEndTime.current && Date.now() < timerEndTime.current) {
+        const remaining = Math.ceil((timerEndTime.current - Date.now()) / 1000);
+        const id = await scheduleTimerNotification(remaining);
+        if (id) timerNotifId.current = id;
+      }
       const user = auth.currentUser;
       if (user) {
         const snap = await getDoc(doc(db, 'users', user.uid));

@@ -16,6 +16,7 @@ import { useCustomAlert } from '../hooks/useCustomAlert';
 import { useTheme } from '../context/ThemeContext';
 import { ThemeMode } from '../context/ThemeContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ImagePicker from 'expo-image-picker';
 
 const GRADIENTS: { name: string; colors: [string, string] }[] = [
   { name: 'MIDNIGHT OCEAN', colors: ['#1E0F75', '#3785D8'] },
@@ -81,6 +82,10 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
   const [confirmPass, setConfirmPass]     = useState('');
   const [passLoading, setPassLoading]     = useState(false);
 
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletePassword, setDeletePassword]   = useState('');
+  const [deleteLoading, setDeleteLoading]     = useState(false);
+
   useEffect(() => { loadUser(); }, []);
 
   const loadUser = async () => {
@@ -124,29 +129,47 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
     });
 
   const pickAndUploadPhoto = async () => {
-    if (Platform.OS !== 'web') return;
     const user = auth.currentUser;
     if (!user) return;
-
-    const file = await new Promise<File | null>((resolve) => {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = 'image/*';
-      input.onchange = (e: Event) => resolve((e.target as HTMLInputElement).files?.[0] ?? null);
-      input.click();
-    });
-
-    if (!file) return;
     setUploadingPhoto(true);
     try {
-      let blob: Blob;
-      try { blob = await compressImage(file, 300); } catch { blob = file; }
-      const base64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload  = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-      });
+      let base64: string | null = null;
+
+      if (Platform.OS === 'web') {
+        const file = await new Promise<File | null>((resolve) => {
+          const input = document.createElement('input');
+          input.type = 'file';
+          input.accept = 'image/*';
+          input.onchange = (e: Event) => resolve((e.target as HTMLInputElement).files?.[0] ?? null);
+          input.click();
+        });
+        if (!file) return;
+        let blob: Blob;
+        try { blob = await compressImage(file, 300); } catch { blob = file; }
+        base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload  = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+      } else {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+          showAlert('הרשאה נדרשת', 'יש לאשר גישה לגלריה בהגדרות כדי לשנות תמונת פרופיל');
+          return;
+        }
+        const result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ['images'],
+          allowsEditing: true,
+          aspect: [1, 1],
+          quality: 0.6,
+          base64: true,
+        });
+        if (result.canceled || !result.assets?.[0]?.base64) return;
+        base64 = `data:image/jpeg;base64,${result.assets[0].base64}`;
+      }
+
+      if (!base64) return;
       await setDoc(doc(db, 'users', user.uid), { photoURL: base64 }, { merge: true });
       setPhotoURL(base64);
       onAvatarChange?.(base64);
@@ -215,15 +238,30 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
   };
 
   const handleDeleteAccount = () => {
-    showDestructiveConfirm('מחיקת חשבון', 'פעולה זו תמחק את החשבון שלך לצמיתות. להמשיך?', 'מחק', async () => {
-      const user = auth.currentUser;
-      if (!user) return;
-      try {
-        await deleteDoc(doc(db, 'users', user.uid));
-        await deleteUser(user);
-        onLogout();
-      } catch { showAlert('שגיאה', 'מחיקת החשבון נכשלה. התנתק והתחבר שוב ונסה שוב.'); }
-    });
+    showDestructiveConfirm(
+      'מחיקת חשבון',
+      'פעולה זו תמחק את החשבון שלך לצמיתות. להמשיך?',
+      'מחק',
+      () => { setDeletePassword(''); setShowDeleteModal(true); },
+    );
+  };
+
+  const confirmDeleteAccount = async () => {
+    if (deletePassword.length < 6) return showAlert('שגיאה', 'אנא הזיני את הסיסמה הנוכחית');
+    const user = auth.currentUser;
+    if (!user || !user.email) return;
+    setDeleteLoading(true);
+    try {
+      await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, deletePassword));
+      await deleteDoc(doc(db, 'users', user.uid));
+      await deleteUser(user);
+      onLogout();
+    } catch (e: any) {
+      if (e?.code === 'auth/wrong-password' || e?.code === 'auth/invalid-credential')
+        showAlert('שגיאה', 'הסיסמה שגויה');
+      else
+        showAlert('שגיאה', 'מחיקת החשבון נכשלה. אנא נסי שוב.');
+    } finally { setDeleteLoading(false); }
   };
 
   const initials = userName
@@ -464,6 +502,46 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
         </Modal>
 
       </ScrollView>
+
+      {/* Delete account — re-auth confirmation modal */}
+      <Modal visible={showDeleteModal} animationType="slide" transparent>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <View style={s.modalOverlay}>
+            <View style={[s.modalCard, { backgroundColor: theme.mode === 'dark' ? '#111122' : '#fff', borderColor: theme.border }]}>
+              <View style={s.modalHeader}>
+                <Text style={[s.modalTitle, { color: theme.text }]}>אימות זהות</Text>
+                <Pressable onPress={() => { setShowDeleteModal(false); setDeletePassword(''); }}>
+                  <MaterialCommunityIcons name="close" size={24} color={theme.textSub} />
+                </Pressable>
+              </View>
+              <Text style={[s.fieldLabel, { color: theme.textSub, marginBottom: 16, lineHeight: 20 }]}>
+                כדי למחוק את החשבון לצמיתות, אנא הזיני את הסיסמה הנוכחית שלך:
+              </Text>
+              <Text style={[s.fieldLabel, { color: theme.textSub }]}>סיסמה נוכחית</Text>
+              <TextInput
+                style={[s.fieldInput, { color: theme.text, backgroundColor: theme.surface, borderColor: theme.border }]}
+                value={deletePassword}
+                onChangeText={setDeletePassword}
+                secureTextEntry
+                placeholderTextColor={theme.textSub}
+                placeholder="••••••••"
+                autoFocus
+              />
+              <Pressable
+                style={[s.saveBtn, { backgroundColor: '#ff4757' }, deleteLoading && { opacity: 0.7 }]}
+                onPress={confirmDeleteAccount}
+                disabled={deleteLoading}
+              >
+                {deleteLoading
+                  ? <ActivityIndicator color="#fff" />
+                  : <Text style={[s.saveBtnText, { color: '#fff' }]}>מחק חשבון לצמיתות</Text>
+                }
+              </Pressable>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
       {alertNode}
     </View>
   );

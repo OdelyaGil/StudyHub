@@ -24,6 +24,12 @@
           "photosPermission": "Allow StudyHub to access your files.",
           "documentPickerPermission": "Allow StudyHub to pick documents."
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow StudyHub to access your photos to set a profile picture."
+        }
       ]
     ]
   }
