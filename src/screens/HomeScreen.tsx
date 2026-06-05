@@ -309,6 +309,11 @@ const HomeScreen = () => {
   const cardText     = theme.text;
   const cardSubText  = theme.textSub;
 
+  // in dark mode add a subtle accent border so cards separate from bg
+  const cardBorder: object = theme.mode === 'dark'
+    ? { borderWidth: 1, borderColor: theme.border }
+    : {};
+
   // dark mode: accent glow instead of white neumorphic shadow
   const neuCard: object = theme.mode === 'dark'
     ? (Platform.select({
@@ -384,7 +389,7 @@ const HomeScreen = () => {
 
           {/* LEFT — Deadlines */}
           <TouchableOpacity
-            style={[s.lightCard, { flex: 2, marginBottom: 0, backgroundColor: cardBg }, neuCard as any]}
+            style={[s.lightCard, { flex: 2, marginBottom: 0, backgroundColor: cardBg }, neuCard as any, cardBorder as any]}
             onPress={() => navigation.navigate('Tasks')}
             activeOpacity={0.9}
           >
@@ -447,7 +452,7 @@ const HomeScreen = () => {
             {upcomingEvents.length > 0 ? upcomingEvents.slice(0, 4).map(ev => (
               <TouchableOpacity
                 key={ev.id}
-                style={[s.eventVertRow, { borderLeftColor: ev.color || NEON_BLUE, backgroundColor: cardBg }, neuCard as any]}
+                style={[s.eventVertRow, { borderLeftColor: ev.color || NEON_BLUE, backgroundColor: cardBg }, neuCard as any, cardBorder as any]}
                 onPress={() => navigation.navigate('Events')}
                 activeOpacity={0.85}
               >
@@ -460,7 +465,7 @@ const HomeScreen = () => {
                 <MaterialCommunityIcons name="chevron-left" size={14} color={cardSubText} />
               </TouchableOpacity>
             )) : (
-              <View style={[s.eventVertRow, { borderLeftColor: '#E8EDF5', backgroundColor: cardBg }, neuCard as any]}>
+              <View style={[s.eventVertRow, { borderLeftColor: '#E8EDF5', backgroundColor: cardBg }, neuCard as any, cardBorder as any]}>
                 <Text style={[s.eventTitle, { color: cardSubText }]}>
                   {todayEvents.length > 0 ? 'כל האירועים להיום הסתיימו ✓' : 'אין אירועים היום'}
                 </Text>
@@ -474,7 +479,7 @@ const HomeScreen = () => {
         </View>
 
         {/* ══ TIP STRIP ═════════════════════════════════════════════════════ */}
-        <View style={[s.lightCard, { borderLeftWidth: 3, borderLeftColor: theme.accent, paddingVertical: 12, backgroundColor: cardBg }, neuCard as any]}>
+        <View style={[s.lightCard, { borderLeftWidth: 3, borderLeftColor: theme.accent, paddingVertical: 12, backgroundColor: cardBg }, neuCard as any, cardBorder as any]}>
           <View style={{ flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: 6, marginBottom: 8 }}>
             <MaterialCommunityIcons name="lightbulb-on-outline" size={15} color={theme.accent} />
             <Text style={{ fontSize: 12, fontWeight: '700', color: theme.accent }}>טיפ יומי</Text>
@@ -484,7 +489,7 @@ const HomeScreen = () => {
 
         {/* ══ STUDY RECS ════════════════════════════════════════════════════ */}
         {studyRecs.length > 0 && (
-          <View style={[s.lightCard, { backgroundColor: cardBg }, neuCard as any]}>
+          <View style={[s.lightCard, { backgroundColor: cardBg }, neuCard as any, cardBorder as any]}>
             <View style={s.cardTopRow}>
               <View />
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -506,7 +511,7 @@ const HomeScreen = () => {
         )}
 
         {/* ══ TIMER ═════════════════════════════════════════════════════════ */}
-        <View style={[s.lightCard, { backgroundColor: cardBg }, neuCard as any]}>
+        <View style={[s.lightCard, { backgroundColor: cardBg }, neuCard as any, cardBorder as any]}>
           <View style={s.cardTopRow}>
             <View />
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
