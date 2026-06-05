@@ -12,13 +12,38 @@ const ARRAY_FIELDS = new Set([
 const userRef  = (uid: string) => doc(db, 'users', uid);
 const storeRef = (uid: string, field: string) => doc(db, 'users', uid, 'store', field);
 
+// ── In-memory TTL cache ───────────────────────────────────────────────────────
+// Avoids redundant Firestore reads when multiple screens navigate quickly and
+// all call loadField for the same data (e.g. tasks on Home + Tasks screens).
+const CACHE_TTL = 30_000; // 30 seconds
+const _cache    = new Map<string, { value: any; at: number }>();
+
+const ck       = (uid: string, f: string) => `${uid}:${f}`;
+const cacheGet = (uid: string, f: string) => {
+  const e = _cache.get(ck(uid, f));
+  if (!e) return undefined;
+  if (Date.now() - e.at > CACHE_TTL) { _cache.delete(ck(uid, f)); return undefined; }
+  return e.value;
+};
+const cacheSet = (uid: string, f: string, v: any) =>
+  _cache.set(ck(uid, f), { value: v, at: Date.now() });
+const cacheDel = (uid: string, f: string) => _cache.delete(ck(uid, f));
+
+// ── Public API ────────────────────────────────────────────────────────────────
+
 export const loadField = async (field: string) => {
   const uid = auth.currentUser?.uid;
   if (!uid) return null;
 
+  const cached = cacheGet(uid, field);
+  if (cached !== undefined) return cached;
+
   if (ARRAY_FIELDS.has(field)) {
     const snap = await getDoc(storeRef(uid, field));
-    if (snap.exists()) return snap.data().value ?? null;
+    if (snap.exists()) {
+      cacheSet(uid, field, snap.data().value ?? null);
+      return snap.data().value ?? null;
+    }
 
     // Lazy migration: first access moves the data from the old single document
     // to the new subcollection document transparently.
@@ -26,18 +51,24 @@ export const loadField = async (field: string) => {
     if (oldSnap.exists() && oldSnap.data()[field] != null) {
       const data = oldSnap.data()[field];
       await setDoc(storeRef(uid, field), { value: data });
+      cacheSet(uid, field, data);
       return data;
     }
+    cacheSet(uid, field, null);
     return null;
   }
 
   const snap = await getDoc(userRef(uid));
-  return snap.exists() ? (snap.data()[field] ?? null) : null;
+  const value = snap.exists() ? (snap.data()[field] ?? null) : null;
+  cacheSet(uid, field, value);
+  return value;
 };
 
 export const saveField = async (field: string, value: any) => {
   const uid = auth.currentUser?.uid;
   if (!uid) return;
+
+  cacheSet(uid, field, value); // optimistic cache update
 
   if (ARRAY_FIELDS.has(field)) {
     await setDoc(storeRef(uid, field), { value });
@@ -52,6 +83,8 @@ export const saveField = async (field: string, value: any) => {
 export const appendToArrayField = async (field: string, item: any) => {
   const uid = auth.currentUser?.uid;
   if (!uid) return;
+
+  cacheDel(uid, field); // invalidate so next read fetches fresh data
 
   if (ARRAY_FIELDS.has(field)) {
     const ref = storeRef(uid, field);

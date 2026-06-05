@@ -8,7 +8,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import {
   EmailAuthProvider, reauthenticateWithCredential,
-  updatePassword, deleteUser,
+  updatePassword, deleteUser, sendEmailVerification,
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
@@ -202,6 +202,17 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
     } catch { showAlert('שגיאה', 'שמירת השם נכשלה'); }
   };
 
+  const handleResendVerification = async () => {
+    const user = auth.currentUser;
+    if (!user) return;
+    try {
+      await sendEmailVerification(user);
+      showAlert('נשלח!', 'מייל האימות נשלח שוב לתיבת הדואר שלך.');
+    } catch {
+      showAlert('שגיאה', 'לא ניתן לשלוח מייל כרגע. נסה שוב מאוחר יותר.');
+    }
+  };
+
   const handleChangePassword = async () => {
     if (currentPass.length < 6) return showAlert('שגיאה', 'הסיסמה הנוכחית קצרה מדי');
     if (newPass.length < 8)     return showAlert('שגיאה', 'הסיסמה החדשה חייבת להכיל לפחות 8 תווים');
@@ -329,6 +340,16 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
             <MaterialCommunityIcons name="email" size={20} color={theme.textSub} />
             <Text style={[s.rowValue, { color: theme.text }]}>{userEmail}</Text>
           </View>
+
+          {!auth.currentUser?.emailVerified && (
+            <View style={[s.verifyBanner, { backgroundColor: '#ffa94d22', borderColor: '#ffa94d55' }]}>
+              <MaterialCommunityIcons name="email-alert-outline" size={16} color="#ffa94d" />
+              <Text style={[s.verifyBannerText, { color: '#ffa94d' }]}>כתובת המייל לא אומתה</Text>
+              <Pressable onPress={handleResendVerification}>
+                <Text style={[s.verifyResend, { color: theme.accent }]}>שלח שוב</Text>
+              </Pressable>
+            </View>
+          )}
 
           <View style={[s.divider, { backgroundColor: theme.border }]} />
 
@@ -618,7 +639,10 @@ const s = StyleSheet.create({
 
   gradientGrid: { flexDirection: 'row', justifyContent: 'space-around', paddingVertical: 8 },
   gradientItem: { alignItems: 'center', gap: 6 },
-  gradientPill: { width: 40, height: 40, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(0,0,0,0.08)' },
+  gradientPill:     { width: 40, height: 40, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(0,0,0,0.08)' },
+  verifyBanner:     { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8, paddingHorizontal: 10, borderRadius: 8, borderWidth: 1, marginTop: 6 },
+  verifyBannerText: { flex: 1, fontSize: 13 },
+  verifyResend:     { fontSize: 13, fontWeight: '600' },
 });
 
 export default ProfileScreen;

@@ -151,11 +151,12 @@ const HomeScreen = () => {
   const [timerTotal,    setTimerTotal]    = useState(0);
   const [timerDone,     setTimerDone]     = useState(false);
   const [timerInput,    setTimerInput]    = useState('25');
-  const doneRef        = useRef(false);
-  const timerNotifId   = useRef<string | null>(null);
-  const timerLeftRef   = useRef(0);
-  const timerEndTime   = useRef<number | null>(null);
-  const webTimeout     = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const doneRef           = useRef(false);
+  const timerNotifId      = useRef<string | null>(null);
+  const timerLeftRef      = useRef(0);
+  const timerEndTime      = useRef<number | null>(null);
+  const webTimeout        = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastNotifSchedule = useRef<number>(0);
 
   useEffect(() => { timerLeftRef.current = timerLeft; }, [timerLeft]);
 
@@ -280,14 +281,18 @@ const HomeScreen = () => {
         loadField('grades'), loadField('tasks'), loadField('schedule'),
       ]);
       setGrades(g ?? []); setTasks(t ?? []); setEvents(e ?? []);
-      await scheduleAllNotifications(t ?? [], e ?? []);
-      // scheduleAllNotifications cancels ALL scheduled notifications before
-      // rescheduling task/event reminders. If the study timer was running its
-      // push notification was silently cancelled — re-register it here.
-      if (timerEndTime.current && Date.now() < timerEndTime.current) {
-        const remaining = Math.ceil((timerEndTime.current - Date.now()) / 1000);
-        const id = await scheduleTimerNotification(remaining);
-        if (id) timerNotifId.current = id;
+      // Reschedule at most once every 5 minutes — navigation triggers useFocusEffect
+      // on every visit so without throttling every tab-switch rebuilds all notifications.
+      if (Date.now() - lastNotifSchedule.current > 5 * 60_000) {
+        await scheduleAllNotifications(t ?? [], e ?? []);
+        lastNotifSchedule.current = Date.now();
+        // scheduleAllNotifications cancels ALL notifications first; re-register
+        // the study timer notification if it was still running.
+        if (timerEndTime.current && Date.now() < timerEndTime.current) {
+          const remaining = Math.ceil((timerEndTime.current - Date.now()) / 1000);
+          const id = await scheduleTimerNotification(remaining);
+          if (id) timerNotifId.current = id;
+        }
       }
       const user = auth.currentUser;
       if (user) {
@@ -609,7 +614,12 @@ const HomeScreen = () => {
               </TouchableOpacity>
             )}
             {(timerLeft > 0 || timerDone) && (
-              <TouchableOpacity style={[s.timerResetBtn, neuCard as any, cardBorder as any, { backgroundColor: cardBg }]} onPress={handleTimerReset}>
+              <TouchableOpacity
+                accessibilityLabel="אפס טיימר"
+                accessibilityRole="button"
+                style={[s.timerResetBtn, neuCard as any, cardBorder as any, { backgroundColor: cardBg }]}
+                onPress={handleTimerReset}
+              >
                 <MaterialCommunityIcons name="restart" size={18} color="#9299B8" />
               </TouchableOpacity>
             )}

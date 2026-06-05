@@ -281,10 +281,10 @@ const GradesScreen = ({ onClose }: { onClose?: () => void }) => {
             {item.value > 0 ? item.value : '—'}
           </Text>
           <View style={styles.gradeActions}>
-            <TouchableOpacity onPress={() => openEdit(item)} style={styles.actionBtn}>
+            <TouchableOpacity accessibilityLabel={`ערוך ${item.name}`} accessibilityRole="button" onPress={() => openEdit(item)} style={styles.actionBtn}>
               <MaterialCommunityIcons name="pencil-outline" size={17} color={theme} />
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => handleDeleteGrade(item.id)} style={styles.actionBtn}>
+            <TouchableOpacity accessibilityLabel={`מחק ${item.name}`} accessibilityRole="button" onPress={() => handleDeleteGrade(item.id)} style={styles.actionBtn}>
               <MaterialCommunityIcons name="trash-can-outline" size={17} color="#ff6b6b" />
             </TouchableOpacity>
           </View>
@@ -453,7 +453,7 @@ const GradesScreen = ({ onClose }: { onClose?: () => void }) => {
       </ScrollView>
 
       {/* FAB */}
-      <TouchableOpacity style={[styles.fab, { backgroundColor: theme, shadowColor: theme }]} onPress={() => { resetForm(); setModalVisible(true); }}>
+      <TouchableOpacity accessibilityLabel="הוסף ציון חדש" accessibilityRole="button" style={[styles.fab, { backgroundColor: theme, shadowColor: theme }]} onPress={() => { resetForm(); setModalVisible(true); }}>
         <MaterialCommunityIcons name="plus" size={28} color="#fff" />
       </TouchableOpacity>
 
@@ -518,7 +518,7 @@ const GradesScreen = ({ onClose }: { onClose?: () => void }) => {
                       onChangeText={(v) => updateCritGrade(c.id, v)}
                       keyboardType="decimal-pad"
                     />
-                    <Pressable onPress={() => removeCriterion(c.id)} style={{ padding: 6 }}>
+                    <Pressable accessibilityLabel={`הסר קריטריון ${c.name}`} accessibilityRole="button" onPress={() => removeCriterion(c.id)} style={{ padding: 6 }}>
                       <MaterialCommunityIcons name="close-circle" size={18} color="#ccc" />
                     </Pressable>
                   </View>

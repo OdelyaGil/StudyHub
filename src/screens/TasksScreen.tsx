@@ -191,6 +191,8 @@ const TaskItem: React.FC<TaskItemProps> = ({ item, onToggle, onDelete, onEdit, o
       {/* Checkbox */}
       <View style={styles.taskCheckBox}>
         <TouchableOpacity
+          accessibilityLabel={item.completed ? `סמן ${item.name} כלא הושלם` : `סמן ${item.name} כהושלם`}
+          accessibilityRole="checkbox"
           onPress={() => onToggle(item.id)}
           style={[styles.checkbox, item.completed && styles.checkboxCompleted]}
         >
@@ -247,10 +249,10 @@ const TaskItem: React.FC<TaskItemProps> = ({ item, onToggle, onDelete, onEdit, o
           <Text style={styles.priorityText}>{item.priority}</Text>
         </View>
         <View style={styles.taskActions}>
-          <TouchableOpacity onPress={() => onEdit(item)} style={styles.actionIcon}>
+          <TouchableOpacity accessibilityLabel={`ערוך ${item.name}`} accessibilityRole="button" onPress={() => onEdit(item)} style={styles.actionIcon}>
             <MaterialCommunityIcons name="pencil-outline" size={17} color={theme} />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => onDelete(item.id)} style={styles.actionIcon}>
+          <TouchableOpacity accessibilityLabel={`מחק ${item.name}`} accessibilityRole="button" onPress={() => onDelete(item.id)} style={styles.actionIcon}>
             <MaterialCommunityIcons name="trash-can-outline" size={17} color="#ff6b6b" />
           </TouchableOpacity>
         </View>
@@ -571,7 +573,7 @@ const TasksScreen = () => {
         )}
       </ScrollView>
 
-      <TouchableOpacity style={[styles.fab, { backgroundColor: theme, shadowColor: theme }]} onPress={() => setModalVisible(true)}>
+      <TouchableOpacity accessibilityLabel="הוסף מטלה חדשה" accessibilityRole="button" style={[styles.fab, { backgroundColor: theme, shadowColor: theme }]} onPress={() => setModalVisible(true)}>
         <MaterialCommunityIcons name="plus" size={28} color="#fff" />
       </TouchableOpacity>
 
@@ -584,7 +586,7 @@ const TasksScreen = () => {
               <Text style={[styles.modalTitle, { color: textColor }]}>
                 {editingTaskId !== null ? 'עריכת מטלה' : 'מטלה חדשה'}
               </Text>
-              <TouchableOpacity onPress={closeModal}>
+              <TouchableOpacity accessibilityLabel="סגור" accessibilityRole="button" onPress={closeModal}>
                 <MaterialCommunityIcons name="close" size={24} color={textSub} />
               </TouchableOpacity>
             </View>
