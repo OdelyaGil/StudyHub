@@ -608,7 +608,7 @@ const ScheduleScreen = () => {
       {/* ─── MONTH VIEW ──────────────────────────────────────────────────── */}
       {viewMode === 'month' && (
         <>
-          <View style={[styles.calBlock, { backgroundColor: surface, borderBottomColor: borderClr }, darkShadow as any]}>
+          <View style={[styles.calBlock, { backgroundColor: surface, borderWidth: 1, borderColor: borderClr }, darkShadow as any]}>
             <View style={styles.calHeader}>
               <TouchableOpacity onPress={goToPrev} style={styles.navBtn}>
                 <MaterialCommunityIcons name="chevron-right" size={24} color={theme} />
