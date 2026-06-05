@@ -304,7 +304,7 @@ const HomeScreen = () => {
   const urgentDayLabel = (d: number) => d === 0 ? 'היום!' : d === 1 ? 'מחר' : `${d} ימים`;
 
   // ── Render ────────────────────────────────────────────────────────────────
-  const hasGradient  = !!theme.accentGradient;
+  const hasGradient  = !!theme.accentGradient && theme.mode === 'light';
   // hero colors: white card on gradient bg, accent card on plain bg
   const heroTxt      = hasGradient ? theme.text            : '#FFFFFF';
   const heroSub      = hasGradient ? theme.textSub         : 'rgba(255,255,255,0.5)';
