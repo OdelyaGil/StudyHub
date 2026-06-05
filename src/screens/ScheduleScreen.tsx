@@ -255,6 +255,7 @@ const ScheduleScreen = () => {
   // ── Week view data ────────────────────────────────────────────────────────
   const wkStart = weekStartISO(selectedDate);
   const weekDayISOs = Array.from({ length: 7 }, (_, i) => addDays(wkStart, i));
+  const todayWkStart = weekStartISO(todayISO);
 
   // ── Form helpers ──────────────────────────────────────────────────────────
   const handleStartTimeChange = (newTime: string) => {
@@ -535,9 +536,11 @@ const ScheduleScreen = () => {
             <TouchableOpacity onPress={() => setSelectedDate(addDays(selectedDate, -1))} style={styles.navBtn}>
               <MaterialCommunityIcons name="chevron-right" size={24} color={theme} />
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => setSelectedDate(todayISO)} style={[styles.todayBtn, { backgroundColor: theme }]}>
-              <Text style={styles.todayBtnText}>היום</Text>
-            </TouchableOpacity>
+            {selectedDate !== todayISO && (
+              <TouchableOpacity onPress={() => setSelectedDate(todayISO)} style={[styles.todayBtn, { backgroundColor: theme }]}>
+                <Text style={styles.todayBtnText}>היום</Text>
+              </TouchableOpacity>
+            )}
             <Text style={[styles.navTitle, { color: textColor }]}>
               {HEBREW_DAYS_LONG[localDate(selectedDate).getDay()]}, {fmtDate(selectedDate)}
             </Text>
@@ -562,9 +565,11 @@ const ScheduleScreen = () => {
             <TouchableOpacity onPress={() => setSelectedDate(addDays(wkStart, -7))} style={styles.navBtn}>
               <MaterialCommunityIcons name="chevron-right" size={24} color={theme} />
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => setSelectedDate(todayISO)} style={[styles.todayBtn, { backgroundColor: theme }]}>
-              <Text style={styles.todayBtnText}>היום</Text>
-            </TouchableOpacity>
+            {wkStart !== todayWkStart && (
+              <TouchableOpacity onPress={() => setSelectedDate(todayISO)} style={[styles.todayBtn, { backgroundColor: theme }]}>
+                <Text style={styles.todayBtnText}>היום</Text>
+              </TouchableOpacity>
+            )}
             <Text style={[styles.navTitle, { color: textColor }]}>
               {fmtDate(weekDayISOs[0])} – {fmtDate(weekDayISOs[6])}
             </Text>
