@@ -206,10 +206,18 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
     const user = auth.currentUser;
     if (!user) return;
     try {
-      await sendEmailVerification(user);
+      await sendEmailVerification(user, {
+        url: typeof window !== 'undefined' ? window.location.origin : '',
+        handleCodeInApp: false,
+      });
       showAlert('נשלח!', 'מייל האימות נשלח שוב לתיבת הדואר שלך.');
-    } catch {
-      showAlert('שגיאה', 'לא ניתן לשלוח מייל כרגע. נסה שוב מאוחר יותר.');
+    } catch (e: any) {
+      console.error('sendEmailVerification error:', e?.code, e?.message);
+      if (e?.code === 'auth/too-many-requests') {
+        showAlert('שגיאה', 'כבר נשלח מייל לאחרונה. המתיני מספר דקות ונסי שוב.');
+      } else {
+        showAlert('שגיאה', `לא ניתן לשלוח מייל כרגע (${e?.code ?? 'unknown'}). נסי שוב מאוחר יותר.`);
+      }
     }
   };
 

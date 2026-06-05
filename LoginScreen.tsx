@@ -109,7 +109,12 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode }: { navigation: any; onL
         schedule: [],
         topics: [],
       });
-      try { await sendEmailVerification(cred.user); } catch (_) {}
+      try {
+        await sendEmailVerification(cred.user, {
+          url: typeof window !== 'undefined' ? window.location.origin : '',
+          handleCodeInApp: false,
+        });
+      } catch (_) {}
       setShowRegister(false);
       showAlert('ברוך הבא! 🎉', 'ההרשמה הושלמה.\nשלחנו לך מייל אימות — אנא אמת את הכתובת דרך תיבת הדואר שלך.');
       onLogin();
