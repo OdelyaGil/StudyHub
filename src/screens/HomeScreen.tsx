@@ -96,7 +96,7 @@ const formatTime = (secs: number) => {
 };
 
 // ── Soft Ring ─────────────────────────────────────────────────────────────────
-const GlowRing = ({ pct, color, label }: { pct: number; color: string; label: string }) => {
+const GlowRing = ({ pct, color, label, bgColor }: { pct: number; color: string; label: string; bgColor: string }) => {
   const deg = Math.max(0, Math.min(360, pct * 3.6));
   return (
     <View style={s.glowRingWrap}>
@@ -109,7 +109,7 @@ const GlowRing = ({ pct, color, label }: { pct: number; color: string; label: st
             } as any
           : { borderColor: color, borderWidth: 4 }
       ]}>
-        <View style={[s.glowRingInner, { backgroundColor: DARK_CARD }]}>
+        <View style={[s.glowRingInner, { backgroundColor: bgColor }]}>
           <Text style={[s.glowRingPct, { color }]}>{pct > 0 ? `${pct}%` : '--'}</Text>
         </View>
       </View>
@@ -303,8 +303,8 @@ const HomeScreen = () => {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={SOFT_TEAL} />}
       >
 
-        {/* ══ HERO CARD (dark purple) ════════════════════════════════════════ */}
-        <View style={s.heroCard}>
+        {/* ══ HERO CARD ══════════════════════════════════════════════════════ */}
+        <View style={[s.heroCard, { backgroundColor: theme.heroBg }]}>
           <View style={s.heroInner}>
             {/* LEFT — greeting */}
             <View style={s.heroLeft}>
@@ -317,7 +317,7 @@ const HomeScreen = () => {
               <Text style={s.heroStatLabel}>AVERAGE SCORE</Text>
             </View>
             {/* RIGHT — ring */}
-            <GlowRing pct={ringPct} color={SOFT_TEAL} label="ציונים" />
+            <GlowRing pct={ringPct} color={theme.accent} label="ציונים" bgColor={theme.heroBg} />
           </View>
 
           <View style={s.heroBottomRow}>
