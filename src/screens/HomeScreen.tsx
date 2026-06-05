@@ -304,7 +304,7 @@ const HomeScreen = () => {
       >
 
         {/* ══ HERO CARD ══════════════════════════════════════════════════════ */}
-        <View style={[s.heroCard, { backgroundColor: theme.sidebarBg }]}>
+        <View style={[s.heroCard, { backgroundColor: theme.accent }]}>
           <View style={s.heroInner}>
             {/* LEFT — greeting */}
             <View style={s.heroLeft}>
@@ -317,7 +317,7 @@ const HomeScreen = () => {
               <Text style={s.heroStatLabel}>AVERAGE SCORE</Text>
             </View>
             {/* RIGHT — ring */}
-            <GlowRing pct={ringPct} color={theme.accent} label="ציונים" bgColor={theme.sidebarBg} />
+            <GlowRing pct={ringPct} color="#FFFFFF" label="ציונים" bgColor={theme.accent} />
           </View>
 
           <View style={s.heroBottomRow}>
