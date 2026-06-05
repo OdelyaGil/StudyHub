@@ -361,7 +361,7 @@ const HomeScreen = () => {
           {/* CENTER — average */}
           <View style={s.heroCenter}>
             <Text style={[s.heroStatBig, { color: heroTxt }]}>{avg ?? '--'}</Text>
-            <Text style={[s.heroStatLabel, { color: heroSub }]}>AVERAGE SCORE</Text>
+            <Text style={[s.heroStatLabel, { color: heroSub }]}>ממוצע כללי</Text>
           </View>
           {/* RIGHT — ring */}
           <GlowRing pct={ringPct} color={heroRingClr} label="ציונים" bgColor={heroRingBg} />
