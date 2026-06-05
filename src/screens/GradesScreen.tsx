@@ -697,7 +697,7 @@ const styles = StyleSheet.create({
   simToggleBtn:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1, borderRadius: 12, paddingVertical: 10, marginBottom: 14 },
   simToggleText:   { fontSize: 13, fontWeight: '700' },
   simPanel:        { borderRadius: 16, borderWidth: 1, padding: 16, marginBottom: 16, gap: 12 },
-  simPanelTitle:   { fontSize: 15, fontWeight: '800', textAlign: 'right' },
+  simPanelTitle:   { fontSize: 15, fontWeight: '700', textAlign: 'right' },
   simPanelSub:     { fontSize: 12, textAlign: 'right' },
   simResult:       { borderRadius: 12, borderWidth: 1, padding: 14, alignItems: 'center', gap: 4 },
   simResultLabel:  { fontSize: 11, fontWeight: '600' },
