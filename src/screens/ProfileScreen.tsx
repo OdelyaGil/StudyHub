@@ -204,7 +204,7 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
 
   const handleChangePassword = async () => {
     if (currentPass.length < 6) return showAlert('שגיאה', 'הסיסמה הנוכחית קצרה מדי');
-    if (newPass.length < 6)     return showAlert('שגיאה', 'הסיסמה החדשה חייבת להכיל לפחות 6 תווים');
+    if (newPass.length < 8)     return showAlert('שגיאה', 'הסיסמה החדשה חייבת להכיל לפחות 8 תווים');
     if (newPass !== confirmPass) return showAlert('שגיאה', 'הסיסמאות אינן תואמות');
     const user = auth.currentUser;
     if (!user || !user.email) return;

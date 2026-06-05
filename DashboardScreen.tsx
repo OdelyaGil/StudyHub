@@ -35,15 +35,18 @@ const DashboardScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout }: Pro
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   useEffect(() => {
+    let active = true;
     const user = auth.currentUser;
     if (!user) return;
     getDoc(doc(db, 'users', user.uid)).then(snap => {
+      if (!active) return;
       if (snap.exists()) {
         const data = snap.data();
         setUserName(data.name || '');
         setUserAvatar(data.photoURL || null);
       }
     });
+    return () => { active = false; };
   }, []);
 
   const renderTabBar = useCallback((props: any) => (

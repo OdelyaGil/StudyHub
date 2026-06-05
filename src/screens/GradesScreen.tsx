@@ -113,9 +113,13 @@ const GradesScreen = ({ onClose }: { onClose?: () => void }) => {
     setRefreshing(false);
   };
 
-  // Weighted average: Σ(grade × credits) / Σ(credits) — skips courses with no grade yet
+  // Weighted average: Σ(grade × credits) / Σ(credits).
+  // A course is "graded" when value > 0 OR when criteria exist (value 0 is a
+  // legitimate failing grade). value === 0 with no criteria means "not yet graded".
   const calcWeightedAvg = (list: Grade[]) => {
-    const withGrades = list.filter((g) => g.value > 0 && g.credits > 0);
+    const withGrades = list.filter(
+      (g) => g.credits > 0 && (g.value > 0 || g.criteria.some(c => c.percentage > 0))
+    );
     if (withGrades.length === 0) return '-';
     const sumWeighted = withGrades.reduce((s, g) => s + g.value * g.credits, 0);
     const sumCredits  = withGrades.reduce((s, g) => s + g.credits, 0);

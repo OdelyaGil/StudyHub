@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   TextInput,
   Modal,
-  FlatList,
   RefreshControl,
   Platform,
   Linking,
@@ -551,9 +550,9 @@ const TasksScreen = () => {
       >
         {tasks.length > 0 ? (
           <View style={styles.section}>
-            <FlatList
-              data={sortedTasks}
-              renderItem={({ item }) => (
+            {sortedTasks.map((item, idx) => (
+              <React.Fragment key={item.id}>
+                {idx > 0 && <View style={styles.separator} />}
                 <TaskItem
                   item={item}
                   onToggle={handleToggleTask}
@@ -561,11 +560,8 @@ const TasksScreen = () => {
                   onEdit={openEditModal}
                   onFileOpen={openFile}
                 />
-              )}
-              keyExtractor={item => item.id.toString()}
-              scrollEnabled={false}
-              ItemSeparatorComponent={() => <View style={styles.separator} />}
-            />
+              </React.Fragment>
+            ))}
           </View>
         ) : (
           <View style={styles.emptyState}>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { View, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -47,7 +48,11 @@ export default function App() {
     return unsubscribe;
   }, []);
 
-  if (isLoading) return null;
+  if (isLoading) return (
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0D0D1A' }}>
+      <ActivityIndicator size="large" color="#00FFFF" />
+    </View>
+  );
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
