@@ -11,6 +11,7 @@ import {
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
   sendEmailVerification,
+  signOut,
 } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { auth, db } from './src/config/firebase';
@@ -18,6 +19,8 @@ import { useCustomAlert } from './src/hooks/useCustomAlert';
 
 const DEFAULT_ACCENT = '#E0659A';
 const DEFAULT_GRAD: [string, string] = ['#E8659A', '#F4A0C0'];
+const NEW_USER_ACCENT = '#ADC6E5';
+const NEW_USER_MODE   = 'light';
 
 const LoginScreen = ({ onLogin, savedAccent, savedMode }: { navigation: any; onLogin: (accent?: string, mode?: string) => void; savedAccent?: string; savedMode?: string }) => {
   const isGrad  = savedAccent?.startsWith('gradient:');
@@ -77,7 +80,12 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode }: { navigation: any; onL
     if (password.length < 6)   return showAlert('שגיאה', 'הסיסמה חייבת להכיל לפחות 6 תווים');
     setLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email.toLowerCase(), password);
+      const cred = await signInWithEmailAndPassword(auth, email.toLowerCase(), password);
+      if (!cred.user.emailVerified) {
+        await signOut(auth);
+        showAlert('אימות מייל נדרש', 'כתובת המייל שלך טרם אומתה.\nאנא בדקי את תיבת הדואר הנכנס ולחצי על הקישור לאימות.\n\n💡 המייל עלול להגיע לתיקיית הספאם — כדאי לבדוק גם שם.');
+        return;
+      }
       onLogin();
     } catch (e: any) {
       const code = e?.code ?? '';
@@ -103,8 +111,8 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode }: { navigation: any; onL
         name: regName.trim(),
         email: regEmail.toLowerCase(),
         userType: 'student',
-        accent: '#ADC6E5',
-        mode: 'light',
+        accent: NEW_USER_ACCENT,
+        mode: NEW_USER_MODE,
         grades: [],
         tasks: [],
         schedule: [],
@@ -116,9 +124,9 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode }: { navigation: any; onL
           handleCodeInApp: false,
         });
       } catch (_) {}
+      await signOut(auth);
       setShowRegister(false);
-      showAlert('ברוך הבא! 🎉', 'ההרשמה הושלמה.\nשלחנו לך מייל אימות — אנא אמת את הכתובת דרך תיבת הדואר שלך.');
-      onLogin('#ADC6E5', 'light');
+      showAlert('ברוך הבא! 🎉', 'ההרשמה הושלמה בהצלחה!\n\nשלחנו לך מייל אימות — יש להיכנס למייל ולאמת את הכתובת לפני הכניסה למערכת.\n\n💡 אם המייל לא מגיע, בדקי גם בתיקיית הספאם.');
     } catch (e: any) {
       const code = e?.code ?? '';
       if (code === 'auth/email-already-in-use')
@@ -281,7 +289,7 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode }: { navigation: any; onL
           <View style={s.modalOverlay}>
             <View style={[s.modalCard, neuShadow as any]}>
               <View style={s.modalHeader}>
-                <Text style={s.modalTitle}>הרשמה</Text>
+                <Text style={s.signupText}>הרשמה</Text>
                 <Pressable onPress={() => setShowRegister(false)}>
                   <MaterialCommunityIcons name="close" size={24} color={SUB} />
                 </Pressable>
