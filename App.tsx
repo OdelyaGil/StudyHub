@@ -18,7 +18,7 @@ const Stack = createNativeStackNavigator();
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading]   = useState(true);
-  const [accent, setAccent]         = useState('#00FFFF');
+  const [accent, setAccent]         = useState('#CBD8E8');
   const [mode, setMode]             = useState<ThemeMode>('dark');
   const [savedAccent, setSavedAccent] = useState<string | undefined>(undefined);
   const [savedMode,   setSavedMode]   = useState<ThemeMode | undefined>(undefined);
@@ -51,7 +51,7 @@ export default function App() {
 
   if (isLoading) return (
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0D0D1A' }}>
-      <ActivityIndicator size="large" color="#00FFFF" />
+      <ActivityIndicator size="large" color="#CBD8E8" />
     </View>
   );
 

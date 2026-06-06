@@ -29,7 +29,7 @@ export const requestNotificationPermission = async (): Promise<boolean> => {
         name: 'StudyHub Reminders',
         importance: Notifications.AndroidImportance.HIGH,
         vibrationPattern: [0, 250, 250, 250],
-        lightColor: '#00FFFF',
+        lightColor: '#CBD8E8',
       });
     }
     return true;
