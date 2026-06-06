@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View, Text, TextInput, Pressable, StyleSheet, ScrollView,
   ActivityIndicator, Modal, KeyboardAvoidingView, Platform,
@@ -64,7 +64,25 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode }: { navigation: any; onL
   const [forgotEmail, setForgotEmail]     = useState('');
   const [forgotLoading, setForgotLoading] = useState(false);
 
+  const [waitingVerification, setWaitingVerification] = useState(false);
+  const [pendingEmail, setPendingEmail]               = useState('');
+
   const passwordRef = useRef<TextInputType>(null);
+
+  useEffect(() => {
+    if (!waitingVerification) return;
+    const id = setInterval(async () => {
+      const user = auth.currentUser;
+      if (!user) { clearInterval(id); setWaitingVerification(false); return; }
+      await user.reload();
+      if (auth.currentUser?.emailVerified) {
+        clearInterval(id);
+        setWaitingVerification(false);
+        onLogin();
+      }
+    }, 3000);
+    return () => clearInterval(id);
+  }, [waitingVerification]);
 
   const validateEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 
@@ -82,8 +100,8 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode }: { navigation: any; onL
     try {
       const cred = await signInWithEmailAndPassword(auth, email.toLowerCase(), password);
       if (!cred.user.emailVerified) {
-        await signOut(auth);
-        showAlert('אימות מייל נדרש', 'כתובת המייל שלך טרם אומתה.\nאנא בדקי את תיבת הדואר הנכנס ולחצי על הקישור לאימות.\n\n💡 המייל עלול להגיע לתיקיית הספאם — כדאי לבדוק גם שם.');
+        setPendingEmail(email.toLowerCase());
+        setWaitingVerification(true);
         return;
       }
       onLogin();
@@ -124,9 +142,9 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode }: { navigation: any; onL
           handleCodeInApp: false,
         });
       } catch (_) {}
-      await signOut(auth);
       setShowRegister(false);
-      showAlert('ברוך הבא! 🎉', 'ההרשמה הושלמה בהצלחה!\n\nשלחנו לך מייל אימות — יש להיכנס למייל ולאמת את הכתובת לפני הכניסה למערכת.\n\n💡 אם המייל לא מגיע, בדקי גם בתיקיית הספאם.');
+      setPendingEmail(regEmail.toLowerCase());
+      setWaitingVerification(true);
     } catch (e: any) {
       const code = e?.code ?? '';
       if (code === 'auth/email-already-in-use')
@@ -134,6 +152,29 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode }: { navigation: any; onL
       else
         showAlert('שגיאה', 'ההרשמה נכשלה. אנא נסה שוב.');
     } finally { setRegLoading(false); }
+  };
+
+  const handleResendVerification = async () => {
+    const user = auth.currentUser;
+    if (!user) return;
+    try {
+      await sendEmailVerification(user, {
+        url: typeof window !== 'undefined' ? window.location.origin : '',
+        handleCodeInApp: false,
+      });
+      showAlert('נשלח!', 'מייל אימות נוסף נשלח לתיבת הדואר שלך.');
+    } catch (e: any) {
+      if (e?.code === 'auth/too-many-requests')
+        showAlert('שגיאה', 'כבר נשלח מייל לאחרונה. המתיני מספר דקות ונסי שוב.');
+      else
+        showAlert('שגיאה', 'לא ניתן לשלוח מייל כרגע. נסי שוב מאוחר יותר.');
+    }
+  };
+
+  const handleCancelVerification = async () => {
+    await signOut(auth);
+    setWaitingVerification(false);
+    setPendingEmail('');
   };
 
   const handleSendResetEmail = async () => {
@@ -197,7 +238,7 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode }: { navigation: any; onL
     modalOverlay:    { flex: 1, backgroundColor: 'rgba(0,0,0,0.25)', justifyContent: 'center', padding: 20 },
     modalCard:       { backgroundColor: SURFACE, borderRadius: 24, padding: 24, maxHeight: '90%', borderWidth: 1, borderColor: BORDER },
     modalHeader:     { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
-    modalTitle:      { fontSize: 20, fontWeight: '800', color: TEXT },
+  modalTitle:        { fontSize: 18, fontWeight: '700' },
     regLabel:        { fontSize: 12, fontWeight: '700', color: SUB, marginBottom: 6, textAlign: 'right', letterSpacing: 0.3 },
     regInput: {
       borderWidth: 1, borderColor: BORDER, borderRadius: 12,
@@ -206,6 +247,38 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode }: { navigation: any; onL
     },
     forgotHint: { fontSize: 13, color: SUB, marginBottom: 20, lineHeight: 20, textAlign: 'right' },
   });
+
+  if (waitingVerification) {
+    return (
+      <View style={[s.container, { justifyContent: 'center', alignItems: 'center', padding: 32 }]}>
+        <MaterialCommunityIcons name="email-check-outline" size={72} color={ACCENT} style={{ marginBottom: 24 }} />
+        <Text style={{ color: TEXT, fontSize: 22, fontWeight: '700', textAlign: 'center', marginBottom: 12 }}>
+          אימות מייל
+        </Text>
+        <Text style={{ color: SUB, fontSize: 14, textAlign: 'center', marginBottom: 6 }}>
+          שלחנו מייל אימות לכתובת:
+        </Text>
+        <Text style={{ color: ACCENT, fontSize: 15, fontWeight: '600', textAlign: 'center', marginBottom: 20 }}>
+          {pendingEmail}
+        </Text>
+        <Text style={{ color: SUB, fontSize: 13, textAlign: 'center', lineHeight: 22, marginBottom: 32 }}>
+          יש ללחוץ על הקישור במייל לאימות הכתובת.{'\n'}
+          לאחר האימות תיכנס/י אוטומטית למערכת.{'\n\n'}
+          💡 אם המייל לא הגיע, בדקי גם בתיקיית הספאם.
+        </Text>
+        <ActivityIndicator color={ACCENT} size="large" style={{ marginBottom: 32 }} />
+        <Pressable onPress={handleResendVerification} style={{ marginBottom: 20, padding: 10 }}>
+          <Text style={{ color: ACCENT, fontSize: 14, fontWeight: '600', textAlign: 'center' }}>
+            שלחי מייל אימות שוב
+          </Text>
+        </Pressable>
+        <Pressable onPress={handleCancelVerification} style={{ padding: 10 }}>
+          <Text style={{ color: SUB, fontSize: 13, textAlign: 'center' }}>חזרה למסך הכניסה</Text>
+        </Pressable>
+        {alertNode}
+      </View>
+    );
+  }
 
   return (
     <View style={s.container}>
@@ -289,7 +362,7 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode }: { navigation: any; onL
           <View style={s.modalOverlay}>
             <View style={[s.modalCard, neuShadow as any]}>
               <View style={s.modalHeader}>
-                <Text style={s.signupText}>הרשמה</Text>
+                <Text style={s.modalTitle}>הרשמה</Text>
                 <Pressable onPress={() => setShowRegister(false)}>
                   <MaterialCommunityIcons name="close" size={24} color={SUB} />
                 </Pressable>
