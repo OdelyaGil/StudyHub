@@ -485,7 +485,7 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
               />
             ) : (
               <Text style={[s.rowValue, { color: theme.text }]}>
-                {requiredCredits ? `${requiredCredits} נ"ז לתואר` : 'הגדר נ"ז נדרשות לתואר'}
+                {requiredCredits ? `${requiredCredits} נ"ז לתואר` : 'הגדר/י נ"ז נדרשות לתואר'}
               </Text>
             )}
             {editingCredits ? (

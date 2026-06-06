@@ -154,7 +154,7 @@ const LinksScreen = () => {
           <View style={s.empty}>
             <MaterialCommunityIcons name="link-variant-off" size={52} color={theme.textSub + '55'} />
             <Text style={[s.emptyText, { color: theme.textSub }]}>אין קישורים עדיין</Text>
-            <Text style={[s.emptyHint, { color: theme.textSub + '88' }]}>לחץ + להוספת קישור</Text>
+            <Text style={[s.emptyHint, { color: theme.textSub + '88' }]}>לחץ/י + להוספת קישור</Text>
           </View>
         )}
         {links.map(link => (

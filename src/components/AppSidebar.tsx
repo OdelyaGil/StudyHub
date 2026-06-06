@@ -122,7 +122,7 @@ const AppSidebar = ({
       {/* Logout */}
       <TouchableOpacity
         style={[st.iconBtn, neuBtn as any, { backgroundColor: iconBg, marginBottom: 16 }]}
-        onPress={() => showConfirm('התנתקות', 'האם אתה בטוח שברצונך להתנתק?', () => onLogout?.())}
+        onPress={() => showConfirm('התנתקות', 'האם את/ה בטוח/ה שברצונך להתנתק?', () => onLogout?.())}
         activeOpacity={0.75}
       >
         <MaterialCommunityIcons name="logout" size={18} color={txtSub} />
@@ -202,7 +202,7 @@ const AppSidebar = ({
       {/* Logout */}
       <TouchableOpacity
         style={[st.logoutRow, { borderTopColor: divider }]}
-        onPress={() => showConfirm('התנתקות', 'האם אתה בטוח שברצונך להתנתק?', () => onLogout?.())}
+        onPress={() => showConfirm('התנתקות', 'האם את/ה בטוח/ה שברצונך להתנתק?', () => onLogout?.())}
       >
         <MaterialCommunityIcons name="logout" size={18} color={txtSub} />
         <Text style={[st.logoutText, { color: txtSub }]}>התנתק</Text>

@@ -225,7 +225,7 @@ const QuizBankScreen = () => {
           <View style={s.empty}>
             <MaterialCommunityIcons name="help-circle-outline" size={52} color={theme.textSub + '55'} />
             <Text style={[s.emptyText, { color: theme.textSub }]}>אין שאלות עדיין</Text>
-            <Text style={[s.emptyHint, { color: theme.textSub + '88' }]}>לחץ + להוספת שאלה</Text>
+            <Text style={[s.emptyHint, { color: theme.textSub + '88' }]}>לחץ/י + להוספת שאלה</Text>
           </View>
         )}
 
@@ -251,7 +251,7 @@ const QuizBankScreen = () => {
                     <Text style={[s.answerText, { color: theme.text }]}>{q.answer}</Text>
                   </View>
                 ) : (
-                  <Text style={[s.tapHint, { color: theme.textSub }]}>לחץ לגילוי התשובה</Text>
+                  <Text style={[s.tapHint, { color: theme.textSub }]}>לחץ/י לגילוי התשובה</Text>
                 )}
               </TouchableOpacity>
               <TouchableOpacity onPress={() => openMenu(q)} style={s.menuBtn}

@@ -243,7 +243,7 @@ const DriveScreen = () => {
             <View style={s.emptyState}>
               <MaterialCommunityIcons name="folder-open-outline" size={60} color={theme.textSub + '55'} />
               <Text style={[s.emptyTitle, { color: theme.textSub }]}>ריק</Text>
-              <Text style={[s.emptyHint, { color: theme.textSub + '88' }]}>לחץ + להוספת קבצים ותיקיות</Text>
+              <Text style={[s.emptyHint, { color: theme.textSub + '88' }]}>לחץ/י + להוספת קבצים ותיקיות</Text>
             </View>
           )}
           {visibleItems.map(item => (

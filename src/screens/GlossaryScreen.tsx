@@ -226,7 +226,7 @@ const GlossaryScreen = () => {
         <MaterialCommunityIcons name="magnify" size={20} color={theme.textSub} />
         <TextInput
           style={[s.searchInput, { color: theme.text }]}
-          placeholder="חפש מונח..." placeholderTextColor={theme.textSub}
+          placeholder="חפש/י מונח..." placeholderTextColor={theme.textSub}
           value={search} onChangeText={setSearch} textAlign="right" />
         {search !== '' && (
           <TouchableOpacity onPress={() => setSearch('')}>
@@ -240,7 +240,7 @@ const GlossaryScreen = () => {
           <View style={s.empty}>
             <MaterialCommunityIcons name="book-alphabet" size={52} color={theme.textSub + '55'} />
             <Text style={[s.emptyText, { color: theme.textSub }]}>אין מונחים עדיין</Text>
-            <Text style={[s.emptyHint, { color: theme.textSub + '88' }]}>לחץ + להוספת מונח</Text>
+            <Text style={[s.emptyHint, { color: theme.textSub + '88' }]}>לחץ/י + להוספת מונח</Text>
           </View>
         )}
         {filtered.length === 0 && terms.length > 0 && (

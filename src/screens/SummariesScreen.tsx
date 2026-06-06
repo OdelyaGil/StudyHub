@@ -452,7 +452,7 @@ const SummariesScreen = () => {
           <View style={s.empty}>
             <MaterialCommunityIcons name="note-text-outline" size={52} color={theme.textSub + '55'} />
             <Text style={[s.emptyText, { color: theme.textSub }]}>אין סיכומים עדיין</Text>
-            <Text style={[s.emptyHint, { color: theme.textSub + '88' }]}>לחץ + ליצירת סיכום או ייבוא קובץ</Text>
+            <Text style={[s.emptyHint, { color: theme.textSub + '88' }]}>לחץ/י + ליצירת סיכום או ייבוא קובץ</Text>
           </View>
         )}
 
@@ -474,7 +474,7 @@ const SummariesScreen = () => {
             )}
             {sum.type === 'file' && (
               <Text style={[s.cardPreview, { color: theme.textSub }]}>
-                {sum.content ? sum.content.slice(0, 80) : 'לחץ לפתיחה ועריכת הערות'}
+                {sum.content ? sum.content.slice(0, 80) : 'לחץ/י לפתיחה ועריכת הערות'}
               </Text>
             )}
           </TouchableOpacity>

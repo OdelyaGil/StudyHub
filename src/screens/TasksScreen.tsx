@@ -537,7 +537,7 @@ const TasksScreen = () => {
 
   const handleDeleteTask = (id: number) => {
     Vibration.vibrate(40);
-    showDestructiveConfirm('מחק מטלה', 'האם אתה בטוח שברצונך למחוק את המטלה?', 'מחק', async () => {
+    showDestructiveConfirm('מחק מטלה', 'האם את/ה בטוח/ה שברצונך למחוק את המטלה?', 'מחק', async () => {
       const updatedTasks = tasks.filter(t => t.id !== id);
       setTasks(updatedTasks);
       try { await saveField('tasks', updatedTasks); } catch (e) { console.log(e); }

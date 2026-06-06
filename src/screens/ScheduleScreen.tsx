@@ -386,7 +386,7 @@ const ScheduleScreen = () => {
 
   // ── Save / delete ─────────────────────────────────────────────────────────
   const handleSave = async () => {
-    if (!eventTitle.trim()) { showAlert('שגיאה', 'אנא הזן שם לאירוע'); return; }
+    if (!eventTitle.trim()) { showAlert('שגיאה', 'אנא הזן/י שם לאירוע'); return; }
     if (!isValidDate(eventDate)) { showAlert('שגיאה', 'תאריך לא תקין'); return; }
     if (eventEndDate && isValidDate(eventEndDate) && eventEndDate < eventDate) {
       showAlert('שגיאה', 'תאריך הסיום לא יכול להיות לפני תאריך ההתחלה'); return;
@@ -417,7 +417,7 @@ const ScheduleScreen = () => {
   };
 
   const handleDelete = (id: number) => {
-    showDestructiveConfirm('מחיקת אירוע', 'האם אתה בטוח שברצונך למחוק את האירוע?', 'מחק', async () => {
+    showDestructiveConfirm('מחיקת אירוע', 'האם את/ה בטוח/ה שברצונך למחוק את האירוע?', 'מחק', async () => {
       const updated = events.filter(e => e.id !== id);
       setEvents(updated); await persist(updated);
     });
@@ -548,7 +548,7 @@ const ScheduleScreen = () => {
               <View style={{ alignItems: 'center', paddingVertical: 24 }}>
                 <MaterialCommunityIcons name="calendar-blank-outline" size={40} color={textSub} />
                 <Text style={[styles.noEventsText, { color: textSub }]}>אין אירועים ביום זה</Text>
-                <Text style={{ color: textSub, fontSize: 12, marginTop: 4, opacity: 0.7 }}>לחץ על + כדי להוסיף</Text>
+                <Text style={{ color: textSub, fontSize: 12, marginTop: 4, opacity: 0.7 }}>לחץ/י על + כדי להוסיף</Text>
               </View>
             ) : (
               selectedEvts.map(ev => renderEventItem(ev))
@@ -678,7 +678,7 @@ const ScheduleScreen = () => {
               <View style={{ alignItems: 'center', paddingVertical: 24 }}>
                 <MaterialCommunityIcons name="calendar-blank-outline" size={40} color={textSub} />
                 <Text style={[styles.noEventsText, { color: textSub }]}>אין אירועים ביום זה</Text>
-                <Text style={{ color: textSub, fontSize: 12, marginTop: 4, opacity: 0.7 }}>לחץ על + כדי להוסיף</Text>
+                <Text style={{ color: textSub, fontSize: 12, marginTop: 4, opacity: 0.7 }}>לחץ/י על + כדי להוסיף</Text>
               </View>
             ) : (
               selectedEvts.map(ev => renderEventItem(ev))

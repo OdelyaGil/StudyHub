@@ -104,7 +104,7 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode }: { navigation: any; onL
   };
 
   const handleLogin = async () => {
-    if (!validateEmail(email)) return showAlert('שגיאה', 'אנא הזן כתובת דוא"ל תקנית');
+    if (!validateEmail(email)) return showAlert('שגיאה', 'אנא הזן/י כתובת דוא"ל תקנית');
     if (password.length < 6)   return showAlert('שגיאה', 'הסיסמה חייבת להכיל לפחות 6 תווים');
     setLoading(true);
     try {
@@ -127,8 +127,8 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode }: { navigation: any; onL
   };
 
   const handleRegister = async () => {
-    if (!regName.trim())            return showAlert('שגיאה', 'אנא הזן שם מלא');
-    if (!validateEmail(regEmail))   return showAlert('שגיאה', 'אנא הזן כתובת דוא"ל תקנית');
+    if (!regName.trim())            return showAlert('שגיאה', 'אנא הזן/י שם מלא');
+    if (!validateEmail(regEmail))   return showAlert('שגיאה', 'אנא הזן/י כתובת דוא"ל תקנית');
     const pwErr = validatePassword(regPassword);
     if (pwErr)                      return showAlert('סיסמה חלשה', pwErr);
     if (regPassword !== regConfirm) return showAlert('שגיאה', 'הסיסמאות אינן תואמות');
@@ -188,7 +188,7 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode }: { navigation: any; onL
   };
 
   const handleSendResetEmail = async () => {
-    if (!validateEmail(forgotEmail)) return showAlert('שגיאה', 'אנא הזן כתובת דוא"ל תקנית');
+    if (!validateEmail(forgotEmail)) return showAlert('שגיאה', 'אנא הזן/י כתובת דוא"ל תקנית');
     setForgotLoading(true);
     try {
       await sendPasswordResetEmail(auth, forgotEmail.toLowerCase());

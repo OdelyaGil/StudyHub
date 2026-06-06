@@ -290,7 +290,7 @@ const FlashcardsScreen = () => {
           <View style={s.empty}>
             <MaterialCommunityIcons name="cards-outline" size={52} color={theme.textSub + '55'} />
             <Text style={[s.emptyText, { color: theme.textSub }]}>אין סטים עדיין</Text>
-            <Text style={[s.emptyHint, { color: theme.textSub + '88' }]}>לחץ + ליצירת סט ראשון</Text>
+            <Text style={[s.emptyHint, { color: theme.textSub + '88' }]}>לחץ/י + ליצירת סט ראשון</Text>
           </View>
         )}
         {sets.map(set => (
@@ -492,7 +492,7 @@ const FlashcardsScreen = () => {
               {showBack ? card.back : card.front}
             </Text>
             {!showBack && (
-              <Text style={[s.tapHint, { color: theme.textSub + '88' }]}>לחץ להצגת התשובה</Text>
+              <Text style={[s.tapHint, { color: theme.textSub + '88' }]}>לחץ/י להצגת התשובה</Text>
             )}
           </TouchableOpacity>
 

@@ -172,9 +172,9 @@ const GradesScreen = ({ onClose }: { onClose?: () => void }) => {
 
   // ── Criterion CRUD ────────────────────────────────────────────────────────
   const handleAddCriterion = () => {
-    if (!critName.trim()) return showAlert('שגיאה', 'הזן שם לקריטריון');
+    if (!critName.trim()) return showAlert('שגיאה', 'הזן/י שם לקריטריון');
     const pct = normalizePct(critPct);
-    if (pct <= 0) return showAlert('שגיאה', 'הזן אחוז תקין\n(למשל: 30 או 0.3)');
+    if (pct <= 0) return showAlert('שגיאה', 'הזן/י אחוז תקין\n(למשל: 30 או 0.3)');
     if (pct > 100) return showAlert('שגיאה', 'אחוז לא יכול לעלות על 100');
     if (pctUsed + pct > 100)
       return showAlert('שגיאה', `נותרו רק ${100 - pctUsed}% לחלוקה`);
@@ -236,10 +236,10 @@ const GradesScreen = ({ onClose }: { onClose?: () => void }) => {
   };
 
   const handleSaveGrade = async () => {
-    if (!courseName.trim()) return showAlert('שגיאה', 'אנא הזן שם קורס');
+    if (!courseName.trim()) return showAlert('שגיאה', 'אנא הזן/י שם קורס');
     const cred = Number(credits);
     if (credits === '' || isNaN(cred) || cred < 0)
-      return showAlert('שגיאה', 'אנא הזן מספר נקודות זכות תקין');
+      return showAlert('שגיאה', 'אנא הזן/י מספר נקודות זכות תקין');
     if (criteria.length === 0)
       return showAlert('שגיאה', 'אנא הוסף לפחות קריטריון אחד\n(ניתן להוסיף קריטריון אחד עם 100%)');
 
@@ -258,7 +258,7 @@ const GradesScreen = ({ onClose }: { onClose?: () => void }) => {
 
   const handleDeleteGrade = (id: number) => {
     Vibration.vibrate(40);
-    showDestructiveConfirm('מחק ציון', 'האם אתה בטוח שברצונך למחוק את הציון?', 'מחק', async () => {
+    showDestructiveConfirm('מחק ציון', 'האם את/ה בטוח/ה שברצונך למחוק את הציון?', 'מחק', async () => {
       const updated = grades.filter((g) => g.id !== id);
       setGrades(updated);
       await saveField('grades', updated);

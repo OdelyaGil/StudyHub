@@ -64,7 +64,7 @@ const LearningScreen = () => {
 
   const handleAddTopic = async () => {
     if (!topicName) {
-      Alert.alert('שגיאה', 'אנא הזן שם הנושא');
+      Alert.alert('שגיאה', 'אנא הזן/י שם הנושא');
       return;
     }
     const newTopic: Topic = { id: Date.now(), course: topicCourse, name: topicName, known: false, needsReview: false };
@@ -102,7 +102,7 @@ const LearningScreen = () => {
   };
 
   const handleDeleteTopic = async (id: number) => {
-    Alert.alert('מחק נושא', 'האם אתה בטוח?', [
+    Alert.alert('מחק נושא', 'האם את/ה בטוח/ה?', [
       { text: 'ביטול', onPress: () => {} },
       {
         text: 'מחק',
@@ -197,7 +197,7 @@ const LearningScreen = () => {
                 <TextInput style={[styles.input, { backgroundColor: surface, borderColor: borderClr, color: textColor }]} placeholder="למשל: פונקציות של משתנה אחד" placeholderTextColor={textSub} value={topicName} onChangeText={setTopicName} textAlign="right" />
               </View>
               <View style={[styles.infoBox, { borderRightColor: theme, backgroundColor: light }]}>
-                <Text style={[styles.infoText, { color: theme }]}>תוכל לסמן את הנושא כ"יודע" או "צריך חזרה" לאחר הוספה</Text>
+                <Text style={[styles.infoText, { color: theme }]}>תוכל/י לסמן את הנושא כ"יודע" או "צריך חזרה" לאחר הוספה</Text>
                 <MaterialCommunityIcons name="information" size={20} color={theme} />
               </View>
               <TouchableOpacity style={[styles.submitBtn, { backgroundColor: theme }]} onPress={handleAddTopic}>
