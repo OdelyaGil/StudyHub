@@ -22,7 +22,7 @@
     "@react-navigation/stack": "^6.3.20",
     "@types/react": "~19.1.10",
     "babel-preset-expo": "~54.0.10",
-    "expo": "^54.0.0",
+    "expo": "~54.0.35",
     "expo-device": "~8.0.10",
     "expo-document-picker": "~14.0.8",
     "expo-image-picker": "~17.0.11",

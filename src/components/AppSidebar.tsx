@@ -25,8 +25,8 @@ const SCREEN_TITLE: Record<string, string> = {
 };
 
 interface Props {
-  state:             any;
-  navigation:        any;
+  state:             { routes: { name: string }[]; index: number };
+  navigation:        { navigate: (name: string) => void };
   userName?:         string;
   userAvatar?:       string;
   onLogout?:         () => void;

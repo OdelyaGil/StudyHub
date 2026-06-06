@@ -5,7 +5,16 @@
       "Bash(npm install *)",
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\odigi\\\\Documents\\\\StudyHub\" -Recurse -Force)",
+      "Bash(Select-Object FullName)",
+      "Bash(Sort-Object FullName)",
+      "Bash(dir /s /b)",
+      "Bash(findstr /v \"node_modules\")",
+      "Bash(findstr /v \"\\\\.git\")",
+      "PowerShell(Get-ChildItem -Path \"c:\\\\Users\\\\odigi\\\\Documents\\\\StudyHub\" -Exclude node_modules -Recurse -Force | Where-Object { $_.FullName -notmatch '\\\\.git' } | Select-Object FullName | Sort-Object FullName | Select-Object -First 300)",
+      "Bash(git commit -m 'fix\\(auth\\): add actionCodeSettings to email verification links *)",
+      "Bash(npx tsc *)"
     ]
   }
 }

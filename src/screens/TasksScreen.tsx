@@ -388,7 +388,7 @@ const TasksScreen = () => {
     try {
       const data = await loadField('tasks');
       if (data) setTasks(data);
-    } catch (e) { console.log(e); } finally { setIsLoading(false); }
+    } catch { } finally { setIsLoading(false); }
   };
 
   const onRefresh = async () => {
@@ -477,7 +477,7 @@ const TasksScreen = () => {
     if (Platform.OS === 'web') {
       const a = (document as any).createElement('a');
       a.href = file.uri;
-      a.download = file.name;
+      a.download = file.name.replace(/[/\\:*?"<>|]/g, '_');
       a.target = '_blank';
       (document as any).body.appendChild(a);
       a.click();
@@ -532,7 +532,7 @@ const TasksScreen = () => {
   const handleToggleTask = async (id: number) => {
     const updatedTasks = tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t);
     setTasks(updatedTasks);
-    try { await saveField('tasks', updatedTasks); } catch (e) { console.log(e); }
+    try { await saveField('tasks', updatedTasks); } catch { }
   };
 
   const handleDeleteTask = (id: number) => {
@@ -540,7 +540,7 @@ const TasksScreen = () => {
     showDestructiveConfirm('מחק מטלה', 'האם את/ה בטוח/ה שברצונך למחוק את המטלה?', 'מחק', async () => {
       const updatedTasks = tasks.filter(t => t.id !== id);
       setTasks(updatedTasks);
-      try { await saveField('tasks', updatedTasks); } catch (e) { console.log(e); }
+      try { await saveField('tasks', updatedTasks); } catch { }
     });
   };
 

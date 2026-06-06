@@ -109,7 +109,7 @@ const GradesScreen = ({ onClose }: { onClose?: () => void }) => {
     try {
       const data = await loadField('grades');
       if (data) setGrades(data);
-    } catch (e) { console.log(e); } finally { setIsLoading(false); }
+    } catch { } finally { setIsLoading(false); }
   };
 
   const onRefresh = async () => {
@@ -164,7 +164,7 @@ const GradesScreen = ({ onClose }: { onClose?: () => void }) => {
     const allFilled = criteria.every((c) => c.grade !== '' && !isNaN(Number(c.grade)));
     if (!allFilled) return null;
     if (pctUsed !== 100) return null;
-    const weighted = criteria.reduce((s, c) => s + Number(c.grade) * c.percentage / 100, 0);
+    const weighted = criteria.reduce((s, c) => s + Math.min(100, Math.max(0, Number(c.grade))) * c.percentage / 100, 0);
     return String(Math.round(weighted));
   };
 

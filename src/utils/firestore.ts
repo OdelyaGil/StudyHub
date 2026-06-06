@@ -1,4 +1,4 @@
-import { doc, getDoc, setDoc, runTransaction } from 'firebase/firestore';
+import { doc, getDoc, setDoc, deleteDoc, runTransaction } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
 
 // These fields grow large over time and are routed to separate subcollection
@@ -7,6 +7,7 @@ import { auth, db } from '../config/firebase';
 const ARRAY_FIELDS = new Set([
   'tasks', 'grades', 'schedule', 'summaries', 'glossary',
   'quizBank', 'links', 'flashcards', 'chats', 'learnings',
+  'photoURL', // profile photo (large base64 blob — kept in its own subcollection doc)
 ]);
 
 const userRef  = (uid: string) => doc(db, 'users', uid);
@@ -80,6 +81,15 @@ export const saveField = async (field: string, value: any) => {
 
 // Atomically append one item to an array field using a transaction so that
 // two concurrent callers (e.g. rapid double-tap) cannot overwrite each other.
+export const clearCache = () => _cache.clear();
+
+// Deletes every store subcollection document for a user and clears the cache.
+// Call this before deleting the root user document on account deletion.
+export const deleteAllUserStoreData = async (uid: string) => {
+  await Promise.all([...ARRAY_FIELDS].map(f => deleteDoc(storeRef(uid, f))));
+  for (const f of ARRAY_FIELDS) _cache.delete(ck(uid, f));
+};
+
 export const appendToArrayField = async (field: string, item: any) => {
   const uid = auth.currentUser?.uid;
   if (!uid) return;

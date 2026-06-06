@@ -3,9 +3,10 @@ import { View, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from './src/config/firebase';
+import { clearCache } from './src/utils/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LoginScreen from './LoginScreen';
 import DashboardScreen from './DashboardScreen';
@@ -43,7 +44,7 @@ export default function App() {
             if (d.accent) setAccent(d.accent);
             if (d.mode)   setMode(d.mode);
           }
-        } catch (e) { console.log(e); }
+        } catch { }
         requestNotificationPermission();
         setIsLoggedIn(true);
       } else {
@@ -78,7 +79,7 @@ export default function App() {
                   mode={mode}
                   onSetAccent={setAccent}
                   onSetMode={setMode}
-                  onLogout={() => setIsLoggedIn(false)}
+                  onLogout={async () => { clearCache(); try { await signOut(auth); } catch { setIsLoggedIn(false); } }}
                 />
               )}
             </Stack.Screen>

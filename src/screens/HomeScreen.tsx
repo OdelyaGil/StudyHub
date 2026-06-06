@@ -6,7 +6,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { loadField } from '../utils/firestore';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, type NavigationProp, type ParamListBase } from '@react-navigation/native';
 import { useTheme } from '../context/ThemeContext';
 import { auth, db } from '../config/firebase';
 import { doc, getDoc } from 'firebase/firestore';
@@ -101,7 +101,7 @@ const GlowRing = ({ pct, color, label, bgColor }: { pct: number; color: string; 
 // ── Component ─────────────────────────────────────────────────────────────────
 const HomeScreen = () => {
   const theme      = useTheme();
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const { showAlert, alertNode } = useCustomAlert(theme.accent);
 
   const [grades,          setGrades]         = useState<any[]>([]);
@@ -269,7 +269,7 @@ const HomeScreen = () => {
           setUserName(d.name || '');
         }
       }
-    } catch (err) { console.log(err); }
+    } catch { }
   };
 
   const onRefresh = async () => { setRefreshing(true); await loadAll(); setRefreshing(false); };

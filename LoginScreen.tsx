@@ -11,6 +11,7 @@ import {
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
   sendEmailVerification,
+  deleteUser,
   signOut,
 } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
@@ -19,8 +20,9 @@ import { useCustomAlert } from './src/hooks/useCustomAlert';
 
 const DEFAULT_ACCENT = '#E0659A';
 const DEFAULT_GRAD: [string, string] = ['#E8659A', '#F4A0C0'];
-const NEW_USER_ACCENT = '#ADC6E5';
-const NEW_USER_MODE   = 'light';
+const NEW_USER_ACCENT    = '#ADC6E5';
+const NEW_USER_MODE      = 'light';
+const VERIFY_TIMEOUT_MS  = 10 * 60 * 1000; // 10 minutes
 
 const LoginScreen = ({ onLogin, savedAccent, savedMode }: { navigation: any; onLogin: (accent?: string, mode?: string) => void; savedAccent?: string; savedMode?: string }) => {
   const isGrad  = savedAccent?.startsWith('gradient:');
@@ -75,13 +77,24 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode }: { navigation: any; onL
     const params = new URLSearchParams(window.location.search);
     if (params.get('emailVerified') === '1') {
       window.history.replaceState({}, '', window.location.pathname);
-      setEmailJustVerified(true);
+      const user = auth.currentUser;
+      if (user) {
+        user.reload()
+          .then(() => { if (auth.currentUser?.emailVerified) setEmailJustVerified(true); })
+          .catch(() => {});
+      }
     }
   }, []);
 
   useEffect(() => {
     if (!waitingVerification) return;
+    const startedAt = Date.now();
     const id = setInterval(async () => {
+      if (Date.now() - startedAt > VERIFY_TIMEOUT_MS) {
+        clearInterval(id);
+        setWaitingVerification(false);
+        return;
+      }
       const user = auth.currentUser;
       if (!user) { clearInterval(id); setWaitingVerification(false); return; }
       await user.reload();
@@ -105,7 +118,7 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode }: { navigation: any; onL
 
   const handleLogin = async () => {
     if (!validateEmail(email)) return showAlert('שגיאה', 'אנא הזן/י כתובת דוא"ל תקנית');
-    if (password.length < 6)   return showAlert('שגיאה', 'הסיסמה חייבת להכיל לפחות 6 תווים');
+    if (password.length < 8)   return showAlert('שגיאה', 'הסיסמה חייבת להכיל לפחות 8 תווים');
     setLoading(true);
     try {
       const cred = await signInWithEmailAndPassword(auth, email.toLowerCase(), password);
@@ -121,6 +134,8 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode }: { navigation: any; onL
         showAlert('שגיאה', 'כתובת המייל או הסיסמה שגויים');
       else if (code === 'auth/wrong-password')
         showAlert('שגיאה', 'הסיסמה שגויה. אנא נסה שוב.');
+      else if (code === 'auth/too-many-requests')
+        showAlert('שגיאה', 'יותר מדי ניסיונות כניסה. אנא המתן/י מספר דקות ונסה/י שוב.');
       else
         showAlert('שגיאה', 'התחברות נכשלה. אנא נסה שוב.');
     } finally { setLoading(false); }
@@ -135,23 +150,32 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode }: { navigation: any; onL
     setRegLoading(true);
     try {
       const cred = await createUserWithEmailAndPassword(auth, regEmail.toLowerCase(), regPassword);
-      await setDoc(doc(db, 'users', cred.user.uid), {
-        name: regName.trim(),
-        email: regEmail.toLowerCase(),
-        userType: 'student',
-        accent: NEW_USER_ACCENT,
-        mode: NEW_USER_MODE,
-        grades: [],
-        tasks: [],
-        schedule: [],
-        topics: [],
-      });
+      try {
+        await setDoc(doc(db, 'users', cred.user.uid), {
+          name: regName.trim(),
+          email: regEmail.toLowerCase(),
+          userType: 'student',
+          accent: NEW_USER_ACCENT,
+          mode: NEW_USER_MODE,
+          grades: [],
+          tasks: [],
+          schedule: [],
+          topics: [],
+        });
+      } catch (firestoreErr) {
+        await deleteUser(cred.user);
+        throw firestoreErr;
+      }
       try {
         await sendEmailVerification(cred.user, {
           url: typeof window !== 'undefined' ? `${window.location.origin}?emailVerified=1` : '',
           handleCodeInApp: false,
         });
-      } catch (_) {}
+      } catch (e: any) {
+        if (e?.code !== 'auth/too-many-requests') {
+          showAlert('שים לב', 'לא ניתן לשלוח מייל אימות כרגע. לחץ/י על "שלח מייל אימות שוב" כדי לנסות שוב.');
+        }
+      }
       setShowRegister(false);
       setPendingEmail(regEmail.toLowerCase());
       setWaitingVerification(true);
@@ -192,16 +216,16 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode }: { navigation: any; onL
     setForgotLoading(true);
     try {
       await sendPasswordResetEmail(auth, forgotEmail.toLowerCase());
-      showAlert('נשלח!', 'קישור לאיפוס סיסמה נשלח לכתובת המייל שלך.');
-      setShowForgot(false);
-      setForgotEmail('');
     } catch (e: any) {
-      const code = e?.code ?? '';
-      if (code === 'auth/user-not-found')
-        showAlert('שגיאה', 'כתובת המייל אינה רשומה במערכת.');
-      else
-        showAlert('שגיאה', 'שליחת המייל נכשלה. אנא נסה שוב.');
+      if (e?.code === 'auth/too-many-requests') {
+        return showAlert('שגיאה', 'כבר נשלחה בקשה לאחרונה. המתן/י מספר דקות ונסה/י שוב.');
+      }
+      // auth/user-not-found and other errors fall through to show the same
+      // success message, preventing email enumeration.
     } finally { setForgotLoading(false); }
+    showAlert('נשלח!', 'אם כתובת המייל רשומה במערכת, יישלח אליה קישור לאיפוס הסיסמה.');
+    setShowForgot(false);
+    setForgotEmail('');
   };
 
   const s = StyleSheet.create({

@@ -11,6 +11,7 @@ import {
   updatePassword, deleteUser, sendEmailVerification,
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
+import { loadField, saveField, deleteAllUserStoreData } from '../utils/firestore';
 import { auth, db } from '../config/firebase';
 import { useCustomAlert } from '../hooks/useCustomAlert';
 import { useTheme } from '../context/ThemeContext';
@@ -96,7 +97,8 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
     setUserName(data.name || '');
     setUserEmail(data.email || user.email || '');
     setNewName(data.name || '');
-    setPhotoURL(data.photoURL || null);
+    const photo = await loadField('photoURL');
+    setPhotoURL(photo || null);
     const rc = data.requiredCredits ? String(data.requiredCredits) : '';
     setRequiredCredits(rc);
     setNewCredits(rc);
@@ -185,7 +187,7 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
       }
 
       if (!base64) return;
-      await setDoc(doc(db, 'users', user.uid), { photoURL: base64 }, { merge: true });
+      await saveField('photoURL', base64);
       setPhotoURL(base64);
       onAvatarChange?.(base64);
     } catch (e) {
@@ -231,7 +233,7 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
       if (e?.code === 'auth/too-many-requests') {
         showAlert('שגיאה', 'כבר נשלח מייל לאחרונה. המתן/י מספר דקות ונסה/י שוב.');
       } else {
-        showAlert('שגיאה', `לא ניתן לשלוח מייל כרגע (${e?.code ?? 'unknown'}). נסה/י שוב מאוחר יותר.`);
+        showAlert('שגיאה', 'לא ניתן לשלוח מייל כרגע. נסה/י שוב מאוחר יותר.');
       }
     }
   };
@@ -287,6 +289,7 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
     setDeleteLoading(true);
     try {
       await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, deletePassword));
+      await deleteAllUserStoreData(user.uid);
       await deleteDoc(doc(db, 'users', user.uid));
       await deleteUser(user);
       onLogout();

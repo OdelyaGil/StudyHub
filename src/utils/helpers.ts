@@ -14,8 +14,11 @@ export const daysUntil = (iso?: string): number => {
   return Math.ceil((ms - Date.now()) / 86400000);
 };
 
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
 export const occursOnISO = (event: any, iso: string): boolean => {
-  if (!event?.date || iso < event.date) return false;
+  if (!ISO_DATE_RE.test(iso) || !ISO_DATE_RE.test(event?.date ?? '')) return false;
+  if (iso < event.date) return false;
   if (event.recurrenceEndDate && iso > event.recurrenceEndDate) return false;
   switch (event.recurrence) {
     case 'none':    return iso === event.date;

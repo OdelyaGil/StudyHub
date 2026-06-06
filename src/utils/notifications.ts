@@ -43,7 +43,7 @@ export const scheduleTimerNotification = async (seconds: number): Promise<string
     if (!permitted) return null;
     const fireAt = new Date(Date.now() + seconds * 1000);
     const id = await Notifications.scheduleNotificationAsync({
-      content: { title: '⏰ טיימר הלימוד הסתיים!', body: 'כל הכבוד! סיימת את פגישת הלימוד שלך.', sound: true },
+      content: { title: '⏰ טיימר הלימוד הסתיים!', body: 'כל הכבוד! סיימת את פגישת הלימוד שלך.', sound: true, data: { type: 'timer' } },
       trigger: { date: fireAt } as any,
     });
     return id;
@@ -70,7 +70,12 @@ export const scheduleAllNotifications = async (tasks: any[], events: any[]) => {
     const permitted = await requestNotificationPermission();
     if (!permitted) return;
 
-    await Notifications.cancelAllScheduledNotificationsAsync();
+    const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+    await Promise.all(
+      scheduled
+        .filter(n => (n.content.data as Record<string, unknown>)?.type !== 'timer')
+        .map(n => Notifications.cancelScheduledNotificationAsync(n.identifier)),
+    );
 
     const now   = new Date();
     const today = toISO(now);
@@ -128,5 +133,5 @@ export const scheduleAllNotifications = async (tasks: any[], events: any[]) => {
         `${pending} מטלות פתוחות${tomorrowEvts > 0 ? ` • ${tomorrowEvts} אירועים היום` : ''}`,
       );
     }
-  } catch (err) { console.log('Notifications error:', err); }
+  } catch { }
 };

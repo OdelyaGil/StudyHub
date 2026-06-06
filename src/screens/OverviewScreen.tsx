@@ -44,7 +44,7 @@ const OverviewScreen = () => {
       setTasks(t);
       setTopics(tp);
       if (g.length > 0) setAvg((g.reduce((s: number, gr: any) => s + gr.value, 0) / g.length).toFixed(2));
-    } catch (e) { console.log(e); }
+    } catch { }
   };
 
   const onRefresh = async () => { setRefreshing(true); await loadData(); setRefreshing(false); };
@@ -67,23 +67,23 @@ const OverviewScreen = () => {
   return (
     <ScrollView style={styles.container} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
       <View style={styles.statsGrid}>
-        <StatCard title="ממוצע"   value={avg}          icon="chart-line"              colors={[theme, darken(theme)]} />
-        <StatCard title="מטלות"   value={activeTasks}  icon="checkbox-multiple-marked" colors={[theme, darken(theme)]} />
-        <StatCard title="קורסים"  value={courseCount}  icon="school"                  colors={[theme, darken(theme)]} />
-        <StatCard title="נושאים"  value={topics.length} icon="brain"                  colors={[theme, darken(theme)]} />
+        <StatCard title="ממוצע"   value={avg}          icon="chart-line"              colors={theme.accentGradient ?? [theme.accent, darken(theme.accent)]} />
+        <StatCard title="מטלות"   value={activeTasks}  icon="checkbox-multiple-marked" colors={theme.accentGradient ?? [theme.accent, darken(theme.accent)]} />
+        <StatCard title="קורסים"  value={courseCount}  icon="school"                  colors={theme.accentGradient ?? [theme.accent, darken(theme.accent)]} />
+        <StatCard title="נושאים"  value={topics.length} icon="brain"                  colors={theme.accentGradient ?? [theme.accent, darken(theme.accent)]} />
       </View>
 
       {nextTask && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>📌 המטלה הקרובה</Text>
-          <TouchableOpacity style={[styles.taskCard, { borderRightColor: theme }]}>
+          <TouchableOpacity style={[styles.taskCard, { borderRightColor: theme.accent }]}>
             <View style={styles.taskHeader}>
               <View>
                 <Text style={styles.taskName}>{nextTask.name}</Text>
                 {nextTask.course ? <Text style={styles.taskCourse}>{nextTask.course}</Text> : null}
               </View>
               <View style={[styles.priorityBadge, {
-                backgroundColor: theme
+                backgroundColor: theme.accent
               }]}>
                 <Text style={styles.priorityText}>{nextTask.priority}</Text>
               </View>
@@ -99,13 +99,13 @@ const OverviewScreen = () => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>📚 התקדמות למידה</Text>
           <View style={styles.progressGrid}>
-            <View style={[styles.progressCard, { borderTopColor: theme }]}>
+            <View style={[styles.progressCard, { borderTopColor: theme.accent }]}>
               <Text style={styles.progressLabel}>נושאים שיודעת</Text>
-              <Text style={[styles.progressValue, { color: theme }]}>{topicsKnown}</Text>
+              <Text style={[styles.progressValue, { color: theme.accent }]}>{topicsKnown}</Text>
             </View>
-            <View style={[styles.progressCard, { borderTopColor: theme }]}>
+            <View style={[styles.progressCard, { borderTopColor: theme.accent }]}>
               <Text style={styles.progressLabel}>צריכים חזרה</Text>
-              <Text style={[styles.progressValue, { color: theme }]}>{topicsNeedReview}</Text>
+              <Text style={[styles.progressValue, { color: theme.accent }]}>{topicsNeedReview}</Text>
             </View>
           </View>
         </View>

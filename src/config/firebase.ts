@@ -1,4 +1,5 @@
 import { initializeApp } from 'firebase/app';
+import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 import { Platform } from 'react-native';
 import { getAuth, initializeAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
@@ -26,3 +27,12 @@ export const auth = Platform.OS === 'web'
 
 export const db      = getFirestore(app);
 export const storage = getStorage(app);
+
+// App Check (web only — requires EXPO_PUBLIC_RECAPTCHA_SITE_KEY in .env and
+// App Check enabled in the Firebase Console under App Check → Apps).
+if (Platform.OS === 'web' && process.env.EXPO_PUBLIC_RECAPTCHA_SITE_KEY) {
+  initializeAppCheck(app, {
+    provider: new ReCaptchaV3Provider(process.env.EXPO_PUBLIC_RECAPTCHA_SITE_KEY),
+    isTokenAutoRefreshEnabled: true,
+  });
+}

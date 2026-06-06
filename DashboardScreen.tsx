@@ -4,6 +4,9 @@ import { Platform, StyleSheet, useWindowDimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { auth, db } from './src/config/firebase';
 import { doc, getDoc } from 'firebase/firestore';
+import { loadField } from './src/utils/firestore';
+import { hexToRgba } from './src/utils/helpers';
+import type { NavigationProp, ParamListBase } from '@react-navigation/native';
 import ThemeContext, { buildTheme, ThemeMode } from './src/context/ThemeContext';
 import HomeScreen    from './src/screens/HomeScreen';
 import EventsScreen  from './src/screens/EventsScreen';
@@ -16,7 +19,7 @@ import AppSidebar, { SIDEBAR_W, SIDEBAR_W_COLLAPSED, TOP_H } from './src/compone
 const Tab = createBottomTabNavigator();
 
 type Props = {
-  navigation:   any;
+  navigation:   NavigationProp<ParamListBase>;
   accent:       string;
   mode:         ThemeMode;
   onSetAccent:  (c: string) => void;
@@ -38,13 +41,11 @@ const DashboardScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout }: Pro
     let active = true;
     const user = auth.currentUser;
     if (!user) return;
-    getDoc(doc(db, 'users', user.uid)).then(snap => {
+    getDoc(doc(db, 'users', user.uid)).then(async snap => {
       if (!active) return;
-      if (snap.exists()) {
-        const data = snap.data();
-        setUserName(data.name || '');
-        setUserAvatar(data.photoURL || null);
-      }
+      if (snap.exists()) setUserName(snap.data().name || '');
+      const photo = await loadField('photoURL');
+      if (active) setUserAvatar(photo || null);
     });
     return () => { active = false; };
   }, []);
@@ -63,13 +64,6 @@ const DashboardScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout }: Pro
       onToggleCollapse={() => setSidebarCollapsed(prev => !prev)}
     />
   ), [userName, userAvatar, onLogout, isWide, sidebarOpen, sidebarCollapsed]);
-
-  const hexToRgba = (hex: string, a: number) => {
-    const r = parseInt(hex.slice(1, 3), 16);
-    const g = parseInt(hex.slice(3, 5), 16);
-    const b = parseInt(hex.slice(5, 7), 16);
-    return `rgba(${r},${g},${b},${a})`;
-  };
 
   return (
     <ThemeContext.Provider value={theme}>
