@@ -66,8 +66,18 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode }: { navigation: any; onL
 
   const [waitingVerification, setWaitingVerification] = useState(false);
   const [pendingEmail, setPendingEmail]               = useState('');
+  const [emailJustVerified, setEmailJustVerified]     = useState(false);
 
   const passwordRef = useRef<TextInputType>(null);
+
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('emailVerified') === '1') {
+      window.history.replaceState({}, '', window.location.pathname);
+      setEmailJustVerified(true);
+    }
+  }, []);
 
   useEffect(() => {
     if (!waitingVerification) return;
@@ -138,7 +148,7 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode }: { navigation: any; onL
       });
       try {
         await sendEmailVerification(cred.user, {
-          url: typeof window !== 'undefined' ? window.location.origin : '',
+          url: typeof window !== 'undefined' ? `${window.location.origin}?emailVerified=1` : '',
           handleCodeInApp: false,
         });
       } catch (_) {}
@@ -247,6 +257,29 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode }: { navigation: any; onL
     },
     forgotHint: { fontSize: 13, color: SUB, marginBottom: 20, lineHeight: 20, textAlign: 'right' },
   });
+
+  if (emailJustVerified) {
+    return (
+      <View style={[s.container, { justifyContent: 'center', alignItems: 'center', padding: 32 }]}>
+        <MaterialCommunityIcons name="check-circle-outline" size={80} color={ACCENT} style={{ marginBottom: 24 }} />
+        <Text style={{ color: TEXT, fontSize: 22, fontWeight: '700', textAlign: 'center', marginBottom: 12 }}>
+          המייל אומת בהצלחה!
+        </Text>
+        <Text style={{ color: SUB, fontSize: 14, textAlign: 'center', lineHeight: 22, marginBottom: 40 }}>
+          כתובת המייל שלך אומתה.{'\n'}ניתן כעת להיכנס למערכת.
+        </Text>
+        <Pressable
+          onPress={() => setEmailJustVerified(false)}
+          style={{ overflow: 'hidden', borderRadius: 14, width: '100%' }}
+        >
+          <LinearGradient colors={GRAD} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ paddingVertical: 15, alignItems: 'center' }}>
+            <Text style={{ color: '#fff', fontSize: 16, fontWeight: '800' }}>כניסה למסך ההתחברות</Text>
+          </LinearGradient>
+        </Pressable>
+        {alertNode}
+      </View>
+    );
+  }
 
   if (waitingVerification) {
     return (

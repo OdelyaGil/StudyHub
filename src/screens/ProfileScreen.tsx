@@ -222,7 +222,7 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
     if (!user) return;
     try {
       await sendEmailVerification(user, {
-        url: typeof window !== 'undefined' ? window.location.origin : '',
+        url: typeof window !== 'undefined' ? `${window.location.origin}?emailVerified=1` : '',
         handleCodeInApp: false,
       });
       showAlert('נשלח!', 'מייל האימות נשלח שוב לתיבת הדואר שלך.');
