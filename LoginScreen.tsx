@@ -103,8 +103,8 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode }: { navigation: any; onL
         name: regName.trim(),
         email: regEmail.toLowerCase(),
         userType: 'student',
-        accent: DEFAULT_ACCENT,
-        mode: 'dark',
+        accent: '#ADC6E5',
+        mode: 'light',
         grades: [],
         tasks: [],
         schedule: [],
@@ -118,7 +118,7 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode }: { navigation: any; onL
       } catch (_) {}
       setShowRegister(false);
       showAlert('ברוך הבא! 🎉', 'ההרשמה הושלמה.\nשלחנו לך מייל אימות — אנא אמת את הכתובת דרך תיבת הדואר שלך.');
-      onLogin(DEFAULT_ACCENT, 'dark');
+      onLogin('#ADC6E5', 'light');
     } catch (e: any) {
       const code = e?.code ?? '';
       if (code === 'auth/email-already-in-use')

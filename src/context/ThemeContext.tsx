@@ -86,6 +86,6 @@ export const buildTheme = (mode: ThemeMode, rawAccent: string): AppTheme => {
   };
 };
 
-const ThemeContext = createContext<AppTheme>(buildTheme('dark', '#CBD8E8'));
+const ThemeContext = createContext<AppTheme>(buildTheme('light', '#ADC6E5'));
 export const useTheme = () => useContext(ThemeContext);
 export default ThemeContext;
