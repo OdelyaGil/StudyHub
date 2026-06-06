@@ -158,7 +158,7 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
         try { blob = await compressImage(file, 300); } catch { blob = file; }
         // Guard: Firestore doc limit is 1MB; base64 of 300px JPEG should be <100KB
         if (blob.size > 700_000) {
-          showAlert('שגיאה', 'התמונה גדולה מדי לאחר דחיסה. בחרי תמונה קטנה יותר.');
+          showAlert('שגיאה', 'התמונה גדולה מדי לאחר דחיסה. בחר/י תמונה קטנה יותר.');
           return;
         }
         base64 = await new Promise<string>((resolve, reject) => {
@@ -196,7 +196,7 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
 
   const handleSaveCredits = async () => {
     const val = parseFloat(newCredits);
-    if (isNaN(val) || val <= 0) return showAlert('שגיאה', 'הזיני מספר נקודות זכות תקין');
+    if (isNaN(val) || val <= 0) return showAlert('שגיאה', 'הזן/י מספר נקודות זכות תקין');
     const user = auth.currentUser;
     if (!user) return;
     try {
@@ -229,9 +229,9 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
     } catch (e: any) {
       console.error('sendEmailVerification error:', e?.code, e?.message);
       if (e?.code === 'auth/too-many-requests') {
-        showAlert('שגיאה', 'כבר נשלח מייל לאחרונה. המתיני מספר דקות ונסי שוב.');
+        showAlert('שגיאה', 'כבר נשלח מייל לאחרונה. המתן/י מספר דקות ונסה/י שוב.');
       } else {
-        showAlert('שגיאה', `לא ניתן לשלוח מייל כרגע (${e?.code ?? 'unknown'}). נסי שוב מאוחר יותר.`);
+        showAlert('שגיאה', `לא ניתן לשלוח מייל כרגע (${e?.code ?? 'unknown'}). נסה/י שוב מאוחר יותר.`);
       }
     }
   };
@@ -281,7 +281,7 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
   };
 
   const confirmDeleteAccount = async () => {
-    if (deletePassword.length < 6) return showAlert('שגיאה', 'אנא הזיני את הסיסמה הנוכחית');
+    if (deletePassword.length < 6) return showAlert('שגיאה', 'אנא הזן/י את הסיסמה הנוכחית');
     const user = auth.currentUser;
     if (!user || !user.email) return;
     setDeleteLoading(true);
@@ -294,7 +294,7 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
       if (e?.code === 'auth/wrong-password' || e?.code === 'auth/invalid-credential')
         showAlert('שגיאה', 'הסיסמה שגויה');
       else
-        showAlert('שגיאה', 'מחיקת החשבון נכשלה. אנא נסי שוב.');
+        showAlert('שגיאה', 'מחיקת החשבון נכשלה. אנא נסה/י שוב.');
     } finally { setDeleteLoading(false); }
   };
 
@@ -559,7 +559,7 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
                 </Pressable>
               </View>
               <Text style={[s.fieldLabel, { color: theme.textSub, marginBottom: 16, lineHeight: 20 }]}>
-                כדי למחוק את החשבון לצמיתות, אנא הזיני את הסיסמה הנוכחית שלך:
+                כדי למחוק את החשבון לצמיתות, אנא הזן/י את הסיסמה הנוכחית שלך:
               </Text>
               <Text style={[s.fieldLabel, { color: theme.textSub }]}>סיסמה נוכחית</Text>
               <TextInput

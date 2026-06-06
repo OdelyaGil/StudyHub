@@ -175,9 +175,9 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode }: { navigation: any; onL
       showAlert('נשלח!', 'מייל אימות נוסף נשלח לתיבת הדואר שלך.');
     } catch (e: any) {
       if (e?.code === 'auth/too-many-requests')
-        showAlert('שגיאה', 'כבר נשלח מייל לאחרונה. המתיני מספר דקות ונסי שוב.');
+        showAlert('שגיאה', 'כבר נשלח מייל לאחרונה. המתן/י מספר דקות ונסה/י שוב.');
       else
-        showAlert('שגיאה', 'לא ניתן לשלוח מייל כרגע. נסי שוב מאוחר יותר.');
+        showAlert('שגיאה', 'לא ניתן לשלוח מייל כרגע. נסה/י שוב מאוחר יותר.');
     }
   };
 
@@ -288,12 +288,12 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode }: { navigation: any; onL
         <Text style={{ color: SUB, fontSize: 13, textAlign: 'center', lineHeight: 22, marginBottom: 32 }}>
           יש ללחוץ על הקישור במייל לאימות הכתובת.{'\n'}
           לאחר האימות תיכנס/י אוטומטית למערכת.{'\n\n'}
-          💡 אם המייל לא הגיע, בדקי גם בתיקיית הספאם.
+          💡 אם המייל לא הגיע, בדוק/י גם בתיקיית הספאם.
         </Text>
         <ActivityIndicator color={ACCENT} size="large" style={{ marginBottom: 32 }} />
         <Pressable onPress={handleResendVerification} style={{ marginBottom: 20, padding: 10 }}>
           <Text style={{ color: ACCENT, fontSize: 14, fontWeight: '600', textAlign: 'center' }}>
-            שלחי מייל אימות שוב
+            שלח/י מייל אימות שוב
           </Text>
         </Pressable>
         <Pressable onPress={handleCancelVerification} style={{ padding: 10 }}>
@@ -396,7 +396,7 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode }: { navigation: any; onL
                   { label: 'שם מלא',      ph: 'שם פרטי ומשפחה',           val: regName,     set: setRegName,     kb: 'default' as const, sec: false },
                   { label: 'דוא"ל',       ph: 'student@university.ac.il', val: regEmail,    set: setRegEmail,    kb: 'email-address' as const, sec: false },
                   { label: 'סיסמה',       ph: 'לפחות 8 תווים, אות גדולה', val: regPassword, set: setRegPassword, kb: 'default' as const, sec: true  },
-                  { label: 'אימות סיסמה', ph: 'הזיני סיסמה שנית',         val: regConfirm,  set: setRegConfirm,  kb: 'default' as const, sec: true  },
+                  { label: 'אימות סיסמה', ph: 'הזן/י סיסמה שנית',         val: regConfirm,  set: setRegConfirm,  kb: 'default' as const, sec: true  },
                 ].map(f => (
                   <View key={f.label}>
                     <Text style={s.regLabel}>{f.label}</Text>
@@ -439,7 +439,7 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode }: { navigation: any; onL
                 </Pressable>
               </View>
               <Text style={s.forgotHint}>
-                הזיני את כתובת המייל שלך ונשלח לך קישור לאיפוס הסיסמה.
+                הזן/י את כתובת המייל שלך ונשלח לך קישור לאיפוס הסיסמה.
               </Text>
               <Text style={s.regLabel}>כתובת דוא"ל</Text>
               <TextInput

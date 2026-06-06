@@ -491,11 +491,11 @@ const TasksScreen = () => {
 
   const handleSaveTask = async () => {
     if (!taskName.trim()) {
-      showAlert('שגיאה', 'אנא הזיני שם למטלה');
+      showAlert('שגיאה', 'אנא הזן/י שם למטלה');
       return;
     }
     if (!taskDueDate) {
-      showAlert('שגיאה', 'אנא בחרי תאריך הגשה');
+      showAlert('שגיאה', 'אנא בחר/י תאריך הגשה');
       return;
     }
 
@@ -523,7 +523,7 @@ const TasksScreen = () => {
       closeModal();
       showAlert('הצלחה', isEdit ? 'המטלה עודכנה בהצלחה' : 'המטלה נשמרה בהצלחה');
     } catch (e) {
-      showAlert('שגיאה', 'שמירת המטלה נכשלה. בדקי את החיבור לאינטרנט ונסי שוב.');
+      showAlert('שגיאה', 'שמירת המטלה נכשלה. בדוק/י את החיבור לאינטרנט ונסה/י שוב.');
     } finally {
       setSaving(false);
     }
@@ -582,7 +582,7 @@ const TasksScreen = () => {
           <View style={styles.emptyState}>
             <MaterialCommunityIcons name="checkbox-multiple-marked-outline" size={64} color={textSub} />
             <Text style={[styles.emptyStateText, { color: textColor }]}>אין מטלות עדיין</Text>
-            <Text style={[styles.emptyStateSub, { color: textSub }]}>הוסיפי מטלה חדשה עם הכפתור למטה</Text>
+            <Text style={[styles.emptyStateSub, { color: textSub }]}>הוסף/י מטלה חדשה עם הכפתור למטה</Text>
           </View>
         )}
       </ScrollView>
@@ -814,7 +814,7 @@ const TasksScreen = () => {
                   חלון פנוי: {minToTime(pickerSlot.startMin)}–{minToTime(pickerSlot.endMin)}
                 </Text>
 
-                <Text style={[styles.slotPickerLabel, { color: textSub }]}>בחרי שעת התחלה:</Text>
+                <Text style={[styles.slotPickerLabel, { color: textSub }]}>בחר/י שעת התחלה:</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.timeOptionsScroll}>
                   {options.map(t => {
                     const selected = pickerStartMin === t;

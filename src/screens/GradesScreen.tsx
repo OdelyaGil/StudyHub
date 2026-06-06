@@ -148,9 +148,9 @@ const GradesScreen = ({ onClose }: { onClose?: () => void }) => {
     const name    = simName.trim();
     const credits = parseFloat(simCredits);
     const grade   = parseFloat(simGrade);
-    if (!name)              return showAlert('שגיאה', 'הזיני שם קורס');
-    if (!credits || credits <= 0) return showAlert('שגיאה', 'הזיני נקודות זכות תקינות');
-    if (!grade || grade < 0 || grade > 100) return showAlert('שגיאה', 'הזיני ציון בין 0 ל-100');
+    if (!name)              return showAlert('שגיאה', 'הזן/י שם קורס');
+    if (!credits || credits <= 0) return showAlert('שגיאה', 'הזן/י נקודות זכות תקינות');
+    if (!grade || grade < 0 || grade > 100) return showAlert('שגיאה', 'הזן/י ציון בין 0 ל-100');
     setSimCourses(prev => [...prev, { id: genId(), name, credits, grade, included: true }]);
     setSimName(''); setSimCredits(''); setSimGrade('');
     setSimModalVisible(false);
@@ -231,7 +231,7 @@ const GradesScreen = ({ onClose }: { onClose?: () => void }) => {
       await saveField('grades', updated);
       resetForm();
       setModalVisible(false);
-    } catch { showAlert('שגיאה', 'שמירת הציון נכשלה. בדקי את החיבור לאינטרנט ונסי שוב.'); }
+    } catch { showAlert('שגיאה', 'שמירת הציון נכשלה. בדוק/י את החיבור לאינטרנט ונסה/י שוב.'); }
     finally { setSaving(false); }
   };
 
@@ -372,7 +372,7 @@ const GradesScreen = ({ onClose }: { onClose?: () => void }) => {
               <Text style={[styles.simPanelTitle, { color: textColor }]}>סימולציה</Text>
             </View>
             <Text style={[styles.simPanelSub, { color: textSub }]}>
-              הוסיפי קורסים היפותטיים וראי איך הממוצע ישתנה
+              הוסף/י קורסים היפותטיים וראה/י איך הממוצע ישתנה
             </Text>
 
             {/* Simulated avg result */}
@@ -474,7 +474,7 @@ const GradesScreen = ({ onClose }: { onClose?: () => void }) => {
           <View style={styles.emptyState}>
             <MaterialCommunityIcons name="school-outline" size={64} color={textSub} />
             <Text style={[styles.emptyStateText, { color: textColor }]}>אין ציונים עדיין</Text>
-            <Text style={[styles.emptyStateSub, { color: textSub }]}>הוסיפי קורס עם כפתור + למטה</Text>
+            <Text style={[styles.emptyStateSub, { color: textSub }]}>הוסף/י קורס עם כפתור + למטה</Text>
           </View>
         )}
       </ScrollView>
