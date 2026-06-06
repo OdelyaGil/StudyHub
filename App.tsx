@@ -31,6 +31,11 @@ export default function App() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
+        if (!user.emailVerified) {
+          // Keep the verification waiting screen visible in LoginScreen
+          setIsLoading(false);
+          return;
+        }
         try {
           const snap = await getDoc(doc(db, 'users', user.uid));
           if (snap.exists()) {
