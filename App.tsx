@@ -62,7 +62,7 @@ export default function App() {
         <Stack.Navigator screenOptions={{ headerShown: false, animation: 'none' }}>
           {!isLoggedIn ? (
             <Stack.Screen name="Login">
-              {(props) => <LoginScreen {...props} onLogin={() => setIsLoggedIn(true)} savedAccent={savedAccent} savedMode={savedMode} />}
+              {(props) => <LoginScreen {...props} onLogin={(a, m) => { if (a) setAccent(a); if (m) setMode(m as ThemeMode); setIsLoggedIn(true); }} savedAccent={savedAccent} savedMode={savedMode} />}
             </Stack.Screen>
           ) : (
             <Stack.Screen name="Dashboard">

@@ -19,7 +19,7 @@ import { useCustomAlert } from './src/hooks/useCustomAlert';
 const DEFAULT_ACCENT = '#E0659A';
 const DEFAULT_GRAD: [string, string] = ['#E8659A', '#F4A0C0'];
 
-const LoginScreen = ({ onLogin, savedAccent, savedMode }: { navigation: any; onLogin: () => void; savedAccent?: string; savedMode?: string }) => {
+const LoginScreen = ({ onLogin, savedAccent, savedMode }: { navigation: any; onLogin: (accent?: string, mode?: string) => void; savedAccent?: string; savedMode?: string }) => {
   const isGrad  = savedAccent?.startsWith('gradient:');
   const gradArr = isGrad ? savedAccent!.replace('gradient:', '').split(',') as [string, string] : null;
   const ACCENT  = gradArr ? gradArr[0] : (savedAccent ?? DEFAULT_ACCENT);
@@ -118,7 +118,7 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode }: { navigation: any; onL
       } catch (_) {}
       setShowRegister(false);
       showAlert('ברוך הבא! 🎉', 'ההרשמה הושלמה.\nשלחנו לך מייל אימות — אנא אמת את הכתובת דרך תיבת הדואר שלך.');
-      onLogin();
+      onLogin(DEFAULT_ACCENT, 'dark');
     } catch (e: any) {
       const code = e?.code ?? '';
       if (code === 'auth/email-already-in-use')
