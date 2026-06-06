@@ -140,12 +140,27 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
           const input = document.createElement('input');
           input.type = 'file';
           input.accept = 'image/*';
-          input.onchange = (e: Event) => resolve((e.target as HTMLInputElement).files?.[0] ?? null);
+          let resolved = false;
+          input.onchange = (e: Event) => {
+            resolved = true;
+            resolve((e.target as HTMLInputElement).files?.[0] ?? null);
+          };
+          // Resolve with null when file picker is dismissed without selection
+          const onFocus = () => {
+            window.removeEventListener('focus', onFocus);
+            setTimeout(() => { if (!resolved) resolve(null); }, 500);
+          };
+          window.addEventListener('focus', onFocus);
           input.click();
         });
         if (!file) return;
         let blob: Blob;
         try { blob = await compressImage(file, 300); } catch { blob = file; }
+        // Guard: Firestore doc limit is 1MB; base64 of 300px JPEG should be <100KB
+        if (blob.size > 700_000) {
+          showAlert('שגיאה', 'התמונה גדולה מדי לאחר דחיסה. בחרי תמונה קטנה יותר.');
+          return;
+        }
         base64 = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
           reader.onload  = () => resolve(reader.result as string);
