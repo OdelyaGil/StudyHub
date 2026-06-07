@@ -35,6 +35,14 @@ export const occursOnISO = (event: any, iso: string): boolean => {
   }
 };
 
+// Returns null when the password is valid, or a Hebrew error message string.
+export const validatePassword = (p: string): string | null => {
+  if (p.length < 8)             return 'הסיסמה חייבת להכיל לפחות 8 תווים';
+  if (!/[A-Z]/.test(p))         return 'הסיסמה חייבת להכיל לפחות אות גדולה אחת (A–Z)';
+  if (/[֐-׿יִ-ﭏ]/.test(p))   return 'הסיסמה יכולה להכיל תווים לועזיים בלבד';
+  return null;
+};
+
 export const hexToRgba = (hex: string, a: number): string => {
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);

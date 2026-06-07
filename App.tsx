@@ -23,6 +23,7 @@ export default function App() {
   const [mode, setMode]             = useState<ThemeMode>('light');
   const [savedAccent, setSavedAccent] = useState<string | undefined>(undefined);
   const [savedMode,   setSavedMode]   = useState<ThemeMode | undefined>(undefined);
+  const [pendingVerificationEmail, setPendingVerificationEmail] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     AsyncStorage.getItem('savedAccent').then(v => { if (v) { setAccent(v); setSavedAccent(v); } });
@@ -33,7 +34,7 @@ export default function App() {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         if (!user.emailVerified) {
-          // Keep the verification waiting screen visible in LoginScreen
+          setPendingVerificationEmail(user.email ?? undefined);
           setIsLoading(false);
           return;
         }
@@ -68,7 +69,7 @@ export default function App() {
         <Stack.Navigator screenOptions={{ headerShown: false, animation: 'none' }}>
           {!isLoggedIn ? (
             <Stack.Screen name="Login">
-              {(props) => <LoginScreen {...props} onLogin={(a, m) => { if (a) setAccent(a); if (m) setMode(m as ThemeMode); setIsLoggedIn(true); }} savedAccent={savedAccent} savedMode={savedMode} />}
+              {(props) => <LoginScreen {...props} onLogin={(a, m) => { if (a) setAccent(a); if (m) setMode(m as ThemeMode); setIsLoggedIn(true); }} savedAccent={savedAccent} savedMode={savedMode} initialPendingEmail={pendingVerificationEmail} />}
             </Stack.Screen>
           ) : (
             <Stack.Screen name="Dashboard">

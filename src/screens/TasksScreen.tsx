@@ -66,9 +66,8 @@ const fmtEstimate = (totalMinutes: number): string => {
 };
 
 const getDaysLeft = (dueDate: string) => {
-  const due = new Date(dueDate);
-  const today = new Date();
-  return Math.ceil((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  const due = new Date(dueDate + 'T23:59:59');
+  return Math.ceil((due.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
 };
 
 // ── Schedule scanning helpers ─────────────────────────────────────────────────
@@ -473,7 +472,13 @@ const TasksScreen = () => {
     setTaskFiles(prev => prev.filter((_, i) => i !== index));
   };
 
+  const SAFE_URI = /^(data:|blob:|https?:\/\/|file:\/\/|content:\/\/)/i;
+
   const openFile = (file: TaskFile) => {
+    if (!SAFE_URI.test(file.uri)) {
+      showAlert('שגיאה', 'לא ניתן לפתוח קובץ זה');
+      return;
+    }
     if (Platform.OS === 'web') {
       const a = (document as any).createElement('a');
       a.href = file.uri;
@@ -515,6 +520,7 @@ const TasksScreen = () => {
       updatedTasks = [...tasks, { id: genId(), ...taskData, completed: false }];
     }
 
+    const prevTasks = tasks;
     setTasks(updatedTasks);
     setSaving(true);
     try {
@@ -523,6 +529,7 @@ const TasksScreen = () => {
       closeModal();
       showAlert('הצלחה', isEdit ? 'המטלה עודכנה בהצלחה' : 'המטלה נשמרה בהצלחה');
     } catch (e) {
+      setTasks(prevTasks);
       showAlert('שגיאה', 'שמירת המטלה נכשלה. בדוק/י את החיבור לאינטרנט ונסה/י שוב.');
     } finally {
       setSaving(false);
@@ -530,17 +537,19 @@ const TasksScreen = () => {
   };
 
   const handleToggleTask = async (id: number) => {
+    const prevTasks = tasks;
     const updatedTasks = tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t);
     setTasks(updatedTasks);
-    try { await saveField('tasks', updatedTasks); } catch { }
+    try { await saveField('tasks', updatedTasks); } catch { setTasks(prevTasks); }
   };
 
   const handleDeleteTask = (id: number) => {
     Vibration.vibrate(40);
     showDestructiveConfirm('מחק מטלה', 'האם את/ה בטוח/ה שברצונך למחוק את המטלה?', 'מחק', async () => {
+      const prevTasks = tasks;
       const updatedTasks = tasks.filter(t => t.id !== id);
       setTasks(updatedTasks);
-      try { await saveField('tasks', updatedTasks); } catch { }
+      try { await saveField('tasks', updatedTasks); } catch { setTasks(prevTasks); }
     });
   };
 

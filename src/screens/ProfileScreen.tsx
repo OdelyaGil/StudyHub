@@ -18,6 +18,7 @@ import { useTheme } from '../context/ThemeContext';
 import { ThemeMode } from '../context/ThemeContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
+import { validatePassword } from '../utils/helpers';
 
 const GRADIENTS: { name: string; colors: [string, string] }[] = [
   { name: 'MIDNIGHT OCEAN', colors: ['#1E0F75', '#3785D8'] },
@@ -239,8 +240,9 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
   };
 
   const handleChangePassword = async () => {
-    if (currentPass.length < 6) return showAlert('שגיאה', 'הסיסמה הנוכחית קצרה מדי');
-    if (newPass.length < 8)     return showAlert('שגיאה', 'הסיסמה החדשה חייבת להכיל לפחות 8 תווים');
+    if (currentPass.length < 8) return showAlert('שגיאה', 'הסיסמה הנוכחית קצרה מדי');
+    const pwErr = validatePassword(newPass);
+    if (pwErr) return showAlert('סיסמה חלשה', pwErr);
     if (newPass !== confirmPass) return showAlert('שגיאה', 'הסיסמאות אינן תואמות');
     const user = auth.currentUser;
     if (!user || !user.email) return;
@@ -287,18 +289,34 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
     const user = auth.currentUser;
     if (!user || !user.email) return;
     setDeleteLoading(true);
+
+    // Phase 1: re-authenticate
     try {
       await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, deletePassword));
+    } catch (e: any) {
+      setDeleteLoading(false);
+      if (e?.code === 'auth/wrong-password' || e?.code === 'auth/invalid-credential')
+        return showAlert('שגיאה', 'הסיסמה שגויה');
+      return showAlert('שגיאה', 'האימות נכשל. אנא נסה/י שוב.');
+    }
+
+    // Phase 2: delete Firestore data — must succeed before touching the auth account
+    try {
       await deleteAllUserStoreData(user.uid);
       await deleteDoc(doc(db, 'users', user.uid));
+    } catch {
+      setDeleteLoading(false);
+      return showAlert('שגיאה', 'מחיקת הנתונים נכשלה. החשבון לא נמחק. אנא נסה/י שוב.');
+    }
+
+    // Phase 3: delete the auth account
+    try {
       await deleteUser(user);
       onLogout();
-    } catch (e: any) {
-      if (e?.code === 'auth/wrong-password' || e?.code === 'auth/invalid-credential')
-        showAlert('שגיאה', 'הסיסמה שגויה');
-      else
-        showAlert('שגיאה', 'מחיקת החשבון נכשלה. אנא נסה/י שוב.');
-    } finally { setDeleteLoading(false); }
+    } catch {
+      setDeleteLoading(false);
+      showAlert('שגיאה', 'נתוניך נמחקו אך החשבון לא הוסר. אנא פנה/י לתמיכה.');
+    }
   };
 
   const initials = userName

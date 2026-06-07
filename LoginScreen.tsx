@@ -17,6 +17,7 @@ import {
 import { doc, setDoc } from 'firebase/firestore';
 import { auth, db } from './src/config/firebase';
 import { useCustomAlert } from './src/hooks/useCustomAlert';
+import { validatePassword } from './src/utils/helpers';
 
 const DEFAULT_ACCENT = '#E0659A';
 const DEFAULT_GRAD: [string, string] = ['#E8659A', '#F4A0C0'];
@@ -24,7 +25,7 @@ const NEW_USER_ACCENT    = '#ADC6E5';
 const NEW_USER_MODE      = 'light';
 const VERIFY_TIMEOUT_MS  = 10 * 60 * 1000; // 10 minutes
 
-const LoginScreen = ({ onLogin, savedAccent, savedMode }: { navigation: any; onLogin: (accent?: string, mode?: string) => void; savedAccent?: string; savedMode?: string }) => {
+const LoginScreen = ({ onLogin, savedAccent, savedMode, initialPendingEmail }: { navigation: any; onLogin: (accent?: string, mode?: string) => void; savedAccent?: string; savedMode?: string; initialPendingEmail?: string }) => {
   const isGrad  = savedAccent?.startsWith('gradient:');
   const gradArr = isGrad ? savedAccent!.replace('gradient:', '').split(',') as [string, string] : null;
   const ACCENT  = gradArr ? gradArr[0] : (savedAccent ?? DEFAULT_ACCENT);
@@ -80,11 +81,23 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode }: { navigation: any; onL
       const user = auth.currentUser;
       if (user) {
         user.reload()
-          .then(() => { if (auth.currentUser?.emailVerified) setEmailJustVerified(true); })
+          .then(() => {
+            if (auth.currentUser?.emailVerified) {
+              setEmailJustVerified(true);
+              onLogin();
+            }
+          })
           .catch(() => {});
       }
     }
   }, []);
+
+  useEffect(() => {
+    if (initialPendingEmail) {
+      setPendingEmail(initialPendingEmail);
+      setWaitingVerification(true);
+    }
+  }, [initialPendingEmail]);
 
   useEffect(() => {
     if (!waitingVerification) return;
@@ -108,13 +121,6 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode }: { navigation: any; onL
   }, [waitingVerification]);
 
   const validateEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
-
-  const validatePassword = (p: string): string | null => {
-    if (p.length < 8)                  return 'הסיסמה חייבת להכיל לפחות 8 תווים';
-    if (!/[A-Z]/.test(p))              return 'הסיסמה חייבת להכיל לפחות אות גדולה אחת (A–Z)';
-    if (/[֐-׿יִ-ﭏ]/.test(p))         return 'הסיסמה יכולה להכיל תווים לועזיים בלבד';
-    return null;
-  };
 
   const handleLogin = async () => {
     if (!validateEmail(email)) return showAlert('שגיאה', 'אנא הזן/י כתובת דוא"ל תקנית');
@@ -193,7 +199,7 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode }: { navigation: any; onL
     if (!user) return;
     try {
       await sendEmailVerification(user, {
-        url: typeof window !== 'undefined' ? window.location.origin : '',
+        url: typeof window !== 'undefined' ? `${window.location.origin}?emailVerified=1` : '',
         handleCodeInApp: false,
       });
       showAlert('נשלח!', 'מייל אימות נוסף נשלח לתיבת הדואר שלך.');
@@ -290,7 +296,7 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode }: { navigation: any; onL
           המייל אומת בהצלחה!
         </Text>
         <Text style={{ color: SUB, fontSize: 14, textAlign: 'center', lineHeight: 22 }}>
-          כתובת המייל שלך אומתה.{'\n'}ניתן כעת להיכנס למערכת.
+          כתובת המייל שלך אומתה.{'\n'}נכנס/ת למערכת...
         </Text>
       </View>
     );

@@ -225,13 +225,17 @@ const GradesScreen = ({ onClose }: { onClose?: () => void }) => {
       ? grades.map((g) => g.id === editingId ? gradeObj : g)
       : [...grades, gradeObj];
 
+    const prevGrades = grades;
     setGrades(updated);
     setSaving(true);
     try {
       await saveField('grades', updated);
       resetForm();
       setModalVisible(false);
-    } catch { showAlert('שגיאה', 'שמירת הציון נכשלה. בדוק/י את החיבור לאינטרנט ונסה/י שוב.'); }
+    } catch {
+      setGrades(prevGrades);
+      showAlert('שגיאה', 'שמירת הציון נכשלה. בדוק/י את החיבור לאינטרנט ונסה/י שוב.');
+    }
     finally { setSaving(false); }
   };
 
@@ -259,9 +263,10 @@ const GradesScreen = ({ onClose }: { onClose?: () => void }) => {
   const handleDeleteGrade = (id: number) => {
     Vibration.vibrate(40);
     showDestructiveConfirm('מחק ציון', 'האם את/ה בטוח/ה שברצונך למחוק את הציון?', 'מחק', async () => {
+      const prevGrades = grades;
       const updated = grades.filter((g) => g.id !== id);
       setGrades(updated);
-      await saveField('grades', updated);
+      try { await saveField('grades', updated); } catch { setGrades(prevGrades); }
     });
   };
 
