@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   View, Text, TextInput, Pressable, StyleSheet, ScrollView,
   ActivityIndicator, Modal, KeyboardAvoidingView, Platform,
@@ -59,9 +59,11 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode, initialPendingEmail }: {
   const [showRegister, setShowRegister] = useState(false);
   const [regName, setRegName]           = useState('');
   const [regEmail, setRegEmail]         = useState('');
-  const [regPassword, setRegPassword]   = useState('');
-  const [regConfirm, setRegConfirm]     = useState('');
-  const [regLoading, setRegLoading]     = useState(false);
+  const [regPassword, setRegPassword]         = useState('');
+  const [regConfirm, setRegConfirm]           = useState('');
+  const [showRegPassword, setShowRegPassword] = useState(false);
+  const [showRegConfirm, setShowRegConfirm]   = useState(false);
+  const [regLoading, setRegLoading]           = useState(false);
 
   const [showForgot, setShowForgot]       = useState(false);
   const [forgotEmail, setForgotEmail]     = useState('');
@@ -234,7 +236,7 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode, initialPendingEmail }: {
     setForgotEmail('');
   };
 
-  const s = StyleSheet.create({
+  const s = useMemo(() => StyleSheet.create({
     container:     { flex: 1, backgroundColor: BG },
     scrollContent: { flexGrow: 1, alignItems: 'center', paddingHorizontal: 32, paddingTop: 64, paddingBottom: 48 },
     logoRing: {
@@ -285,8 +287,17 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode, initialPendingEmail }: {
       paddingHorizontal: 15, paddingVertical: 13,
       fontSize: 14, backgroundColor: BG, marginBottom: 18, color: TEXT, textAlign: 'right',
     },
+    regPasswordContainer: {
+      flexDirection: 'row', alignItems: 'center',
+      borderWidth: 1, borderColor: BORDER, borderRadius: 12,
+      backgroundColor: BG, marginBottom: 18,
+    },
+    regPasswordInput: {
+      flex: 1, paddingHorizontal: 15, paddingVertical: 13,
+      fontSize: 14, color: TEXT, textAlign: 'right',
+    },
     forgotHint: { fontSize: 13, color: SUB, marginBottom: 20, lineHeight: 20, textAlign: 'right' },
-  });
+  }), [savedAccent, savedMode]);
 
   if (emailJustVerified) {
     return (
@@ -423,23 +434,40 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode, initialPendingEmail }: {
               </View>
               <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
                 {[
-                  { label: 'שם מלא',      ph: 'שם פרטי ומשפחה',           val: regName,     set: setRegName,     kb: 'default' as const, sec: false },
-                  { label: 'דוא"ל',       ph: 'student@university.ac.il', val: regEmail,    set: setRegEmail,    kb: 'email-address' as const, sec: false },
-                  { label: 'סיסמה',       ph: 'לפחות 8 תווים, אות גדולה', val: regPassword, set: setRegPassword, kb: 'default' as const, sec: true  },
-                  { label: 'אימות סיסמה', ph: 'הזן/י סיסמה שנית',         val: regConfirm,  set: setRegConfirm,  kb: 'default' as const, sec: true  },
+                  { label: 'שם מלא',      ph: 'שם פרטי ומשפחה',           val: regName,     set: setRegName,     kb: 'default' as const,       sec: false, show: false,           setShow: undefined as any },
+                  { label: 'דוא"ל',       ph: 'student@university.ac.il', val: regEmail,    set: setRegEmail,    kb: 'email-address' as const, sec: false, show: false,           setShow: undefined as any },
+                  { label: 'סיסמה',       ph: 'לפחות 8 תווים, אות גדולה', val: regPassword, set: setRegPassword, kb: 'default' as const,       sec: true,  show: showRegPassword, setShow: setShowRegPassword },
+                  { label: 'אימות סיסמה', ph: 'הזן/י סיסמה שנית',         val: regConfirm,  set: setRegConfirm,  kb: 'default' as const,       sec: true,  show: showRegConfirm,  setShow: setShowRegConfirm  },
                 ].map(f => (
                   <View key={f.label}>
                     <Text style={s.regLabel}>{f.label}</Text>
-                    <TextInput
-                      style={s.regInput}
-                      placeholder={f.ph}
-                      placeholderTextColor={SUB}
-                      value={f.val}
-                      onChangeText={f.set}
-                      keyboardType={f.kb}
-                      autoCapitalize="none"
-                      secureTextEntry={f.sec}
-                    />
+                    {f.sec ? (
+                      <View style={s.regPasswordContainer}>
+                        <TextInput
+                          style={s.regPasswordInput}
+                          placeholder={f.ph}
+                          placeholderTextColor={SUB}
+                          value={f.val}
+                          onChangeText={f.set}
+                          keyboardType={f.kb}
+                          autoCapitalize="none"
+                          secureTextEntry={!f.show}
+                        />
+                        <Pressable onPress={() => f.setShow(!f.show)} style={s.eyeBtn}>
+                          <MaterialCommunityIcons name={f.show ? 'eye' : 'eye-off'} size={20} color={SUB} />
+                        </Pressable>
+                      </View>
+                    ) : (
+                      <TextInput
+                        style={s.regInput}
+                        placeholder={f.ph}
+                        placeholderTextColor={SUB}
+                        value={f.val}
+                        onChangeText={f.set}
+                        keyboardType={f.kb}
+                        autoCapitalize="none"
+                      />
+                    )}
                   </View>
                 ))}
                 <Pressable

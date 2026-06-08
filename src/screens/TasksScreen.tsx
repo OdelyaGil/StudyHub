@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -154,7 +154,7 @@ interface TaskItemProps {
   onFileOpen: (file: TaskFile) => void;
 }
 
-const TaskItem: React.FC<TaskItemProps> = ({ item, onToggle, onDelete, onEdit, onFileOpen }) => {
+const TaskItem: React.FC<TaskItemProps> = React.memo(({ item, onToggle, onDelete, onEdit, onFileOpen }) => {
   const themeObj = useTheme();
   const theme    = themeObj.accent;
   const surface  = themeObj.surface;
@@ -257,7 +257,7 @@ const TaskItem: React.FC<TaskItemProps> = ({ item, onToggle, onDelete, onEdit, o
       {card}
     </Swipeable>
   );
-};
+});
 
 // ── TasksScreen ───────────────────────────────────────────────────────────────
 const TasksScreen = () => {
@@ -406,7 +406,7 @@ const TasksScreen = () => {
     setTaskFiles([]);
   };
 
-  const openEditModal = (task: Task) => {
+  const openEditModal = useCallback((task: Task) => {
     setEditingTaskId(task.id);
     setTaskName(task.name);
     setTaskCourse(task.course ?? '');
@@ -416,7 +416,7 @@ const TasksScreen = () => {
     setTaskEstimateMinutes((task.estimate ?? 0) % 60);
     setTaskFiles((task as any).files ?? []);
     setModalVisible(true);
-  };
+  }, []);
 
   const closeModal = () => {
     resetForm();
@@ -474,7 +474,7 @@ const TasksScreen = () => {
 
   const SAFE_URI = /^(data:|blob:|https?:\/\/|file:\/\/|content:\/\/)/i;
 
-  const openFile = (file: TaskFile) => {
+  const openFile = useCallback((file: TaskFile) => {
     if (!SAFE_URI.test(file.uri)) {
       showAlert('שגיאה', 'לא ניתן לפתוח קובץ זה');
       return;
@@ -492,7 +492,7 @@ const TasksScreen = () => {
         showAlert('שגיאה', 'לא ניתן לפתוח את הקובץ')
       );
     }
-  };
+  }, [showAlert]);
 
   const handleSaveTask = async () => {
     if (!taskName.trim()) {
@@ -536,14 +536,14 @@ const TasksScreen = () => {
     }
   };
 
-  const handleToggleTask = async (id: number) => {
+  const handleToggleTask = useCallback(async (id: number) => {
     const prevTasks = tasks;
     const updatedTasks = tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t);
     setTasks(updatedTasks);
     try { await saveField('tasks', updatedTasks); } catch { setTasks(prevTasks); }
-  };
+  }, [tasks]);
 
-  const handleDeleteTask = (id: number) => {
+  const handleDeleteTask = useCallback((id: number) => {
     Vibration.vibrate(40);
     showDestructiveConfirm('מחק מטלה', 'האם את/ה בטוח/ה שברצונך למחוק את המטלה?', 'מחק', async () => {
       const prevTasks = tasks;
@@ -551,7 +551,7 @@ const TasksScreen = () => {
       setTasks(updatedTasks);
       try { await saveField('tasks', updatedTasks); } catch { setTasks(prevTasks); }
     });
-  };
+  }, [tasks, showDestructiveConfirm]);
 
   // Sort: incomplete first → priority → due date; completed sink to bottom
   const sortedTasks = [...tasks].sort((a, b) => {

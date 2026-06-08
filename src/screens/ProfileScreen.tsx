@@ -276,12 +276,8 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
   };
 
   const handleDeleteAccount = () => {
-    showDestructiveConfirm(
-      'מחיקת חשבון',
-      'פעולה זו תמחק את החשבון שלך לצמיתות. להמשיך?',
-      'מחק',
-      () => { setDeletePassword(''); setShowDeleteModal(true); },
-    );
+    setDeletePassword('');
+    setShowDeleteModal(true);
   };
 
   const confirmDeleteAccount = async () => {
@@ -568,19 +564,25 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
 
       </ScrollView>
 
-      {/* Delete account — re-auth confirmation modal */}
+      {/* Delete account — single modal with warning + password */}
       <Modal visible={showDeleteModal} animationType="slide" transparent>
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <View style={s.modalOverlay}>
             <View style={[s.modalCard, { backgroundColor: theme.mode === 'dark' ? '#111122' : '#fff', borderColor: theme.border }]}>
               <View style={s.modalHeader}>
-                <Text style={[s.modalTitle, { color: theme.text }]}>אימות זהות</Text>
+                <Text style={[s.modalTitle, { color: '#ff4757' }]}>מחיקת חשבון</Text>
                 <Pressable onPress={() => { setShowDeleteModal(false); setDeletePassword(''); }}>
                   <MaterialCommunityIcons name="close" size={24} color={theme.textSub} />
                 </Pressable>
               </View>
-              <Text style={[s.fieldLabel, { color: theme.textSub, marginBottom: 16, lineHeight: 20 }]}>
-                כדי למחוק את החשבון לצמיתות, אנא הזן/י את הסיסמה הנוכחית שלך:
+              <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, backgroundColor: '#fff1f2', borderRadius: 10, padding: 12, marginBottom: 16 }}>
+                <MaterialCommunityIcons name="alert-circle-outline" size={18} color="#ff4757" style={{ marginTop: 1 }} />
+                <Text style={{ flex: 1, fontSize: 13, color: '#ff4757', lineHeight: 20, textAlign: 'right' }}>
+                  פעולה זו תמחק את כל הנתונים שלך לצמיתות ולא ניתן לשחזרם.
+                </Text>
+              </View>
+              <Text style={[s.fieldLabel, { color: theme.textSub, marginBottom: 8 }]}>
+                הזן/י את הסיסמה הנוכחית לאישור:
               </Text>
               <Text style={[s.fieldLabel, { color: theme.textSub }]}>סיסמה נוכחית</Text>
               <TextInput

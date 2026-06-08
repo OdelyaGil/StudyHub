@@ -1,4 +1,4 @@
-import { doc, getDoc, setDoc, deleteDoc, runTransaction } from 'firebase/firestore';
+import { doc, getDoc, setDoc, deleteDoc, runTransaction, updateDoc, deleteField } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
 
 // These fields grow large over time and are routed to separate subcollection
@@ -52,6 +52,7 @@ export const loadField = async (field: string) => {
     if (oldSnap.exists() && oldSnap.data()[field] != null) {
       const data = oldSnap.data()[field];
       await setDoc(storeRef(uid, field), { value: data });
+      updateDoc(userRef(uid), { [field]: deleteField() }).catch(() => {});
       cacheSet(uid, field, data);
       return data;
     }
