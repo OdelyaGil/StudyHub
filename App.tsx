@@ -3,6 +3,7 @@ import { Platform, View, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from './src/config/firebase';
@@ -95,6 +96,7 @@ export default function App() {
   );
 
   return (
+    <SafeAreaProvider>
     <ErrorBoundary>
     <GestureHandlerRootView style={{ flex: 1 }}>
       <NavigationContainer>
@@ -121,5 +123,6 @@ export default function App() {
       </NavigationContainer>
     </GestureHandlerRootView>
     </ErrorBoundary>
+    </SafeAreaProvider>
   );
 }

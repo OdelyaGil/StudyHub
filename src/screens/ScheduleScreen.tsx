@@ -901,21 +901,11 @@ const ScheduleScreen = () => {
             </View>
           </View>
         </KeyboardAvoidingView>
-      </Modal>
 
-      {/* ─── Native date/time picker ──────────────────────────────────────── */}
-      {dtPickerTarget !== null && Platform.OS === 'android' && (
-        <DateTimePicker
-          value={dtPickerTempDate}
-          mode={dtPickerMode(dtPickerTarget)}
-          display="default"
-          onChange={onDtPickerChange}
-          minimumDate={(dtPickerTarget === 'recurrenceEnd' || dtPickerTarget === 'endDate') && isValidDate(eventDate) ? localDate(eventDate) : undefined}
-        />
-      )}
-      {dtPickerTarget !== null && Platform.OS === 'ios' && (
-        <Modal visible animationType="slide" transparent>
-          <TouchableOpacity style={styles.dtPickerOverlay} activeOpacity={1} onPress={cancelDtPicker}>
+        {/* iOS date picker — absolute View, no nested Modal (iOS nested-Modal bug workaround) */}
+        {dtPickerTarget !== null && Platform.OS === 'ios' && (
+          <>
+            <TouchableOpacity style={styles.dtPickerBackdrop} activeOpacity={1} onPress={cancelDtPicker} />
             <View style={styles.dtPickerSheet} onStartShouldSetResponder={() => true}>
               <View style={styles.dtPickerHeader}>
                 <TouchableOpacity onPress={cancelDtPicker} style={styles.dtPickerHeaderBtn}>
@@ -935,8 +925,19 @@ const ScheduleScreen = () => {
                 style={styles.dtPickerControl}
               />
             </View>
-          </TouchableOpacity>
-        </Modal>
+          </>
+        )}
+      </Modal>
+
+      {/* Android date/time picker — system dialog, no nesting needed */}
+      {dtPickerTarget !== null && Platform.OS === 'android' && (
+        <DateTimePicker
+          value={dtPickerTempDate}
+          mode={dtPickerMode(dtPickerTarget)}
+          display="default"
+          onChange={onDtPickerChange}
+          minimumDate={(dtPickerTarget === 'recurrenceEnd' || dtPickerTarget === 'endDate') && isValidDate(eventDate) ? localDate(eventDate) : undefined}
+        />
       )}
 
       {alertNode}
@@ -1078,9 +1079,9 @@ const styles = StyleSheet.create({
   webTimeLabel:      { fontSize: 11, fontWeight: '600', flexShrink: 0 },
   webTimeDivider:    { width: 1, height: 44, marginHorizontal: 12 },
 
-  // iOS date picker sheet
-  dtPickerOverlay:    { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
-  dtPickerSheet:      { backgroundColor: '#fff', borderTopLeftRadius: 16, borderTopRightRadius: 16, paddingBottom: 20 },
+  // iOS date picker sheet — absolute positioned inside form Modal (no nested Modal)
+  dtPickerBackdrop:   { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.4)' },
+  dtPickerSheet:      { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#fff', borderTopLeftRadius: 16, borderTopRightRadius: 16, paddingBottom: 20 },
   dtPickerHeader:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#eee' },
   dtPickerHeaderBtn:  { minWidth: 60, padding: 4 },
   dtPickerTitle:      { fontSize: 15, fontWeight: '700' },

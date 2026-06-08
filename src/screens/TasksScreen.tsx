@@ -805,68 +805,11 @@ const TasksScreen = () => {
           </View>
         </View>
         </KeyboardAvoidingView>
-      </Modal>
-      {/* Slot time-picker modal */}
-      {pickerSlot && (() => {
-        const estimateMins = taskEstimateHours * 60 + taskEstimateMinutes || 60;
-        const d            = new Date(pickerSlot.iso + 'T12:00:00');
-        const dayName      = HEBREW_DAYS[d.getDay()];
-        const dateFmt      = pickerSlot.iso.split('-').reverse().join('/');
-        const endPreview   = Math.min(pickerStartMin + estimateMins, pickerSlot.endMin);
-        // 30-min steps that leave room for the full duration
-        const options: number[] = [];
-        for (let t = pickerSlot.startMin; t + estimateMins <= pickerSlot.endMin; t += 30) {
-          options.push(t);
-        }
-        if (options.length === 0) options.push(pickerSlot.startMin);
-        return (
-          <Modal visible animationType="fade" transparent onRequestClose={() => setPickerSlot(null)}>
-            <View style={styles.slotPickerOverlay}>
-              <View style={[styles.slotPickerPanel, { backgroundColor: tabBg, borderColor: theme + '55' }]}>
-                <Text style={[styles.slotPickerTitle, { color: textColor }]}>{dayName}, {dateFmt}</Text>
-                <Text style={[styles.slotPickerSub, { color: textSub }]}>
-                  חלון פנוי: {minToTime(pickerSlot.startMin)}–{minToTime(pickerSlot.endMin)}
-                </Text>
 
-                <Text style={[styles.slotPickerLabel, { color: textSub }]}>בחר/י שעת התחלה:</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.timeOptionsScroll}>
-                  {options.map(t => {
-                    const selected = pickerStartMin === t;
-                    return (
-                      <TouchableOpacity
-                        key={t}
-                        onPress={() => setPickerStartMin(t)}
-                        style={[styles.timeOptionBtn, { borderColor: theme }, selected && { backgroundColor: theme }]}
-                      >
-                        <Text style={[styles.timeOptionText, { color: selected ? '#fff' : theme }]}>{minToTime(t)}</Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </ScrollView>
-
-                <Text style={[styles.slotPickerEndPreview, { color: textSub }]}>
-                  סיום משוער: <Text style={{ color: textColor, fontWeight: '700' }}>{minToTime(endPreview)}</Text>
-                </Text>
-
-                <View style={styles.slotPickerActions}>
-                  <TouchableOpacity onPress={() => setPickerSlot(null)} style={[styles.slotPickerCancelBtn, { borderColor: borderClr }]}>
-                    <Text style={[styles.slotPickerCancelText, { color: textSub }]}>ביטול</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={confirmAddSlot} style={[styles.slotPickerConfirmBtn, { backgroundColor: theme }]}>
-                    <MaterialCommunityIcons name="calendar-plus" size={16} color="#fff" />
-                    <Text style={styles.slotPickerConfirmText}>הוסף ליומן</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
-          </Modal>
-        );
-      })()}
-
-      {/* iOS DateTimePicker bottom sheet */}
-      {dtPickerOpen && Platform.OS === 'ios' && (
-        <Modal visible animationType="slide" transparent>
-          <TouchableOpacity style={styles.dtPickerOverlay} activeOpacity={1} onPress={() => setDtPickerOpen(false)}>
+        {/* iOS date picker — absolute View, no nested Modal (iOS nested-Modal bug workaround) */}
+        {dtPickerOpen && Platform.OS === 'ios' && (
+          <>
+            <TouchableOpacity style={styles.dtPickerBackdrop} activeOpacity={1} onPress={() => setDtPickerOpen(false)} />
             <View style={styles.dtPickerSheet} onStartShouldSetResponder={() => true}>
               <View style={styles.dtPickerHeader}>
                 <TouchableOpacity onPress={() => setDtPickerOpen(false)} style={styles.dtPickerHeaderBtn}>
@@ -891,11 +834,68 @@ const TasksScreen = () => {
                 style={styles.dtPickerControl}
               />
             </View>
-          </TouchableOpacity>
-        </Modal>
-      )}
+          </>
+        )}
 
-      {/* Android DateTimePicker */}
+        {/* Slot time-picker — absolute Views inside this Modal (no nested Modal) */}
+        {pickerSlot && (() => {
+          const estimateMins = taskEstimateHours * 60 + taskEstimateMinutes || 60;
+          const d            = new Date(pickerSlot.iso + 'T12:00:00');
+          const dayName      = HEBREW_DAYS[d.getDay()];
+          const dateFmt      = pickerSlot.iso.split('-').reverse().join('/');
+          const endPreview   = Math.min(pickerStartMin + estimateMins, pickerSlot.endMin);
+          const options: number[] = [];
+          for (let t = pickerSlot.startMin; t + estimateMins <= pickerSlot.endMin; t += 30) {
+            options.push(t);
+          }
+          if (options.length === 0) options.push(pickerSlot.startMin);
+          return (
+            <>
+              <TouchableOpacity style={styles.slotPickerBackdrop} activeOpacity={1} onPress={() => setPickerSlot(null)} />
+              <View pointerEvents="box-none" style={styles.slotPickerCentered}>
+                <View style={[styles.slotPickerPanel, { backgroundColor: tabBg, borderColor: theme + '55' }]}>
+                  <Text style={[styles.slotPickerTitle, { color: textColor }]}>{dayName}, {dateFmt}</Text>
+                  <Text style={[styles.slotPickerSub, { color: textSub }]}>
+                    חלון פנוי: {minToTime(pickerSlot.startMin)}–{minToTime(pickerSlot.endMin)}
+                  </Text>
+
+                  <Text style={[styles.slotPickerLabel, { color: textSub }]}>בחר/י שעת התחלה:</Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.timeOptionsScroll}>
+                    {options.map(t => {
+                      const selected = pickerStartMin === t;
+                      return (
+                        <TouchableOpacity
+                          key={t}
+                          onPress={() => setPickerStartMin(t)}
+                          style={[styles.timeOptionBtn, { borderColor: theme }, selected && { backgroundColor: theme }]}
+                        >
+                          <Text style={[styles.timeOptionText, { color: selected ? '#fff' : theme }]}>{minToTime(t)}</Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </ScrollView>
+
+                  <Text style={[styles.slotPickerEndPreview, { color: textSub }]}>
+                    סיום משוער: <Text style={{ color: textColor, fontWeight: '700' }}>{minToTime(endPreview)}</Text>
+                  </Text>
+
+                  <View style={styles.slotPickerActions}>
+                    <TouchableOpacity onPress={() => setPickerSlot(null)} style={[styles.slotPickerCancelBtn, { borderColor: borderClr }]}>
+                      <Text style={[styles.slotPickerCancelText, { color: textSub }]}>ביטול</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={confirmAddSlot} style={[styles.slotPickerConfirmBtn, { backgroundColor: theme }]}>
+                      <MaterialCommunityIcons name="calendar-plus" size={16} color="#fff" />
+                      <Text style={styles.slotPickerConfirmText}>הוסף ליומן</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            </>
+          );
+        })()}
+      </Modal>
+
+      {/* Android DateTimePicker — system dialog, no nesting needed */}
       {dtPickerOpen && Platform.OS === 'android' && (
         <DateTimePicker
           value={dtPickerTemp}
@@ -1041,8 +1041,8 @@ const styles = StyleSheet.create({
   estimateInput: { borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 10, paddingHorizontal: 15, paddingVertical: 12, fontSize: 16, backgroundColor: '#f5f5f5', textAlign: 'center', color: '#333' },
 
   // DateTimePicker bottom sheet
-  dtPickerOverlay:    { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
-  dtPickerSheet:      { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingBottom: 20 },
+  dtPickerBackdrop:   { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.4)' },
+  dtPickerSheet:      { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingBottom: 20 },
   dtPickerHeader:     { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
   dtPickerHeaderBtn:  { padding: 4, minWidth: 60 },
   dtPickerTitle:      { fontSize: 15, fontWeight: '700', color: '#333' },
@@ -1068,7 +1068,8 @@ const styles = StyleSheet.create({
   noSlotsText:    { fontSize: 13, textAlign: 'right', marginTop: 4 },
 
   // Slot time-picker panel
-  slotPickerOverlay:     { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'center', alignItems: 'center', padding: 24 },
+  slotPickerBackdrop:    { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.55)' },
+  slotPickerCentered:    { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center', padding: 24 },
   slotPickerPanel:       { width: '100%', borderRadius: 18, padding: 20, borderWidth: 1 },
   slotPickerTitle:       { fontSize: 17, fontWeight: '700', textAlign: 'center', marginBottom: 4 },
   slotPickerSub:         { fontSize: 12, textAlign: 'center', marginBottom: 16 },

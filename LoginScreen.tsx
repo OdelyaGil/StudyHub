@@ -22,6 +22,7 @@ import { validatePassword } from './src/utils/helpers';
 
 const DEFAULT_ACCENT = '#E0659A';
 const DEFAULT_GRAD: [string, string] = ['#E8659A', '#F4A0C0'];
+const SKY_FADE:    [string, string] = ['#3785D8', '#E0EEFF'];
 const NEW_USER_ACCENT    = '#ADC6E5';
 const NEW_USER_MODE      = 'light';
 const VERIFY_TIMEOUT_MS  = 10 * 60 * 1000; // 10 minutes
@@ -241,7 +242,7 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode, initialPendingEmail }: {
   };
 
   const s = useMemo(() => StyleSheet.create({
-    container:     { flex: 1, backgroundColor: BG },
+    container:     { flex: 1 },
     scrollContent: { flexGrow: 1, alignItems: 'center', paddingHorizontal: 32, paddingTop: 64, paddingBottom: 48 },
     logoRing: {
       width: 100, height: 100, borderRadius: 50,
@@ -305,7 +306,7 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode, initialPendingEmail }: {
 
   if (emailJustVerified) {
     return (
-      <View style={[s.container, { justifyContent: 'center', alignItems: 'center', padding: 32 }]}>
+      <LinearGradient colors={isDark ? [BG, BG] : SKY_FADE} style={[s.container, { justifyContent: 'center', alignItems: 'center', padding: 32 }]}>
         <MaterialCommunityIcons name="check-circle-outline" size={80} color="#4CAF50" style={{ marginBottom: 24 }} />
         <Text style={{ color: TEXT, fontSize: 22, fontWeight: '700', textAlign: 'center', marginBottom: 16 }}>
           המייל אומת בהצלחה!
@@ -314,13 +315,13 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode, initialPendingEmail }: {
           כתובת המייל שלך אומתה.{'\n\n'}
           ניתן לסגור כרטיסייה זו ולחזור{'\n'}לכרטיסיית ההרשמה הקודמת.
         </Text>
-      </View>
+      </LinearGradient>
     );
   }
 
   if (waitingVerification) {
     return (
-      <View style={[s.container, { justifyContent: 'center', alignItems: 'center', padding: 32 }]}>
+      <LinearGradient colors={isDark ? [BG, BG] : SKY_FADE} style={[s.container, { justifyContent: 'center', alignItems: 'center', padding: 32 }]}>
         <MaterialCommunityIcons name="email-check-outline" size={72} color={ACCENT} style={{ marginBottom: 24 }} />
         <Text style={{ color: TEXT, fontSize: 22, fontWeight: '700', textAlign: 'center', marginBottom: 12 }}>
           אימות מייל
@@ -346,12 +347,12 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode, initialPendingEmail }: {
           <Text style={{ color: SUB, fontSize: 13, textAlign: 'center' }}>חזרה למסך הכניסה</Text>
         </Pressable>
         {alertNode}
-      </View>
+      </LinearGradient>
     );
   }
 
   return (
-    <View style={s.container}>
+    <LinearGradient colors={isDark ? [BG, BG] : SKY_FADE} style={s.container}>
       <ScrollView
         contentContainerStyle={s.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -532,7 +533,7 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode, initialPendingEmail }: {
       </Modal>
 
       {alertNode}
-    </View>
+    </LinearGradient>
   );
 };
 

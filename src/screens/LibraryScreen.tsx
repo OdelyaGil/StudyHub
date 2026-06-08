@@ -3,6 +3,7 @@ import {
   View, Text, StyleSheet, ScrollView,
   TouchableOpacity, Modal, Platform,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import LearningScreen   from './LearningScreen';
@@ -35,8 +36,9 @@ const MODAL_TITLE: Record<string, string> = {
 const ACTIVE_KEYS: ActiveModal[] = ['topics', 'summaries', 'flashcards', 'links', 'quizbank', 'glossary'];
 
 const LibraryScreen = () => {
-  const theme = useTheme();
+  const theme  = useTheme();
   const isDark = theme.mode === 'dark';
+  const insets = useSafeAreaInsets();
   const darkShadow: object = isDark
     ? (Platform.select({ web: { boxShadow: `0 4px 20px ${theme.accent}30, 0 1px 6px rgba(0,0,0,0.5)` } as any, default: { shadowColor: theme.accent, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.18, shadowRadius: 12, elevation: 6 } }) ?? {})
     : {};
@@ -74,7 +76,7 @@ const LibraryScreen = () => {
       {/* Full-screen modal shared by all categories */}
       <Modal visible={modal !== null} animationType="slide">
         <View style={{ flex: 1 }}>
-          <View style={[s.modalBar, { backgroundColor: theme.bg, borderBottomColor: theme.border }]}>
+          <View style={[s.modalBar, { backgroundColor: theme.bg, borderBottomColor: theme.border, paddingTop: insets.top + 10 }]}>
             <TouchableOpacity onPress={() => setModal(null)} style={s.backBtn}>
               <MaterialCommunityIcons name="chevron-right" size={24} color={theme.accent} />
               <Text style={[s.backText, { color: theme.accent }]}>ספריה</Text>

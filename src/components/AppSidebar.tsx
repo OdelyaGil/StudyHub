@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, Platform, Image,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
 import { useCustomAlert } from '../hooks/useCustomAlert';
 
@@ -25,26 +26,33 @@ const SCREEN_TITLE: Record<string, string> = {
 };
 
 interface Props {
-  state:             { routes: { name: string }[]; index: number };
-  navigation:        { navigate: (name: string) => void };
-  userName?:         string;
-  userAvatar?:       string;
-  onLogout?:         () => void;
-  isWide:            boolean;
-  isOpen:            boolean;
-  onOpen:            () => void;
-  onClose:           () => void;
-  isCollapsed?:      boolean;
-  onToggleCollapse?: () => void;
+  state:              { routes: { name: string }[]; index: number };
+  navigation:         { navigate: (name: string) => void };
+  userName?:          string;
+  userAvatar?:        string;
+  onLogout?:          () => void;
+  isWide:             boolean;
+  isOpen:             boolean;
+  onOpen:             () => void;
+  onClose:            () => void;
+  onCollapsedChange?: (collapsed: boolean) => void;
 }
 
 const AppSidebar = ({
   state, navigation, userName, userAvatar, onLogout,
   isWide, isOpen, onOpen, onClose,
-  isCollapsed = false, onToggleCollapse,
+  onCollapsedChange,
 }: Props) => {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  const toggleCollapse = () => {
+    const next = !isCollapsed;
+    setIsCollapsed(next);
+    onCollapsedChange?.(next);
+  };
   const current = state.routes[state.index]?.name ?? 'Home';
   const theme   = useTheme();
+  const insets  = useSafeAreaInsets();
   const { showConfirm, alertNode } = useCustomAlert(theme.accent);
 
   // ── Dynamic tokens based on mode ────────────────────────────────────────────
@@ -74,12 +82,12 @@ const AppSidebar = ({
 
   // ── Collapsed sidebar ───────────────────────────────────────────────────────
   const CollapsedBody = () => (
-    <View style={[st.bodyCollapsed, { backgroundColor: sidebarBg }]}>
+    <View style={[st.bodyCollapsed, { backgroundColor: sidebarBg, paddingTop: insets.top + 12 }]}>
 
       {/* Logo */}
       <TouchableOpacity
         style={[st.iconBtn, neuBtn as any, { backgroundColor: iconBg, marginBottom: 4 }]}
-        onPress={onToggleCollapse}
+        onPress={toggleCollapse}
         activeOpacity={0.8}
       >
         <MaterialCommunityIcons name="school" size={22} color={theme.accent} />
@@ -134,14 +142,14 @@ const AppSidebar = ({
 
   // ── Expanded sidebar ────────────────────────────────────────────────────────
   const ExpandedBody = () => (
-    <View style={[st.body, { backgroundColor: sidebarBg }]}>
+    <View style={[st.body, { backgroundColor: sidebarBg, paddingTop: insets.top + 12 }]}>
 
       {/* Logo row */}
       <View style={st.logoRow}>
         <MaterialCommunityIcons name="school" size={26} color={theme.accent} />
         <Text style={[st.logoText, { color: txtMain }]}>StudyHub</Text>
         <TouchableOpacity
-          onPress={onToggleCollapse}
+          onPress={toggleCollapse}
           style={st.collapseBtn}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
@@ -238,7 +246,7 @@ const AppSidebar = ({
     <>
       <View style={[
         st.topBar,
-        { backgroundColor: sidebarBg, borderBottomColor: divider },
+        { backgroundColor: sidebarBg, borderBottomColor: divider, height: TOP_H + insets.top, paddingTop: insets.top },
         isDark
           ? (Platform.OS === 'web' ? { boxShadow: '0 2px 12px rgba(0,0,0,0.4)' } as any : { shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.35, shadowRadius: 6, elevation: 4 })
           : (Platform.OS === 'web' ? { boxShadow: '0 2px 12px rgba(180,185,210,0.3)' } as any : { shadowColor: '#B0B5CC', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.2, shadowRadius: 6, elevation: 4 }),
@@ -270,7 +278,6 @@ const AppSidebar = ({
 const st = StyleSheet.create({
   bodyCollapsed: {
     flex: 1,
-    paddingTop: Platform.OS === 'ios' ? 50 : 20,
     alignItems: 'center',
     paddingHorizontal: 8,
     gap: 10,
@@ -289,7 +296,6 @@ const st = StyleSheet.create({
 
   body: {
     flex: 1,
-    paddingTop: Platform.OS === 'ios' ? 50 : 20,
   },
 
   logoRow: {

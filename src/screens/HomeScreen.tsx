@@ -3,6 +3,7 @@ import {
   View, Text, StyleSheet, ScrollView,
   TouchableOpacity, RefreshControl, TextInput, Vibration, Platform, AppState,
 } from 'react-native';
+import Svg, { Circle } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { loadField } from '../utils/firestore';
@@ -71,24 +72,58 @@ const formatTime = (secs: number) => {
 };
 
 // ── Soft Ring ─────────────────────────────────────────────────────────────────
+const RING_SIZE   = 82;
+const RING_STROKE = 6;
+const RING_RADIUS = (RING_SIZE - RING_STROKE) / 2;
+const RING_CIRC   = 2 * Math.PI * RING_RADIUS;
+
 const GlowRing = ({ pct, color, label, bgColor }: { pct: number; color: string; label: string; bgColor: string }) => {
+  if (Platform.OS !== 'web') {
+    const offset = RING_CIRC - (Math.min(pct, 100) / 100) * RING_CIRC;
+    return (
+      <View style={s.glowRingWrap}>
+        <View style={{ width: RING_SIZE, height: RING_SIZE, justifyContent: 'center', alignItems: 'center' }}>
+          <View style={{ position: 'absolute', width: RING_SIZE, height: RING_SIZE }}>
+            <Svg width={RING_SIZE} height={RING_SIZE}>
+              <Circle
+                cx={RING_SIZE / 2} cy={RING_SIZE / 2} r={RING_RADIUS}
+                stroke="rgba(255,255,255,0.15)" strokeWidth={RING_STROKE} fill="none"
+              />
+              {pct > 0 && (
+                <Circle
+                  cx={RING_SIZE / 2} cy={RING_SIZE / 2} r={RING_RADIUS}
+                  stroke={color} strokeWidth={RING_STROKE} fill="none"
+                  strokeDasharray={RING_CIRC}
+                  strokeDashoffset={offset}
+                  strokeLinecap="round"
+                  rotation={-90}
+                  origin={`${RING_SIZE / 2}, ${RING_SIZE / 2}`}
+                />
+              )}
+            </Svg>
+          </View>
+          <View style={[s.glowRingInner, { backgroundColor: bgColor }]}>
+            <Text style={[s.glowRingPct, { color }]}>{pct > 0 ? `${pct}%` : '--'}</Text>
+          </View>
+        </View>
+        <Text style={[s.heroMetaLabel, { color: 'rgba(255,255,255,0.45)' }]}>{label}</Text>
+      </View>
+    );
+  }
+
   const deg = Math.max(0, Math.min(360, pct * 3.6));
   return (
     <View style={s.glowRingWrap}>
       <View style={[
         s.glowRingOuter,
-        Platform.OS === 'web'
-          ? {
-              background: `conic-gradient(${color} ${deg}deg, rgba(255,255,255,0.12) ${deg}deg)`,
-              boxShadow: '5px 5px 14px rgba(0,0,0,0.5), -3px -3px 8px rgba(255,255,255,0.07)',
-            } as any
-          : { borderColor: color, borderWidth: 4 }
+        {
+          background: `conic-gradient(${color} ${deg}deg, rgba(255,255,255,0.12) ${deg}deg)`,
+          boxShadow: '5px 5px 14px rgba(0,0,0,0.5), -3px -3px 8px rgba(255,255,255,0.07)',
+        } as any
       ]}>
         <View style={[
           s.glowRingInner,
-          Platform.OS === 'web'
-            ? { background: `radial-gradient(circle, ${bgColor} 30%, ${color}18 100%)` } as any
-            : { backgroundColor: bgColor }
+          { background: `radial-gradient(circle, ${bgColor} 30%, ${color}18 100%)` } as any
         ]}>
           <Text style={[s.glowRingPct, { color }]}>{pct > 0 ? `${pct}%` : '--'}</Text>
         </View>
@@ -247,10 +282,19 @@ const HomeScreen = () => {
 
   const loadAll = async () => {
     try {
-      const [g, t, e] = await Promise.all([
+      const user = auth.currentUser;
+      const [g, t, e, snap] = await Promise.all([
         loadField('grades'), loadField('tasks'), loadField('schedule'),
+        user ? getDoc(doc(db, 'users', user.uid)) : Promise.resolve(null),
       ]);
+      // All setters in one batch — prevents a render with grades but without
+      // requiredCredits that would briefly show avgPct instead of creditsPct.
       setGrades(g ?? []); setTasks(t ?? []); setEvents(e ?? []);
+      if (snap && snap.exists()) {
+        const d = snap.data();
+        setRequiredCredits(+(d.requiredCredits ?? 0));
+        setUserName(d.name || '');
+      }
       // Reschedule at most once every 5 minutes — navigation triggers useFocusEffect
       // on every visit so without throttling every tab-switch rebuilds all notifications.
       if (Date.now() - lastNotifSchedule.current > 5 * 60_000) {
@@ -262,15 +306,6 @@ const HomeScreen = () => {
           const remaining = Math.ceil((timerEndTime.current - Date.now()) / 1000);
           const id = await scheduleTimerNotification(remaining);
           if (id) timerNotifId.current = id;
-        }
-      }
-      const user = auth.currentUser;
-      if (user) {
-        const snap = await getDoc(doc(db, 'users', user.uid));
-        if (snap.exists()) {
-          const d = snap.data();
-          setRequiredCredits(+(d.requiredCredits ?? 0));
-          setUserName(d.name || '');
         }
       }
     } catch { }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Platform, StyleSheet, useWindowDimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { auth, db } from './src/config/firebase';
 import { doc, getDoc } from 'firebase/firestore';
@@ -31,11 +32,12 @@ const DashboardScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout }: Pro
   const theme = buildTheme(mode, accent);
   const { width } = useWindowDimensions();
   const isWide = Platform.OS === 'web' && width >= 720;
+  const { top: safeTop } = useSafeAreaInsets();
 
-  const [userName,     setUserName]     = useState('');
-  const [userAvatar,   setUserAvatar]   = useState<string | null>(null);
-  const [sidebarOpen,      setSidebarOpen]      = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [userName,    setUserName]    = useState('');
+  const [userAvatar,  setUserAvatar]  = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarWidth, setSidebarWidth] = useState(SIDEBAR_W);
 
   useEffect(() => {
     let active = true;
@@ -60,10 +62,9 @@ const DashboardScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout }: Pro
       isOpen={sidebarOpen}
       onOpen={() => setSidebarOpen(true)}
       onClose={() => setSidebarOpen(false)}
-      isCollapsed={sidebarCollapsed}
-      onToggleCollapse={() => setSidebarCollapsed(prev => !prev)}
+      onCollapsedChange={(c) => setSidebarWidth(c ? SIDEBAR_W_COLLAPSED : SIDEBAR_W)}
     />
-  ), [userName, userAvatar, onLogout, isWide, sidebarOpen, sidebarCollapsed]);
+  ), [userName, userAvatar, onLogout, isWide, sidebarOpen]);
 
   return (
     <ThemeContext.Provider value={theme}>
@@ -79,8 +80,8 @@ const DashboardScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout }: Pro
         tabBar={renderTabBar}
         sceneContainerStyle={[
           isWide
-            ? { marginLeft: sidebarCollapsed ? SIDEBAR_W_COLLAPSED : SIDEBAR_W }
-            : { paddingTop: TOP_H },
+            ? { marginLeft: sidebarWidth }
+            : { paddingTop: TOP_H + safeTop },
           { backgroundColor: (theme.accentGradient && theme.mode === 'light') ? 'transparent' : theme.bg },
         ]}
         screenOptions={{ headerShown: false }}
