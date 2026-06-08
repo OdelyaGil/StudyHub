@@ -53,7 +53,7 @@ const LearningScreen = () => {
     try {
       const data = await loadField('topics');
       if (data) setTopics(data);
-    } catch (e) { console.log(e); }
+    } catch { /* silent — stale topics stay until next refresh */ }
   };
 
   const onRefresh = async () => {
@@ -88,7 +88,7 @@ const LearningScreen = () => {
       return { ...t, known: newKnown, needsReview: newKnown ? false : t.needsReview };
     });
     setTopics(updatedTopics);
-    try { await saveField('topics', updatedTopics); } catch (e) { console.log(e); }
+    try { await saveField('topics', updatedTopics); } catch { setTopics(topics); }
   };
 
   const handleToggleReview = async (id: number) => {
@@ -98,7 +98,7 @@ const LearningScreen = () => {
       return { ...t, needsReview: newReview, known: newReview ? false : t.known };
     });
     setTopics(updatedTopics);
-    try { await saveField('topics', updatedTopics); } catch (e) { console.log(e); }
+    try { await saveField('topics', updatedTopics); } catch { setTopics(topics); }
   };
 
   const handleDeleteTopic = async (id: number) => {
@@ -109,7 +109,7 @@ const LearningScreen = () => {
         onPress: async () => {
           const updatedTopics = topics.filter(t => t.id !== id);
           setTopics(updatedTopics);
-          try { await saveField('topics', updatedTopics); } catch (e) { console.log(e); }
+          try { await saveField('topics', updatedTopics); } catch { setTopics(topics); }
         },
       },
     ]);

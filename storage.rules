@@ -1,0 +1,11 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // App stores all user files as base64 in Firestore — Storage bucket is unused.
+    // Deny all reads and writes unconditionally.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

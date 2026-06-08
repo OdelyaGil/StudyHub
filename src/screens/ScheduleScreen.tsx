@@ -209,7 +209,7 @@ const ScheduleScreen = () => {
         }));
         setEvents(parsed);
       }
-    } catch (e) { console.log(e); }
+    } catch { /* silent — UI shows stale data until next mount */ }
   };
 
   const persist = async (updated: CalendarEvent[]) => saveField('schedule', updated);
@@ -387,6 +387,7 @@ const ScheduleScreen = () => {
   // ── Save / delete ─────────────────────────────────────────────────────────
   const handleSave = async () => {
     if (!eventTitle.trim()) { showAlert('שגיאה', 'אנא הזן/י שם לאירוע'); return; }
+    if (eventTitle.trim().length > 200) { showAlert('שגיאה', 'שם האירוע ארוך מדי (מקסימום 200 תווים)'); return; }
     if (!isValidDate(eventDate)) { showAlert('שגיאה', 'תאריך לא תקין'); return; }
     if (eventEndDate && isValidDate(eventEndDate) && eventEndDate < eventDate) {
       showAlert('שגיאה', 'תאריך הסיום לא יכול להיות לפני תאריך ההתחלה'); return;
