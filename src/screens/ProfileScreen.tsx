@@ -191,8 +191,7 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
       await saveField('photoURL', base64);
       setPhotoURL(base64);
       onAvatarChange?.(base64);
-    } catch (e) {
-      console.error('avatar save error:', e);
+    } catch {
       showAlert('שגיאה', 'העלאת התמונה נכשלה');
     } finally { setUploadingPhoto(false); }
   };
@@ -230,7 +229,6 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
       });
       showAlert('נשלח!', 'מייל האימות נשלח שוב לתיבת הדואר שלך.');
     } catch (e: any) {
-      console.error('sendEmailVerification error:', e?.code, e?.message);
       if (e?.code === 'auth/too-many-requests') {
         showAlert('שגיאה', 'כבר נשלח מייל לאחרונה. המתן/י מספר דקות ונסה/י שוב.');
       } else {

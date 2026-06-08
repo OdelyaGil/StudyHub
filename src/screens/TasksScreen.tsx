@@ -335,8 +335,9 @@ const TasksScreen = () => {
         cur.setDate(cur.getDate() + 1);
       }
       setSuggestedSlots(slots.slice(0, 8));
-    } catch (_) {
+    } catch {
       setSuggestedSlots([]);
+      showAlert('שגיאה', 'לא ניתן לטעון את הלוח זמנים. בדוק/י את החיבור לאינטרנט.');
     } finally {
       setLoadingSlots(false);
     }
@@ -435,15 +436,19 @@ const TasksScreen = () => {
       let runningTotal = taskFiles.reduce((s, f) => s + (f.size ?? 0), 0);
 
       for (const asset of result.assets) {
-        if ((asset.size ?? 0) > MAX_FILE) {
+        if (asset.size == null) {
+          showAlert('שגיאה', `לא ניתן לקבוע את גודל הקובץ "${asset.name}". נסה/י קובץ אחר.`);
+          continue;
+        }
+        if (asset.size > MAX_FILE) {
           showAlert('קובץ גדול מדי', `"${asset.name}" גדול מ-100KB ולא ניתן לשמור אותו.\nטיפ: דחוס את הקובץ לפני הצירוף.`);
           continue;
         }
-        if (runningTotal + (asset.size ?? 0) > MAX_TOTAL) {
+        if (runningTotal + asset.size > MAX_TOTAL) {
           showAlert('מגבלת גודל', 'סך הקבצים המצורפים חרג מהמגבלה המותרת (300KB סה"כ).');
           break;
         }
-        runningTotal += (asset.size ?? 0);
+        runningTotal += asset.size;
         if (Platform.OS === 'web') {
           try {
             const res = await fetch(asset.uri);

@@ -198,6 +198,10 @@ const HomeScreen = () => {
   }, [timerRunning]);
 
   useEffect(() => {
+    return () => { if (webTimeout.current) { clearTimeout(webTimeout.current); webTimeout.current = null; } };
+  }, []);
+
+  useEffect(() => {
     if (!timerDone) return;
     timerNotifId.current = null;
     Vibration.vibrate([0, 400, 200, 400, 200, 400]);
