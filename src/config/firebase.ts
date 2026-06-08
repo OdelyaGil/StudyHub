@@ -6,15 +6,14 @@ import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const REQUIRED_ENV = [
-  'EXPO_PUBLIC_FIREBASE_API_KEY',
-  'EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN',
-  'EXPO_PUBLIC_FIREBASE_PROJECT_ID',
-  'EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID',
-  'EXPO_PUBLIC_FIREBASE_APP_ID',
-] as const;
-
-const missing = REQUIRED_ENV.filter(k => !process.env[k]);
+// Metro replaces process.env.EXPO_PUBLIC_* statically at build time — dynamic
+// access via process.env[key] does not work in the browser bundle.
+const missing: string[] = [];
+if (!process.env.EXPO_PUBLIC_FIREBASE_API_KEY)            missing.push('EXPO_PUBLIC_FIREBASE_API_KEY');
+if (!process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN)        missing.push('EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN');
+if (!process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID)         missing.push('EXPO_PUBLIC_FIREBASE_PROJECT_ID');
+if (!process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID) missing.push('EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID');
+if (!process.env.EXPO_PUBLIC_FIREBASE_APP_ID)             missing.push('EXPO_PUBLIC_FIREBASE_APP_ID');
 if (missing.length > 0) {
   throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
 }
