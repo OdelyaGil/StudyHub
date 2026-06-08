@@ -28,7 +28,15 @@ service cloud.firestore {
       // Subcollection: file summaries stored as individual documents (one per file).
       match /fileSummaries/{fileId} {
         allow read, delete: if request.auth != null && request.auth.uid == userId;
-        allow create, update: if request.auth != null && request.auth.uid == userId;
+        allow create, update: if request.auth != null && request.auth.uid == userId
+          && request.resource.data.keys().hasOnly(['id','name','content','type','mimeType','size','createdAt','folderId','downloadURL']);
+      }
+
+      // Subcollection: Drive file content stored as base64 (avoids Storage CORS).
+      match /driveFiles/{fileId} {
+        allow read, delete: if request.auth != null && request.auth.uid == userId;
+        allow create, update: if request.auth != null && request.auth.uid == userId
+          && request.resource.data.keys().hasOnly(['value']);
       }
     }
 

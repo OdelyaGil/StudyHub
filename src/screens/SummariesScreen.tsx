@@ -168,14 +168,18 @@ const SummariesScreen = () => {
   const [delFolderModal,   setDelFolderModal]   = useState(false);
 
   const load = useCallback(async () => {
-    const [sumData, folData, fileSums] = await Promise.all([
-      loadField('summaries'),
-      loadField('summaryFolders'),
-      loadFileSummaries(),
-    ]);
-    const textSums = (Array.isArray(sumData) ? sumData : []).filter((s: any) => s.type !== 'file');
-    setSummaries([...textSums, ...fileSums]);
-    setFolders(Array.isArray(folData) ? folData : []);
+    try {
+      const [sumData, folData, fileSums] = await Promise.all([
+        loadField('summaries'),
+        loadField('summaryFolders'),
+        loadFileSummaries(),
+      ]);
+      const textSums = (Array.isArray(sumData) ? sumData : []).filter((s: any) => s.type !== 'file');
+      setSummaries([...textSums, ...fileSums]);
+      setFolders(Array.isArray(folData) ? folData : []);
+    } catch (e) {
+      console.error('SummariesScreen load:', e);
+    }
   }, []);
 
   useEffect(() => { load(); }, [load]);

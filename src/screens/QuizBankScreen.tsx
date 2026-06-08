@@ -56,12 +56,16 @@ const QuizBankScreen = () => {
   const [delFolderModal,    setDelFolderModal]    = useState(false);
 
   const load = useCallback(async () => {
-    const [qData, fData] = await Promise.all([
-      loadField('quizBank'),
-      loadField('quizBankFolders'),
-    ]);
-    setQuestions(Array.isArray(qData) ? qData : []);
-    setFolders(Array.isArray(fData) ? fData : []);
+    try {
+      const [qData, fData] = await Promise.all([
+        loadField('quizBank'),
+        loadField('quizBankFolders'),
+      ]);
+      setQuestions(Array.isArray(qData) ? qData : []);
+      setFolders(Array.isArray(fData) ? fData : []);
+    } catch (e) {
+      console.error('QuizBankScreen load:', e);
+    }
   }, []);
 
   useEffect(() => { load(); }, [load]);

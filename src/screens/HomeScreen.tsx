@@ -290,7 +290,7 @@ const HomeScreen = () => {
   const urgentTasks  = activeTasks
     .filter(t => { const d = daysUntil(t.dueDate); return d >= 0 && d <= 7; })
     .sort((a, b) => daysUntil(a.dueDate) - daysUntil(b.dueDate));
-  const todayEvents   = events.filter(e => occursOnISO(e, todayISO)).sort((a, b) => a.startTime.localeCompare(b.startTime));
+  const todayEvents   = events.filter(e => occursOnISO(e, todayISO)).sort((a, b) => (a.startTime ?? '').localeCompare(b.startTime ?? ''));
   const nowStr        = `${String(today.getHours()).padStart(2,'0')}:${String(today.getMinutes()).padStart(2,'0')}`;
   const upcomingEvents = todayEvents.filter(ev => (ev.endTime || ev.startTime) >= nowStr);
   const next7Dates    = Array.from({ length: 7 }, (_, i) => { const d = new Date(today); d.setDate(d.getDate() + i + 1); return toISO(d); });

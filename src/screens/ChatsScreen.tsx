@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, Modal, Alert, ActivityIndicator, Platform, Linking,
+  TextInput, Modal, ActivityIndicator, Platform,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
-import { auth, storage } from '../config/firebase';
+import { doc, setDoc, getDoc, deleteDoc } from 'firebase/firestore';
+import { auth, db } from '../config/firebase';
 import { loadField, saveField } from '../utils/firestore';
 import { useTheme } from '../context/ThemeContext';
+import { useCustomAlert } from '../hooks/useCustomAlert';
 
 interface DriveItem {
   id: string;
@@ -52,6 +53,7 @@ const getFileIcon = (mimeType?: string): React.ComponentProps<typeof MaterialCom
 
 const DriveScreen = () => {
   const theme = useTheme();
+  const { showAlert, showDestructiveConfirm, alertNode } = useCustomAlert(theme.accent);
   const [items, setItems]               = useState<DriveItem[]>([]);
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [folderPath, setFolderPath]     = useState<DriveItem[]>([]);
@@ -63,6 +65,7 @@ const DriveScreen = () => {
   const [renameModal, setRenameModal]   = useState(false);
   const [renameTarget, setRenameTarget] = useState<DriveItem | null>(null);
   const [renameName, setRenameName]     = useState('');
+  const [actionItem, setActionItem]     = useState<DriveItem | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -121,57 +124,53 @@ const DriveScreen = () => {
       const result = await DocumentPicker.getDocumentAsync({ copyToCacheDirectory: true });
       if (result.canceled || !result.assets?.length) return;
       const asset = result.assets[0];
+      const uid = auth.currentUser?.uid;
+      if (!uid) { showAlert('שגיאה', 'יש להתחבר מחדש'); return; }
       setUploading(true);
-      const uid    = auth.currentUser?.uid;
       const fileId = Date.now().toString();
-      const response   = await fetch(asset.uri);
-      const blob       = await response.blob();
-      const storageRef = ref(storage, `users/${uid}/drive/${fileId}`);
-      await uploadBytes(storageRef, blob, {
-        contentType: asset.mimeType ?? 'application/octet-stream',
+      // Convert to base64 data URI and store in Firestore (avoids Storage CORS)
+      const response = await fetch(asset.uri);
+      const blob     = await response.blob();
+      const base64   = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload  = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
       });
-      const downloadURL = await getDownloadURL(storageRef);
+      await setDoc(doc(db, 'users', uid, 'driveFiles', fileId), { value: base64 });
       const file: DriveItem = {
         id: fileId,
         name: asset.name,
         type: 'file',
         mimeType: asset.mimeType ?? undefined,
         size: asset.size ?? undefined,
-        downloadURL,
         folderId: currentFolderId,
         createdAt: Date.now(),
       };
       await persist([...items, file]);
     } catch {
-      Alert.alert('שגיאה', 'לא ניתן להעלות את הקובץ');
+      showAlert('שגיאה', 'לא ניתן להעלות את הקובץ');
     } finally {
       setUploading(false);
     }
   };
 
   const deleteItem = (item: DriveItem) => {
-    Alert.alert(
-      'מחיקה',
-      `למחוק את "${item.name}"?${item.type === 'folder' ? '\nכל התוכן בתיקייה יימחק.' : ''}`,
-      [
-        { text: 'ביטול', style: 'cancel' },
-        {
-          text: 'מחק', style: 'destructive',
-          onPress: async () => {
-            const ids     = collectIds(item.id, items);
-            const uid     = auth.currentUser?.uid;
-            const next    = items.filter(i => !ids.has(i.id));
-            for (const id of ids) {
-              const f = items.find(i => i.id === id && i.type === 'file');
-              if (f?.downloadURL) {
-                try { await deleteObject(ref(storage, `users/${uid}/drive/${id}`)); } catch {}
-              }
-            }
-            await persist(next);
-          },
-        },
-      ],
-    );
+    const msg = `למחוק את "${item.name}"?${item.type === 'folder' ? '\nכל התוכן בתיקייה יימחק.' : ''}`;
+    showDestructiveConfirm('מחיקה', msg, 'מחק', async () => {
+      const uid  = auth.currentUser?.uid;
+      if (!uid) return;
+      const ids  = collectIds(item.id, items);
+      const next = items.filter(i => !ids.has(i.id));
+      // Delete Firestore content docs first, then update metadata
+      for (const id of ids) {
+        const f = items.find(i => i.id === id && i.type === 'file');
+        if (f) {
+          try { await deleteDoc(doc(db, 'users', uid, 'driveFiles', id)); } catch {}
+        }
+      }
+      await persist(next);
+    });
   };
 
   const startRename = (item: DriveItem) => {
@@ -189,21 +188,28 @@ const DriveScreen = () => {
     setRenameTarget(null);
   };
 
-  const openFile = (item: DriveItem) => {
-    if (item.downloadURL) {
-      Linking.openURL(item.downloadURL).catch(() =>
-        Alert.alert('שגיאה', 'לא ניתן לפתוח את הקובץ'),
-      );
+  const openFile = async (item: DriveItem) => {
+    const uid = auth.currentUser?.uid;
+    if (!uid) return;
+    try {
+      const snap   = await getDoc(doc(db, 'users', uid, 'driveFiles', item.id));
+      const base64 = snap.data()?.value as string | undefined;
+      if (!base64) { showAlert('שגיאה', 'לא ניתן לפתוח את הקובץ'); return; }
+      if (Platform.OS === 'web') {
+        const [meta, b64] = base64.split(',');
+        const mime  = meta.replace('data:', '').replace(';base64', '');
+        const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+        const blob  = new Blob([bytes], { type: mime });
+        const url   = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        setTimeout(() => URL.revokeObjectURL(url), 30_000);
+      }
+    } catch {
+      showAlert('שגיאה', 'לא ניתן לפתוח את הקובץ');
     }
   };
 
-  const onItemLongPress = (item: DriveItem) => {
-    Alert.alert(item.name, '', [
-      { text: 'שנה שם', onPress: () => startRename(item) },
-      { text: 'מחק', style: 'destructive', onPress: () => deleteItem(item) },
-      { text: 'ביטול', style: 'cancel' },
-    ]);
-  };
+  const onItemLongPress = (item: DriveItem) => setActionItem(item);
 
   return (
     <View style={[s.container, { backgroundColor: theme.bg }]}>
@@ -360,6 +366,30 @@ const DriveScreen = () => {
         </View>
       </Modal>
 
+      {/* Item action sheet (long-press menu) */}
+      <Modal visible={!!actionItem} transparent animationType="fade">
+        <View style={s.overlay}>
+          <View style={[s.panel, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+            <Text style={[s.panelTitle, { color: theme.text }]} numberOfLines={1}>{actionItem?.name}</Text>
+            <TouchableOpacity
+              style={[s.confirmBtn, { backgroundColor: theme.accent, marginBottom: 8 }]}
+              onPress={() => { const t = actionItem; setActionItem(null); if (t) startRename(t); }}
+            >
+              <Text style={{ color: theme.mode === 'dark' ? '#000' : '#fff', fontWeight: '700', textAlign: 'center' }}>שנה שם</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[s.confirmBtn, { backgroundColor: '#EF4444', marginBottom: 8 }]}
+              onPress={() => { const t = actionItem; setActionItem(null); if (t) deleteItem(t); }}
+            >
+              <Text style={{ color: '#fff', fontWeight: '700', textAlign: 'center' }}>מחק</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={s.cancelBtn} onPress={() => setActionItem(null)}>
+              <Text style={{ color: theme.textSub, fontWeight: '600', textAlign: 'center' }}>ביטול</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       {/* Rename modal */}
       <Modal visible={renameModal} transparent animationType="fade">
         <View style={s.overlay}>
@@ -386,6 +416,7 @@ const DriveScreen = () => {
           </View>
         </View>
       </Modal>
+      {alertNode}
     </View>
   );
 };

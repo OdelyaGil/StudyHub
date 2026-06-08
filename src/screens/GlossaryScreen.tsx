@@ -56,12 +56,16 @@ const GlossaryScreen = () => {
   const [delFolderModal,    setDelFolderModal]    = useState(false);
 
   const load = useCallback(async () => {
-    const [tData, fData] = await Promise.all([
-      loadField('glossary'),
-      loadField('glossaryFolders'),
-    ]);
-    setTerms(Array.isArray(tData) ? tData : []);
-    setFolders(Array.isArray(fData) ? fData : []);
+    try {
+      const [tData, fData] = await Promise.all([
+        loadField('glossary'),
+        loadField('glossaryFolders'),
+      ]);
+      setTerms(Array.isArray(tData) ? tData : []);
+      setFolders(Array.isArray(fData) ? fData : []);
+    } catch (e) {
+      console.error('GlossaryScreen load:', e);
+    }
   }, []);
 
   useEffect(() => { load(); }, [load]);
