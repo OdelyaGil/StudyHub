@@ -9,6 +9,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  fetchSignInMethodsForEmail,
   sendPasswordResetEmail,
   sendEmailVerification,
   deleteUser,
@@ -71,7 +72,12 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode, initialPendingEmail }: {
 
   const [waitingVerification, setWaitingVerification] = useState(false);
   const [pendingEmail, setPendingEmail]               = useState('');
-  const [emailJustVerified, setEmailJustVerified]     = useState(false);
+  // Initialise from URL so the first render already shows the success screen
+  // with no intermediate flash of the login form.
+  const [emailJustVerified, setEmailJustVerified] = useState(() => {
+    if (Platform.OS !== 'web' || typeof window === 'undefined') return false;
+    return new URLSearchParams(window.location.search).get('emailVerified') === '1';
+  });
 
   const passwordRef = useRef<TextInputType>(null);
 
@@ -80,17 +86,6 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode, initialPendingEmail }: {
     const params = new URLSearchParams(window.location.search);
     if (params.get('emailVerified') === '1') {
       window.history.replaceState({}, '', window.location.pathname);
-      const user = auth.currentUser;
-      if (user) {
-        user.reload()
-          .then(() => {
-            if (auth.currentUser?.emailVerified) {
-              setEmailJustVerified(true);
-              onLogin();
-            }
-          })
-          .catch(() => {});
-      }
     }
   }, []);
 
@@ -138,11 +133,20 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode, initialPendingEmail }: {
       onLogin();
     } catch (e: any) {
       const code = e?.code ?? '';
-      if (code === 'auth/user-not-found' || code === 'auth/invalid-credential')
-        showAlert('שגיאה', 'כתובת המייל או הסיסמה שגויים');
-      else if (code === 'auth/wrong-password')
-        showAlert('שגיאה', 'הסיסמה שגויה. אנא נסה שוב.');
-      else if (code === 'auth/too-many-requests')
+      if (code === 'auth/user-not-found' || code === 'auth/invalid-credential' || code === 'auth/wrong-password') {
+        // Firebase SDK merges user-not-found and wrong-password into
+        // auth/invalid-credential, so we distinguish them with a secondary check.
+        try {
+          const methods = await fetchSignInMethodsForEmail(auth, email.toLowerCase());
+          if (methods.length === 0) {
+            showAlert('שגיאה', 'כתובת המייל אינה רשומה במערכת');
+          } else {
+            showAlert('שגיאה', 'הסיסמה שגויה. אנא נסה/י שוב.');
+          }
+        } catch {
+          showAlert('שגיאה', 'כתובת המייל או הסיסמה שגויים');
+        }
+      } else if (code === 'auth/too-many-requests')
         showAlert('שגיאה', 'יותר מדי ניסיונות כניסה. אנא המתן/י מספר דקות ונסה/י שוב.');
       else
         showAlert('שגיאה', 'התחברות נכשלה. אנא נסה שוב.');
@@ -303,11 +307,12 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode, initialPendingEmail }: {
     return (
       <View style={[s.container, { justifyContent: 'center', alignItems: 'center', padding: 32 }]}>
         <MaterialCommunityIcons name="check-circle-outline" size={80} color="#4CAF50" style={{ marginBottom: 24 }} />
-        <Text style={{ color: TEXT, fontSize: 22, fontWeight: '700', textAlign: 'center', marginBottom: 12 }}>
+        <Text style={{ color: TEXT, fontSize: 22, fontWeight: '700', textAlign: 'center', marginBottom: 16 }}>
           המייל אומת בהצלחה!
         </Text>
-        <Text style={{ color: SUB, fontSize: 14, textAlign: 'center', lineHeight: 22 }}>
-          כתובת המייל שלך אומתה.{'\n'}נכנס/ת למערכת...
+        <Text style={{ color: SUB, fontSize: 14, textAlign: 'center', lineHeight: 24 }}>
+          כתובת המייל שלך אומתה.{'\n\n'}
+          ניתן לסגור כרטיסייה זו ולחזור{'\n'}לכרטיסיית ההרשמה הקודמת.
         </Text>
       </View>
     );

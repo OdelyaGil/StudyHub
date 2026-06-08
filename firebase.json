@@ -3,6 +3,7 @@
     "rules": "firestore.rules"
   },
   "hosting": {
+    "site": "studyhub-100",
     "public": "dist",
     "ignore": ["firebase.json", "**/.*"],
     "headers": [

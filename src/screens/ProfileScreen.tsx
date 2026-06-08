@@ -60,11 +60,12 @@ type Props = {
   onSetMode: (m: ThemeMode) => void;
   onLogout: () => void;
   onAvatarChange?: (url: string) => void;
+  onNameChange?: (name: string) => void;
 };
 
-const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvatarChange }: Props) => {
+const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvatarChange, onNameChange }: Props) => {
   const theme = useTheme();
-  const { showAlert, showDestructiveConfirm, alertNode } = useCustomAlert(theme.accent);
+  const { showAlert, alertNode } = useCustomAlert(theme.accent);
 
   const [userName, setUserName]   = useState('');
   const [userEmail, setUserEmail] = useState('');
@@ -215,6 +216,7 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
     try {
       await setDoc(doc(db, 'users', user.uid), { name: newName.trim() }, { merge: true });
       setUserName(newName.trim());
+      onNameChange?.(newName.trim());
       setEditingName(false);
     } catch { showAlert('שגיאה', 'שמירת השם נכשלה'); }
   };
@@ -258,19 +260,19 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
     } finally { setPassLoading(false); }
   };
 
-  const handleSelectAccent = async (color: string) => {
-    const user = auth.currentUser;
-    if (user) await setDoc(doc(db, 'users', user.uid), { accent: color }, { merge: true });
-    await AsyncStorage.setItem('savedAccent', color);
+  const handleSelectAccent = (color: string) => {
     onSetAccent(color);
+    const user = auth.currentUser;
+    if (user) setDoc(doc(db, 'users', user.uid), { accent: color }, { merge: true }).catch(() => {});
+    AsyncStorage.setItem('savedAccent', color).catch(() => {});
   };
 
-  const handleToggleMode = async (val: boolean) => {
+  const handleToggleMode = (val: boolean) => {
     const newMode: ThemeMode = val ? 'dark' : 'light';
-    const user = auth.currentUser;
-    if (user) await setDoc(doc(db, 'users', user.uid), { mode: newMode }, { merge: true });
-    await AsyncStorage.setItem('savedMode', newMode);
     onSetMode(newMode);
+    const user = auth.currentUser;
+    if (user) setDoc(doc(db, 'users', user.uid), { mode: newMode }, { merge: true }).catch(() => {});
+    AsyncStorage.setItem('savedMode', newMode).catch(() => {});
   };
 
   const handleDeleteAccount = () => {
@@ -306,6 +308,10 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
     // Phase 3: delete the auth account
     try {
       await deleteUser(user);
+      // Clear persisted theme so the next user starts fresh
+      await AsyncStorage.multiRemove(['savedAccent', 'savedMode']);
+      onSetAccent('#ADC6E5');
+      onSetMode('light');
       onLogout();
     } catch {
       setDeleteLoading(false);

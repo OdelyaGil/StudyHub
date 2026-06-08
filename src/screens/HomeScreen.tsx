@@ -522,8 +522,8 @@ const HomeScreen = () => {
               <MaterialCommunityIcons name="timer-outline" size={18} color={theme.accent} />
               <Text style={[s.cardTitle, { color: theme.accent }]}>טיימר ללימוד עצמי</Text>
               {timerDone && (
-                <View style={s.doneBadge}>
-                  <Text style={s.doneBadgeText}>✓ הסתיים</Text>
+                <View style={[s.doneBadge, { backgroundColor: theme.accent + '22' }]}>
+                  <Text style={[s.doneBadgeText, { color: theme.accent }]}>✓ הסתיים</Text>
                 </View>
               )}
             </View>
@@ -531,7 +531,7 @@ const HomeScreen = () => {
 
           <Text style={[
             s.timerDisplay,
-            { color: timerDone ? NEON_GREEN : cardText },
+            { color: timerDone ? theme.accent : cardText },
           ]}>
             {timerLeft > 0 ? formatTime(timerLeft) : timerDone ? formatTime(0) : formatTime((parseInt(timerInput) || 25) * 60)}
           </Text>
@@ -543,7 +543,7 @@ const HomeScreen = () => {
           <View style={[s.timerBarBg, NEU_INSET as any]}>
             <View style={[s.timerBarFill, {
               width: `${timerBarPct}%` as any,
-              backgroundColor: timerDone ? NEON_GREEN : theme.accent,
+              backgroundColor: theme.accent,
             }]} />
           </View>
 
@@ -705,8 +705,8 @@ const s = StyleSheet.create({
   tipText: { flex: 1, fontSize: 13, lineHeight: 19, textAlign: 'right' },
 
   // ── Timer ─────────────────────────────────────────────────────────────────
-  doneBadge:     { marginLeft: 8, backgroundColor: NEON_GREEN + '22', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10 },
-  doneBadgeText: { fontSize: 11, fontWeight: '700', color: NEON_GREEN },
+  doneBadge:     { marginLeft: 8, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10 },
+  doneBadgeText: { fontSize: 11, fontWeight: '700' },
 
   timerDisplay: { fontSize: 52, fontWeight: '900', textAlign: 'center', letterSpacing: 2, marginTop: 2 },
   timerStatus:  { fontSize: 11, fontWeight: '700', textAlign: 'center', color: '#9299B8', marginTop: 4, textTransform: 'uppercase', letterSpacing: 1 },

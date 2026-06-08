@@ -22,8 +22,13 @@ service cloud.firestore {
         allow read:   if request.auth != null && request.auth.uid == userId;
         allow delete: if request.auth != null && request.auth.uid == userId;
         allow create, update: if request.auth != null && request.auth.uid == userId
-          && request.resource.data.keys().hasOnly(['value'])
-          && request.resource.size < 900000;
+          && request.resource.data.keys().hasOnly(['value']);
+      }
+
+      // Subcollection: file summaries stored as individual documents (one per file).
+      match /fileSummaries/{fileId} {
+        allow read, delete: if request.auth != null && request.auth.uid == userId;
+        allow create, update: if request.auth != null && request.auth.uid == userId;
       }
     }
 

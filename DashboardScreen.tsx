@@ -99,6 +99,7 @@ const DashboardScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout }: Pro
               onSetMode={onSetMode}
               onLogout={onLogout}
               onAvatarChange={(url) => setUserAvatar(url)}
+              onNameChange={(name) => setUserName(name)}
             />
           )}
         </Tab.Screen>

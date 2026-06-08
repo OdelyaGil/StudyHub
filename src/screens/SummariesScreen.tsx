@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   TextInput, Modal, KeyboardAvoidingView, Platform, Linking,
@@ -51,7 +51,9 @@ const loadFileSummaries = async (): Promise<Summary[]> => {
 const saveFileSummaryDoc = async (sum: Summary) => {
   const uid = auth.currentUser?.uid;
   if (!uid) return;
-  await setDoc(fsDoc(FILE_COLL(uid), sum.id), sum);
+  // Firestore rejects undefined field values — strip them before writing
+  const data = Object.fromEntries(Object.entries(sum).filter(([, v]) => v !== undefined));
+  await setDoc(fsDoc(FILE_COLL(uid), sum.id), data);
 };
 
 const delFileSummaryDoc = async (id: string) => {
@@ -145,6 +147,7 @@ const SummariesScreen = () => {
   const [editContent, setEditContent] = useState('');
   const [editFolder,  setEditFolder]  = useState<string | undefined>();
   const [previewMode, setPreviewMode] = useState(false);
+  const contentInputRef = useRef<TextInput>(null);
 
   // File viewer
   const [fileModal,    setFileModal]    = useState(false);
@@ -629,7 +632,22 @@ const SummariesScreen = () => {
                 <Text style={[s.fileType, { color: theme.textSub }]}>{viewingFile?.mimeType ?? 'קובץ'}</Text>
               </View>
               <TouchableOpacity
-                onPress={() => viewingFile?.downloadURL && Linking.openURL(viewingFile.downloadURL)}
+                onPress={() => {
+                  const url = viewingFile?.downloadURL;
+                  if (!url) return;
+                  if (Platform.OS === 'web' && url.startsWith('data:')) {
+                    // Browsers block direct navigation to data: URLs — convert to blob URL
+                    const [meta, b64] = url.split(',');
+                    const mime = meta.replace('data:', '').replace(';base64', '');
+                    const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+                    const blob = new Blob([bytes], { type: mime });
+                    const blobUrl = URL.createObjectURL(blob);
+                    window.open(blobUrl, '_blank');
+                    setTimeout(() => URL.revokeObjectURL(blobUrl), 30_000);
+                  } else {
+                    Linking.openURL(url);
+                  }
+                }}
                 style={[s.openBtn, { backgroundColor: theme.accent }]}>
                 <MaterialCommunityIcons name="open-in-new" size={16} color={accentText} />
                 <Text style={{ color: accentText, fontWeight: '700', fontSize: 13 }}>פתח</Text>
@@ -716,11 +734,26 @@ const SummariesScreen = () => {
                 value={editTitle} onChangeText={setEditTitle}
                 textAlign="right" blurOnSubmit={false} returnKeyType="next" />
               <TextInput
+                ref={contentInputRef}
                 style={[s.contentInput, { color: theme.text }]}
                 placeholder="כתוב את הסיכום כאן..." placeholderTextColor={theme.textSub}
                 value={editContent} onChangeText={setEditContent}
                 multiline textAlign="right" textAlignVertical="top"
-                blurOnSubmit={false} />
+                blurOnSubmit={false}
+                submitBehavior="newline"
+                onBlur={() => {
+                  if (Platform.OS !== 'web') return;
+                  // React Native Web bug: Enter can cause an unexpected blur where
+                  // focus lands on document.body instead of a real element.
+                  // Re-focus immediately in that case.
+                  requestAnimationFrame(() => {
+                    if (typeof document !== 'undefined' &&
+                        (!document.activeElement || document.activeElement === document.body)) {
+                      contentInputRef.current?.focus();
+                    }
+                  });
+                }}
+              />
             </View>
           )}
         </KeyboardAvoidingView>
