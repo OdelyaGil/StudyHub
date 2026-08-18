@@ -5,6 +5,8 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
+    "backgroundColor": "#F4EEF9",
     "assetBundlePatterns": [
       "**/*"
     ],
@@ -13,9 +15,18 @@
       "bundleIdentifier": "com.studyhub.app"
     },
     "android": {
-      "package": "com.studyhub.app"
+      "package": "com.studyhub.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#F4EEF9"
+      }
     },
-    "web": { "bundler": "metro" },
+    "web": {
+      "bundler": "metro",
+      "favicon": "./public/favicon.png",
+      "themeColor": "#ADC6E5",
+      "backgroundColor": "#F4EEF9"
+    },
     "newArchEnabled": false,
     "plugins": [
       [
