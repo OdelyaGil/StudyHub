@@ -11,7 +11,6 @@ import {
   signInWithEmailAndPassword,
   fetchSignInMethodsForEmail,
   sendPasswordResetEmail,
-  sendEmailVerification,
   deleteUser,
   signOut,
 } from 'firebase/auth';
@@ -120,6 +119,17 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode, initialPendingEmail }: {
 
   const validateEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 
+  const sendVerificationEmail = async (email: string, continueUrl?: string) => {
+    const base = Platform.OS === 'web' && typeof window !== 'undefined'
+      ? window.location.origin
+      : (process.env.EXPO_PUBLIC_VERCEL_URL ?? '');
+    await fetch(`${base}/api/send-verification`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, continueUrl }),
+    });
+  };
+
   const handleLogin = async () => {
     if (!validateEmail(email)) return showAlert('שגיאה', 'אנא הזן/י כתובת דוא"ל תקנית');
     if (password.length < 8)   return showAlert('שגיאה', 'הסיסמה חייבת להכיל לפחות 8 תווים');
@@ -180,14 +190,10 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode, initialPendingEmail }: {
         throw firestoreErr;
       }
       try {
-        await sendEmailVerification(cred.user, {
-          url: typeof window !== 'undefined' ? `${window.location.origin}?emailVerified=1` : '',
-          handleCodeInApp: false,
-        });
-      } catch (e: any) {
-        if (e?.code !== 'auth/too-many-requests') {
-          showAlert('שים לב', 'לא ניתן לשלוח מייל אימות כרגע. לחץ/י על "שלח מייל אימות שוב" כדי לנסות שוב.');
-        }
+        const continueUrl = typeof window !== 'undefined' ? `${window.location.origin}?emailVerified=1` : undefined;
+        await sendVerificationEmail(cred.user.email!, continueUrl);
+      } catch {
+        showAlert('שים לב', 'לא ניתן לשלוח מייל אימות כרגע. לחץ/י על "שלח מייל אימות שוב" כדי לנסות שוב.');
       }
       setShowRegister(false);
       setPendingEmail(regEmail.toLowerCase());
@@ -205,16 +211,11 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode, initialPendingEmail }: {
     const user = auth.currentUser;
     if (!user) return;
     try {
-      await sendEmailVerification(user, {
-        url: typeof window !== 'undefined' ? `${window.location.origin}?emailVerified=1` : '',
-        handleCodeInApp: false,
-      });
+      const continueUrl = typeof window !== 'undefined' ? `${window.location.origin}?emailVerified=1` : undefined;
+      await sendVerificationEmail(pendingEmail, continueUrl);
       showAlert('נשלח!', 'מייל אימות נוסף נשלח לתיבת הדואר שלך.');
-    } catch (e: any) {
-      if (e?.code === 'auth/too-many-requests')
-        showAlert('שגיאה', 'כבר נשלח מייל לאחרונה. המתן/י מספר דקות ונסה/י שוב.');
-      else
-        showAlert('שגיאה', 'לא ניתן לשלוח מייל כרגע. נסה/י שוב מאוחר יותר.');
+    } catch {
+      showAlert('שגיאה', 'לא ניתן לשלוח מייל כרגע. נסה/י שוב מאוחר יותר.');
     }
   };
 
