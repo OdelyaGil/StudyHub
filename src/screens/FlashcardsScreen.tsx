@@ -598,7 +598,7 @@ const s = StyleSheet.create({
   panelTitle: { fontSize: 18, fontWeight: '700', textAlign: 'right' },
   input: {
     borderWidth: 1, borderRadius: 10,
-    paddingHorizontal: 14, paddingVertical: 10, fontSize: 15,
+    paddingHorizontal: 14, paddingVertical: 10, fontSize: 16,
   },
   panelBtns:  { flexDirection: 'row', gap: 10, justifyContent: 'flex-end' },
   cancelBtn:  { paddingHorizontal: 16, paddingVertical: 10 },

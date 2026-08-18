@@ -265,14 +265,14 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode, initialPendingEmail }: {
       width: '100%', backgroundColor: BG, borderRadius: 12,
       borderWidth: 1, borderColor: BORDER,
       paddingHorizontal: 16, paddingVertical: 13,
-      fontSize: 14, color: TEXT, marginBottom: 18, textAlign: 'right',
+      fontSize: 16, color: TEXT, marginBottom: 18, textAlign: 'right',
     },
     passwordContainer: {
       width: '100%', flexDirection: 'row', alignItems: 'center',
       backgroundColor: BG, borderRadius: 12,
       borderWidth: 1, borderColor: BORDER, marginBottom: 4,
     },
-    passwordInput:   { flex: 1, paddingHorizontal: 16, paddingVertical: 13, fontSize: 14, color: TEXT, textAlign: 'right' },
+    passwordInput:   { flex: 1, paddingHorizontal: 16, paddingVertical: 13, fontSize: 16, color: TEXT, textAlign: 'right' },
     eyeBtn:          { paddingHorizontal: 14, paddingVertical: 13 },
     forgotContainer: { alignSelf: 'flex-end', marginTop: 8, marginBottom: 20 },
     forgotText:      { fontSize: 12, color: ACCENT, fontWeight: '600' },
@@ -291,7 +291,7 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode, initialPendingEmail }: {
     regInput: {
       borderWidth: 1, borderColor: BORDER, borderRadius: 12,
       paddingHorizontal: 15, paddingVertical: 13,
-      fontSize: 14, backgroundColor: BG, marginBottom: 18, color: TEXT, textAlign: 'right',
+      fontSize: 16, backgroundColor: BG, marginBottom: 18, color: TEXT, textAlign: 'right',
     },
     regPasswordContainer: {
       flexDirection: 'row', alignItems: 'center',
@@ -300,7 +300,7 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode, initialPendingEmail }: {
     },
     regPasswordInput: {
       flex: 1, paddingHorizontal: 15, paddingVertical: 13,
-      fontSize: 14, color: TEXT, textAlign: 'right',
+      fontSize: 16, color: TEXT, textAlign: 'right',
     },
     forgotHint: { fontSize: 13, color: SUB, marginBottom: 20, lineHeight: 20, textAlign: 'right' },
   }), [savedAccent, savedMode]);

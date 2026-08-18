@@ -1007,7 +1007,7 @@ const styles = StyleSheet.create({
   // Form
   formGroup: { marginBottom: 20 },
   label:     { fontSize: 13, fontWeight: '600', color: '#333', marginBottom: 8, textTransform: 'uppercase', textAlign: 'right' },
-  input:     { borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 10, paddingHorizontal: 15, paddingVertical: 12, fontSize: 14, backgroundColor: '#f5f5f5', textAlign: 'right' },
+  input:     { borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 10, paddingHorizontal: 15, paddingVertical: 12, fontSize: 16, backgroundColor: '#f5f5f5', textAlign: 'right' },
 
   prioritySelector:    { flexDirection: 'row', gap: 8 },
   priorityBtn:         { flex: 1, paddingVertical: 10, paddingHorizontal: 12, borderRadius: 8, borderWidth: 1, borderColor: '#e0e0e0', backgroundColor: '#f5f5f5', alignItems: 'center' },

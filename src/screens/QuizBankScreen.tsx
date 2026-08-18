@@ -499,7 +499,7 @@ const s = StyleSheet.create({
   overlay:    { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 24 },
   panel:      { width: '100%', borderRadius: 18, borderWidth: 1, padding: 24, gap: 14 },
   panelTitle: { fontSize: 18, fontWeight: '700', textAlign: 'right' },
-  input:      { borderWidth: 1, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, fontSize: 15 },
+  input:      { borderWidth: 1, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, fontSize: 16 },
   inputMulti: { minHeight: 80, textAlignVertical: 'top' },
   panelBtns:  { flexDirection: 'row', gap: 10, justifyContent: 'flex-end' },
   cancelBtn:  { paddingHorizontal: 16, paddingVertical: 10 },

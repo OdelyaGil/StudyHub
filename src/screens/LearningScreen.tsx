@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
   modalTitle:     { fontSize: 18, fontWeight: '700', color: '#333' },
   formGroup:      { marginBottom: 20 },
   label:          { fontSize: 13, fontWeight: '600', color: '#333', marginBottom: 8, textTransform: 'uppercase', textAlign: 'right' },
-  input:          { borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 10, paddingHorizontal: 15, paddingVertical: 12, fontSize: 14, backgroundColor: '#f5f5f5', textAlign: 'right' },
+  input:          { borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 10, paddingHorizontal: 15, paddingVertical: 12, fontSize: 16, backgroundColor: '#f5f5f5', textAlign: 'right' },
   infoBox:        { backgroundColor: '#FFF0F5', borderRightWidth: 4, borderRightColor: '#CE6385', borderRadius: 8, padding: 12, marginBottom: 20, flexDirection: 'row', gap: 10, alignItems: 'flex-start' },
   infoText:       { fontSize: 12, color: '#CE6385', flex: 1, lineHeight: 18, textAlign: 'right' },
   submitBtn:      { backgroundColor: '#CE6385', paddingVertical: 13, borderRadius: 10, alignItems: 'center', marginTop: 10, marginBottom: 20 },

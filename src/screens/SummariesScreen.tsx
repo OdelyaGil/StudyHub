@@ -826,7 +826,7 @@ const s = StyleSheet.create({
 
   panel:       { width: '100%', borderRadius: 18, borderWidth: 1, padding: 24, gap: 14 },
   panelTitle:  { fontSize: 18, fontWeight: '700', textAlign: 'right' },
-  panelInput:  { borderWidth: 1, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, fontSize: 15 },
+  panelInput:  { borderWidth: 1, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, fontSize: 16 },
   panelBtns:   { flexDirection: 'row', gap: 10, justifyContent: 'flex-end' },
   panelCancel: { paddingHorizontal: 16, paddingVertical: 10 },
   panelOk:     { paddingHorizontal: 20, paddingVertical: 10, borderRadius: 10 },
@@ -854,14 +854,14 @@ const s = StyleSheet.create({
 
   editorBody:   { flex: 1, padding: 20 },
   titleInput:   { borderBottomWidth: 1, paddingBottom: 12, marginBottom: 16, fontSize: 20, fontWeight: '700' },
-  contentInput: { flex: 1, lineHeight: 24, fontSize: 15, textAlignVertical: 'top' },
+  contentInput: { flex: 1, lineHeight: 24, fontSize: 16, textAlignVertical: 'top' },
 
   fileCard:  { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: 14, borderWidth: 1 },
   fileName:  { fontSize: 15, fontWeight: '700', textAlign: 'right' },
   fileType:  { fontSize: 12, textAlign: 'right', marginTop: 2 },
   openBtn:   { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10 },
   notesLabel:{ fontSize: 13, fontWeight: '700', textAlign: 'right', textTransform: 'uppercase', letterSpacing: 0.5 },
-  notesInput:{ borderWidth: 1, borderRadius: 12, padding: 14, minHeight: 160, fontSize: 15, lineHeight: 22 },
+  notesInput:{ borderWidth: 1, borderRadius: 12, padding: 14, minHeight: 160, fontSize: 16, lineHeight: 22 },
 });
 
 export default SummariesScreen;

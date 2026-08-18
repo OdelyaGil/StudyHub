@@ -752,7 +752,7 @@ const s = StyleSheet.create({
   timerPresets: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4, justifyContent: 'center' },
   presetBtn:    { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', backgroundColor: PAGE_BG },
   presetText:   { fontSize: 12, fontWeight: '700' },
-  timerInput:   { width: 52, height: 46, borderRadius: 23, backgroundColor: PAGE_BG, fontSize: 12, fontWeight: '700', color: '#1A2052', textAlign: 'center' },
+  timerInput:   { width: 52, height: 46, borderRadius: 23, backgroundColor: PAGE_BG, fontSize: 16, fontWeight: '700', color: '#1A2052', textAlign: 'center' },
 
   timerBtns:     { flexDirection: 'row', gap: 10, marginTop: 10, alignItems: 'center' },
   timerStartBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 13, borderRadius: 14 },

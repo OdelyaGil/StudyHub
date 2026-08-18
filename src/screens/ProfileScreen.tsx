@@ -653,7 +653,7 @@ const s = StyleSheet.create({
   sectionTitle: { fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 12, textTransform: 'uppercase', textAlign: 'right' },
   row:          { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8 },
   rowValue:     { flex: 1, fontSize: 14, textAlign: 'right' },
-  inlineInput:  { flex: 1, fontSize: 14, borderBottomWidth: 1, paddingVertical: 2, textAlign: 'right' },
+  inlineInput:  { flex: 1, fontSize: 16, borderBottomWidth: 1, paddingVertical: 2, textAlign: 'right' },
   divider:      { height: 1, marginVertical: 2 },
   toggleRow:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8 },
   toggleLabels: { flexDirection: 'row', alignItems: 'center', gap: 10 },
@@ -682,7 +682,7 @@ const s = StyleSheet.create({
   fieldInput: {
     borderWidth: 1, borderRadius: 10,
     paddingHorizontal: 14, paddingVertical: 12,
-    fontSize: 14, marginBottom: 16, textAlign: 'right',
+    fontSize: 16, marginBottom: 16, textAlign: 'right',
   },
   saveBtn:      { borderRadius: 10, paddingVertical: 13, alignItems: 'center' },
   saveBtnText:  { fontSize: 15, fontWeight: '700' },

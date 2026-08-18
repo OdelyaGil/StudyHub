@@ -1033,7 +1033,7 @@ const styles = StyleSheet.create({
   modalTitle:   { fontSize: 18, fontWeight: '700' },
   formGroup:    { marginBottom: 18 },
   formLabel:    { fontSize: 13, fontWeight: '600', marginBottom: 8, textTransform: 'uppercase', textAlign: 'right' },
-  input:        { borderWidth: 1, borderRadius: 10, paddingHorizontal: 15, paddingVertical: 12, fontSize: 14, textAlign: 'right' },
+  input:        { borderWidth: 1, borderRadius: 10, paddingHorizontal: 15, paddingVertical: 12, fontSize: 16, textAlign: 'right' },
 
   pickerBtn:           { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   pickerBtnText:       { fontSize: 14, flex: 1 },
