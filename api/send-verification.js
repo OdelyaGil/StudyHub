@@ -1,11 +1,10 @@
 const nodemailer = require('nodemailer');
-const admin = require('firebase-admin');
+const { initializeApp, getApps, cert } = require('firebase-admin/app');
+const { getAuth } = require('firebase-admin/auth');
 
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert(
-      JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
-    ),
+if (!getApps().length) {
+  initializeApp({
+    credential: cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)),
   });
 }
 
@@ -30,7 +29,7 @@ module.exports = async function handler(req, res) {
 
   try {
     const settings = continueUrl ? { url: continueUrl } : undefined;
-    const link = await admin.auth().generateEmailVerificationLink(email, settings);
+    const link = await getAuth().generateEmailVerificationLink(email, settings);
 
     const transporter = nodemailer.createTransport({
       service: 'gmail',
