@@ -425,25 +425,29 @@ const ScheduleScreen = () => {
       color:     eventColor,
       recurrence: eventRecurrence,
       ...(eventRecurrence !== 'none' && eventRecurrenceEnd ? { recurrenceEndDate: eventRecurrenceEnd } : {}),
-      reminderMinutes: eventReminder,
+      reminderMinutes: eventReminder ?? null,
     };
     const updated = editingId !== null ? events.map(e => e.id === editingId ? saved : e) : [...events, saved];
     setEvents(updated);
     try {
       await persist(updated);
       setModalVisible(false);
-      // Reschedule immediately — waiting for the next Home-tab visit (where the
-      // periodic reschedule normally runs) could miss a reminder set for very soon.
-      scheduleWebEventReminders(updated);
+    } catch {
+      showAlert('שגיאה', 'שמירה נכשלה');
+      return;
     }
-    catch { showAlert('שגיאה', 'שמירה נכשלה'); }
+    // Best-effort — reschedule immediately so a reminder set for very soon
+    // doesn't wait on the next Home-tab visit. Isolated from the save's own
+    // try/catch above: a scheduling hiccup here must never present as a save
+    // failure when the event actually saved fine.
+    try { scheduleWebEventReminders(updated); } catch { /* non-critical */ }
   };
 
   const handleDelete = (id: number) => {
     showDestructiveConfirm('מחיקת אירוע', 'האם את/ה בטוח/ה שברצונך למחוק את האירוע?', 'מחק', async () => {
       const updated = events.filter(e => e.id !== id);
       setEvents(updated); await persist(updated);
-      scheduleWebEventReminders(updated);
+      try { scheduleWebEventReminders(updated); } catch { /* non-critical */ }
     });
   };
 
