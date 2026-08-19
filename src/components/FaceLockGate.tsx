@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { buildTheme, ThemeMode } from '../context/ThemeContext';
@@ -16,15 +16,29 @@ const FaceLockGate = ({ uid, accent, mode, onUnlock, onLogout }: Props) => {
   const theme = buildTheme(mode, accent);
   const [checking, setChecking] = useState(false);
   const [failed,   setFailed]   = useState(false);
+  const autoTried = useRef(false);
 
-  const tryUnlock = async () => {
+  // Browsers gate navigator.credentials.get() behind a recent user gesture, but
+  // that requirement is inconsistent across browsers/OS versions — some allow it
+  // right on mount (e.g. right after tapping the PWA's home-screen icon still
+  // counts on some platforms), some don't. Try silently once on mount; if the
+  // browser blocks it, this fails invisibly and the button below is the fallback
+  // — no error shown for that first silent attempt, since blocking it is normal,
+  // expected behavior there, not a real failure.
+  const tryUnlock = async (silent: boolean) => {
     setChecking(true);
-    setFailed(false);
+    if (!silent) setFailed(false);
     const ok = await verifyFaceLock(uid);
     setChecking(false);
     if (ok) onUnlock();
-    else setFailed(true);
+    else if (!silent) setFailed(true);
   };
+
+  useEffect(() => {
+    if (autoTried.current) return;
+    autoTried.current = true;
+    tryUnlock(true);
+  }, []);
 
   return (
     <View style={[st.wrap, { backgroundColor: theme.bg }]}>
@@ -44,7 +58,7 @@ const FaceLockGate = ({ uid, accent, mode, onUnlock, onLogout }: Props) => {
 
       <TouchableOpacity
         style={[st.unlockBtn, { backgroundColor: theme.accent }]}
-        onPress={tryUnlock}
+        onPress={() => tryUnlock(false)}
         disabled={checking}
         activeOpacity={0.85}
       >
