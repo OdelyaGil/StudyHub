@@ -253,7 +253,16 @@ const HomeScreen = () => {
     if (id) timerNotifId.current = id;
     if (Platform.OS === 'web') {
       if (webTimeout.current) clearTimeout(webTimeout.current);
-      webTimeout.current = setTimeout(() => { fireWebNotif(); }, secs * 1000);
+      // Backstop for backgrounded tabs, where setInterval gets throttled and may
+      // never notice completion on its own. Goes through the same doneRef guard
+      // and timerDone state as every other completion path (interval tick,
+      // visibilitychange, AppState) so exactly one of them ends up firing the
+      // notification, not both.
+      webTimeout.current = setTimeout(() => {
+        if (doneRef.current) return;
+        doneRef.current = true; timerEndTime.current = null;
+        setTimerRunning(false); setTimerLeft(0); setTimerDone(true);
+      }, secs * 1000);
     }
   };
 
