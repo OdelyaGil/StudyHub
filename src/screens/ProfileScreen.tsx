@@ -19,6 +19,7 @@ import { ThemeMode } from '../context/ThemeContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { validatePassword } from '../utils/helpers';
+import { isFaceLockEnabled, isFaceLockSupported, registerFaceLock, disableFaceLock } from '../utils/faceLock';
 
 const GRADIENTS: { name: string; colors: [string, string] }[] = [
   { name: 'MIDNIGHT OCEAN', colors: ['#1E0F75', '#3785D8'] },
@@ -89,7 +90,33 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
   const [deletePassword, setDeletePassword]   = useState('');
   const [deleteLoading, setDeleteLoading]     = useState(false);
 
+  const [faceLockOn,        setFaceLockOn]        = useState(false);
+  const [faceLockAvailable, setFaceLockAvailable] = useState(false);
+  const [faceLockBusy,      setFaceLockBusy]      = useState(false);
+
   useEffect(() => { loadUser(); }, []);
+
+  useEffect(() => {
+    const uid = auth.currentUser?.uid;
+    if (!uid) return;
+    isFaceLockSupported().then(setFaceLockAvailable);
+    isFaceLockEnabled(uid).then(setFaceLockOn);
+  }, []);
+
+  const handleToggleFaceLock = async (val: boolean) => {
+    const uid = auth.currentUser?.uid;
+    if (!uid) return;
+    if (!val) { await disableFaceLock(uid); setFaceLockOn(false); return; }
+    if (!faceLockAvailable) {
+      showAlert('לא זמין', 'זיהוי פנים/טביעת אצבע לא נתמך בדפדפן או במכשיר הזה.');
+      return;
+    }
+    setFaceLockBusy(true);
+    const ok = await registerFaceLock(uid, userEmail || userName || 'StudyHub');
+    setFaceLockBusy(false);
+    if (ok) setFaceLockOn(true);
+    else showAlert('שגיאה', 'לא ניתן היה להגדיר זיהוי פנים. נסה/י שוב.');
+  };
 
   const loadUser = async () => {
     const user = auth.currentUser;
@@ -402,6 +429,33 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
             <Text style={[s.rowValue, { color: theme.text }]}>שינוי סיסמה</Text>
             <MaterialCommunityIcons name="chevron-left" size={20} color={theme.textSub} />
           </Pressable>
+
+          {Platform.OS === 'web' && (
+            <>
+              <View style={[s.divider, { backgroundColor: theme.border }]} />
+              <View style={s.toggleRow}>
+                <View style={s.toggleLabels}>
+                  <MaterialCommunityIcons name="face-recognition" size={20} color={theme.accent} />
+                  <Text style={[s.toggleText, { color: theme.text }]}>נעילת פרטיות (זיהוי פנים)</Text>
+                </View>
+                {faceLockBusy
+                  ? <ActivityIndicator size="small" color={theme.accent} />
+                  : (
+                    <Switch
+                      value={faceLockOn}
+                      onValueChange={handleToggleFaceLock}
+                      thumbColor={theme.accent}
+                      trackColor={{ false: theme.textSub + '44', true: theme.accent + '55' }}
+                    />
+                  )}
+              </View>
+              {faceLockOn && (
+                <Text style={[s.faceLockHint, { color: theme.textSub }]}>
+                  תתבקש/י לאמת זהות בכל פתיחה מחדש של האפליקציה. פעיל רק במכשיר הזה.
+                </Text>
+              )}
+            </>
+          )}
         </View>
 
         {/* Theme settings */}
@@ -658,6 +712,7 @@ const s = StyleSheet.create({
   toggleRow:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8 },
   toggleLabels: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   toggleText:   { fontSize: 14, fontWeight: '600' },
+  faceLockHint: { fontSize: 11, lineHeight: 16, textAlign: 'right', paddingTop: 2, paddingBottom: 4 },
   subLabel:     { fontSize: 11, fontWeight: '600', marginTop: 12, marginBottom: 10, textAlign: 'right' },
   accentRow:    { flexDirection: 'row', flexWrap: 'wrap', paddingVertical: 8 },
   accentItem:   { width: '25%', alignItems: 'center', gap: 6, paddingVertical: 6 },

@@ -13,6 +13,8 @@ import LoginScreen from './LoginScreen';
 import DashboardScreen from './DashboardScreen';
 import { ThemeMode } from './src/context/ThemeContext';
 import { requestNotificationPermission } from './src/utils/notifications';
+import { isFaceLockEnabled } from './src/utils/faceLock';
+import FaceLockGate from './src/components/FaceLockGate';
 import ErrorBoundary from './src/components/ErrorBoundary';
 
 const Stack = createNativeStackNavigator();
@@ -25,6 +27,19 @@ export default function App() {
   const [savedAccent, setSavedAccent] = useState<string | undefined>(undefined);
   const [savedMode,   setSavedMode]   = useState<ThemeMode | undefined>(undefined);
   const [pendingVerificationEmail, setPendingVerificationEmail] = useState<string | undefined>(undefined);
+  // Privacy gate (Face ID / Touch ID via WebAuthn), independent of Firebase auth —
+  // see src/utils/faceLock.ts. faceLockPassed is intentionally plain in-memory
+  // state: it must reset to false on every fresh page load, which is exactly what
+  // an already-logged-in-but-not-yet-unlocked PWA reopened from the home screen
+  // needs (iOS suspends/kills backgrounded PWAs, so "reopen" is effectively reload).
+  const [faceLockNeeded, setFaceLockNeeded] = useState(false);
+  const [faceLockPassed, setFaceLockPassed] = useState(false);
+
+  const handleLogout = async () => {
+    clearCache();
+    setFaceLockPassed(false);
+    try { await signOut(auth); } catch { setIsLoggedIn(false); }
+  };
 
   useEffect(() => {
     AsyncStorage.getItem('savedAccent').then(v => { if (v) { setAccent(v); setSavedAccent(v); } });
@@ -78,10 +93,14 @@ export default function App() {
             if (d.mode)   setMode(d.mode);
           }
         } catch { }
+        setFaceLockPassed(false);
+        setFaceLockNeeded(await isFaceLockEnabled(user.uid));
         requestNotificationPermission();
         setIsLoggedIn(true);
       } else {
         setPendingVerificationEmail(undefined);
+        setFaceLockNeeded(false);
+        setFaceLockPassed(false);
         setIsLoggedIn(false);
       }
       setIsLoading(false);
@@ -105,6 +124,18 @@ export default function App() {
             <Stack.Screen name="Login">
               {(props) => <LoginScreen {...props} onLogin={(a, m) => { if (a) setAccent(a); if (m) setMode(m as ThemeMode); setPendingVerificationEmail(undefined); setIsLoggedIn(true); }} savedAccent={savedAccent} savedMode={savedMode} initialPendingEmail={pendingVerificationEmail} />}
             </Stack.Screen>
+          ) : faceLockNeeded && !faceLockPassed ? (
+            <Stack.Screen name="FaceLock">
+              {() => (
+                <FaceLockGate
+                  uid={auth.currentUser?.uid ?? ''}
+                  accent={accent}
+                  mode={mode}
+                  onUnlock={() => setFaceLockPassed(true)}
+                  onLogout={handleLogout}
+                />
+              )}
+            </Stack.Screen>
           ) : (
             <Stack.Screen name="Dashboard">
               {(props) => (
@@ -114,7 +145,7 @@ export default function App() {
                   mode={mode}
                   onSetAccent={setAccent}
                   onSetMode={setMode}
-                  onLogout={async () => { clearCache(); try { await signOut(auth); } catch { setIsLoggedIn(false); } }}
+                  onLogout={handleLogout}
                 />
               )}
             </Stack.Screen>
