@@ -16,8 +16,19 @@ import GradesScreen  from './src/screens/GradesScreen';
 import LibraryScreen from './src/screens/LibraryScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import AppSidebar, { SIDEBAR_W, SIDEBAR_W_COLLAPSED, TOP_H } from './src/components/AppSidebar';
+import SwipeBackEdge, { withSwipeBack } from './src/components/SwipeBackEdge';
+import { TabHistoryProvider } from './src/context/TabHistoryContext';
 
 const Tab = createBottomTabNavigator();
+
+// Created once at module scope so Tab.Screen's `component=` prop gets a stable
+// reference across renders (required for React Navigation's own memoization —
+// see withSwipeBack's comment).
+const HomeTab    = withSwipeBack(HomeScreen);
+const EventsTab  = withSwipeBack(EventsScreen);
+const TasksTab   = withSwipeBack(TasksScreen);
+const GradesTab  = withSwipeBack(GradesScreen);
+const LibraryTab = withSwipeBack(LibraryScreen);
 
 type Props = {
   navigation:   NavigationProp<ParamListBase>;
@@ -39,6 +50,10 @@ const DashboardScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout }: Pro
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(SIDEBAR_W);
 
+  const [activeTabName, setActiveTabName] = useState('Home');
+  const tabNavigationRef = React.useRef<NavigationProp<ParamListBase> | null>(null);
+  const navigateTab = useCallback((name: string) => tabNavigationRef.current?.navigate(name as never), []);
+
   useEffect(() => {
     let active = true;
     const user = auth.currentUser;
@@ -52,19 +67,22 @@ const DashboardScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout }: Pro
     return () => { active = false; };
   }, []);
 
-  const renderTabBar = useCallback((props: any) => (
-    <AppSidebar
-      {...props}
-      userName={userName}
-      userAvatar={userAvatar ?? undefined}
-      onLogout={onLogout}
-      isWide={isWide}
-      isOpen={sidebarOpen}
-      onOpen={() => setSidebarOpen(true)}
-      onClose={() => setSidebarOpen(false)}
-      onCollapsedChange={(c) => setSidebarWidth(c ? SIDEBAR_W_COLLAPSED : SIDEBAR_W)}
-    />
-  ), [userName, userAvatar, onLogout, isWide, sidebarOpen]);
+  const renderTabBar = useCallback((props: any) => {
+    tabNavigationRef.current = props.navigation;
+    return (
+      <AppSidebar
+        {...props}
+        userName={userName}
+        userAvatar={userAvatar ?? undefined}
+        onLogout={onLogout}
+        isWide={isWide}
+        isOpen={sidebarOpen}
+        onOpen={() => setSidebarOpen(true)}
+        onClose={() => setSidebarOpen(false)}
+        onCollapsedChange={(c) => setSidebarWidth(c ? SIDEBAR_W_COLLAPSED : SIDEBAR_W)}
+      />
+    );
+  }, [userName, userAvatar, onLogout, isWide, sidebarOpen]);
 
   return (
     <ThemeContext.Provider value={theme}>
@@ -76,35 +94,46 @@ const DashboardScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout }: Pro
           style={StyleSheet.absoluteFillObject}
         />
       )}
-      <Tab.Navigator
-        tabBar={renderTabBar}
-        sceneContainerStyle={[
-          isWide
-            ? { marginLeft: sidebarWidth }
-            : { paddingTop: TOP_H + safeTop },
-          { backgroundColor: (theme.accentGradient && theme.mode === 'light') ? 'transparent' : theme.bg },
-        ]}
-        screenOptions={{ headerShown: false }}
-      >
-        <Tab.Screen name="Home"    component={HomeScreen} />
-        <Tab.Screen name="Events"  component={EventsScreen} />
-        <Tab.Screen name="Tasks"   component={TasksScreen} />
-        <Tab.Screen name="Grades"  component={GradesScreen} />
-        <Tab.Screen name="Library" component={LibraryScreen} />
-        <Tab.Screen name="Profile">
-          {() => (
-            <ProfileScreen
-              accent={accent}
-              mode={mode}
-              onSetAccent={onSetAccent}
-              onSetMode={onSetMode}
-              onLogout={onLogout}
-              onAvatarChange={(url) => setUserAvatar(url)}
-              onNameChange={(name) => setUserName(name)}
-            />
-          )}
-        </Tab.Screen>
-      </Tab.Navigator>
+      <TabHistoryProvider activeName={activeTabName} navigate={navigateTab}>
+        <Tab.Navigator
+          tabBar={renderTabBar}
+          screenListeners={{
+            state: (e) => {
+              const s = (e.data as any)?.state;
+              const name = s?.routes?.[s.index]?.name;
+              if (name) setActiveTabName(name);
+            },
+          }}
+          sceneContainerStyle={[
+            isWide
+              ? { marginLeft: sidebarWidth }
+              : { paddingTop: TOP_H + safeTop },
+            { backgroundColor: (theme.accentGradient && theme.mode === 'light') ? 'transparent' : theme.bg },
+          ]}
+          screenOptions={{ headerShown: false }}
+        >
+          <Tab.Screen name="Home"    component={HomeTab} />
+          <Tab.Screen name="Events"  component={EventsTab} />
+          <Tab.Screen name="Tasks"   component={TasksTab} />
+          <Tab.Screen name="Grades"  component={GradesTab} />
+          <Tab.Screen name="Library" component={LibraryTab} />
+          <Tab.Screen name="Profile">
+            {() => (
+              <SwipeBackEdge>
+                <ProfileScreen
+                  accent={accent}
+                  mode={mode}
+                  onSetAccent={onSetAccent}
+                  onSetMode={onSetMode}
+                  onLogout={onLogout}
+                  onAvatarChange={(url) => setUserAvatar(url)}
+                  onNameChange={(name) => setUserName(name)}
+                />
+              </SwipeBackEdge>
+            )}
+          </Tab.Screen>
+        </Tab.Navigator>
+      </TabHistoryProvider>
     </ThemeContext.Provider>
   );
 };
