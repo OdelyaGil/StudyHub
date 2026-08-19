@@ -54,6 +54,66 @@ export const cancelTimerNotification = async (id: string): Promise<void> => {
   try { await Notifications.cancelScheduledNotificationAsync(id); } catch (_) {}
 };
 
+// ── Web-native scheduling ────────────────────────────────────────────────────
+// expo-notifications has no web implementation — NotificationScheduler.web is an
+// empty stub, so scheduleNotificationAsync always throws there (silently, since
+// every caller wraps it in try/catch). Task/event reminders never fired on web.
+// This mirrors the workaround HomeScreen's study timer already uses: the browser's
+// own Notification API + service worker, driven by plain setTimeout instead of an
+// OS-level scheduler.
+export const showWebNotification = (title: string, body: string): void => {
+  if (Platform.OS !== 'web' || typeof navigator === 'undefined') return;
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.ready
+      .then(reg => reg.showNotification(title, { body }))
+      .catch(() => { const N = (globalThis as any).Notification; if (N?.permission === 'granted') new N(title, { body }); });
+  } else {
+    const N = (globalThis as any).Notification;
+    if (N?.permission === 'granted') new N(title, { body });
+  }
+};
+
+// setTimeout only survives as long as this tab/PWA instance is alive — a reminder
+// won't fire if the app is fully closed when its time comes, only while it's open
+// (foreground or a still-running background tab). Re-scheduling (e.g. on every
+// HomeScreen focus) clears and rebuilds this list rather than accumulating it.
+let webReminderTimeouts: ReturnType<typeof setTimeout>[] = [];
+
+export const scheduleWebEventReminders = (events: any[]): void => {
+  if (Platform.OS !== 'web' || typeof window === 'undefined') return;
+  webReminderTimeouts.forEach(clearTimeout);
+  webReminderTimeouts = [];
+
+  const N = (globalThis as any).Notification;
+  if (!N || N.permission !== 'granted') return;
+
+  const now = Date.now();
+  const SCAN_DAYS = 7;
+  const MAX_DELAY = SCAN_DAYS * 24 * 60 * 60000;
+  for (let i = 0; i < SCAN_DAYS; i++) {
+    const d   = new Date(); d.setDate(d.getDate() + i);
+    const iso = toISO(d);
+    for (const ev of events.filter(e => occursOnISO(e, iso))) {
+      if (!ev.startTime) continue;
+      const reminderMinutes = ev.reminderMinutes === undefined ? 30 : ev.reminderMinutes;
+      if (reminderMinutes === null) continue;
+      const [h, m] = ev.startTime.split(':').map(Number);
+      const start  = new Date(d); start.setHours(h, m, 0, 0);
+      const delay  = start.getTime() - reminderMinutes * 60000 - now;
+      if (delay <= 0 || delay > MAX_DELAY) continue;
+      const timeRange = ev.endTime ? `${ev.startTime} עד ${ev.endTime}` : ev.startTime;
+      const leadLabel =
+        reminderMinutes === 0  ? 'מתחיל עכשיו' :
+        reminderMinutes < 60   ? `עוד ${reminderMinutes} דקות` :
+        reminderMinutes < 1440 ? 'עוד שעה' :
+                                  'מחר';
+      webReminderTimeouts.push(
+        setTimeout(() => showWebNotification(`📅 ${leadLabel}`, `${ev.title} — ${timeRange}`), delay)
+      );
+    }
+  }
+};
+
 const scheduleAt = async (date: Date, title: string, body: string) => {
   try {
     if (date <= new Date()) return;

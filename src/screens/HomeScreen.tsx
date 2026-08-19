@@ -11,7 +11,7 @@ import { useFocusEffect, useNavigation, type NavigationProp, type ParamListBase 
 import { useTheme } from '../context/ThemeContext';
 import { auth, db } from '../config/firebase';
 import { doc, getDoc } from 'firebase/firestore';
-import { scheduleAllNotifications, scheduleTimerNotification, cancelTimerNotification } from '../utils/notifications';
+import { scheduleAllNotifications, scheduleTimerNotification, cancelTimerNotification, scheduleWebEventReminders } from '../utils/notifications';
 import { useCustomAlert } from '../hooks/useCustomAlert';
 import { toISO, daysUntil, occursOnISO, hexToRgba } from '../utils/helpers';
 
@@ -308,6 +308,7 @@ const HomeScreen = () => {
       // on every visit so without throttling every tab-switch rebuilds all notifications.
       if (Date.now() - lastNotifSchedule.current > 5 * 60_000) {
         await scheduleAllNotifications(t ?? [], e ?? []);
+        scheduleWebEventReminders(e ?? []);
         lastNotifSchedule.current = Date.now();
         // scheduleAllNotifications cancels ALL notifications first; re-register
         // the study timer notification if it was still running.

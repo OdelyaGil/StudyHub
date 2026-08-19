@@ -20,6 +20,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useCustomAlert } from '../hooks/useCustomAlert';
 import { useTheme } from '../context/ThemeContext';
 import { toISO } from '../utils/helpers';
+import { scheduleWebEventReminders } from '../utils/notifications';
 
 interface CalendarEvent {
   id: number;
@@ -428,7 +429,13 @@ const ScheduleScreen = () => {
     };
     const updated = editingId !== null ? events.map(e => e.id === editingId ? saved : e) : [...events, saved];
     setEvents(updated);
-    try { await persist(updated); setModalVisible(false); }
+    try {
+      await persist(updated);
+      setModalVisible(false);
+      // Reschedule immediately — waiting for the next Home-tab visit (where the
+      // periodic reschedule normally runs) could miss a reminder set for very soon.
+      scheduleWebEventReminders(updated);
+    }
     catch { showAlert('שגיאה', 'שמירה נכשלה'); }
   };
 
@@ -436,6 +443,7 @@ const ScheduleScreen = () => {
     showDestructiveConfirm('מחיקת אירוע', 'האם את/ה בטוח/ה שברצונך למחוק את האירוע?', 'מחק', async () => {
       const updated = events.filter(e => e.id !== id);
       setEvents(updated); await persist(updated);
+      scheduleWebEventReminders(updated);
     });
   };
 
