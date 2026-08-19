@@ -102,22 +102,30 @@ export const scheduleAllNotifications = async (tasks: any[], events: any[]) => {
     }
 
     // ── Event notifications ─────────────────────────────────────────────────
+    // reminderMinutes is per-event (set in the event editor): a number of
+    // minutes before startTime, 0 for "at start time", or null for "off".
+    // undefined (events saved before this field existed) falls back to the
+    // old 30-minutes-before default until the user edits and picks explicitly.
     for (let i = 0; i < 7; i++) {
       const d   = new Date(now); d.setDate(d.getDate() + i);
       const iso = toISO(d);
       for (const ev of events.filter(e => occursOnISO(e, iso))) {
         if (!ev.startTime) continue;
+        const reminderMinutes = ev.reminderMinutes === undefined ? 30 : ev.reminderMinutes;
+        if (reminderMinutes === null) continue;
         const [h, m] = ev.startTime.split(':').map(Number);
         const start  = new Date(d); start.setHours(h, m, 0, 0);
+        const timeRange = ev.endTime ? `${ev.startTime} עד ${ev.endTime}` : ev.startTime;
+        const leadLabel =
+          reminderMinutes === 0  ? 'מתחיל עכשיו' :
+          reminderMinutes < 60   ? `עוד ${reminderMinutes} דקות` :
+          reminderMinutes < 1440 ? 'עוד שעה' :
+                                    'מחר';
         await scheduleAt(
-          new Date(start.getTime() - 30 * 60000),
-          '📅 עוד 30 דקות',
-          `${ev.title} — ${ev.startTime}${ev.endTime ? ` עד ${ev.endTime}` : ''}`,
+          new Date(start.getTime() - reminderMinutes * 60000),
+          `📅 ${leadLabel}`,
+          `${ev.title} — ${timeRange}`,
         );
-        if (i === 0) {
-          const morning = new Date(d); morning.setHours(8, 0, 0, 0);
-          await scheduleAt(morning, '☀️ תזכורת בוקר', `היום יש לך: ${ev.title} בשעה ${ev.startTime}`);
-        }
       }
     }
 

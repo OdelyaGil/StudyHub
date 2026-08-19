@@ -32,6 +32,10 @@ interface CalendarEvent {
   color: string;
   recurrence: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
   recurrenceEndDate?: string;
+  // Minutes before startTime to notify; 0 = at the event's start time; null = no
+  // notification. Undefined (events saved before this field existed) is treated
+  // as 30 — the old hardcoded behavior — until the user edits and picks explicitly.
+  reminderMinutes?: number | null;
 }
 
 type ViewMode = 'day' | 'week' | 'month' | 'year';
@@ -43,6 +47,14 @@ const HEBREW_MONTHS = [
 const HEBREW_DAYS_LONG = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
 const DAY_LABELS = ['א׳','ב׳','ג׳','ד׳','ה׳','ו׳','ש׳'];
 const EVENT_COLORS = ['#B35A8A','#F6B7C7','#B6A5CE','#523F77','#7880AE','#A3BBD7'];
+const REMINDER_OPTIONS: { key: number | null; label: string }[] = [
+  { key: null, label: 'ללא'      },
+  { key: 0,    label: 'בזמן'     },
+  { key: 10,   label: '10 דק׳'   },
+  { key: 30,   label: '30 דק׳'   },
+  { key: 60,   label: 'שעה'      },
+  { key: 1440, label: 'יום לפני' },
+];
 const RECURRENCE_OPTIONS: { key: CalendarEvent['recurrence']; label: string }[] = [
   { key: 'none',    label: 'ללא' },
   { key: 'daily',   label: 'יומי' },
@@ -192,6 +204,7 @@ const ScheduleScreen = () => {
   const [eventColor,          setEventColor]          = useState(EVENT_COLORS[0]);
   const [eventRecurrence,     setEventRecurrence]     = useState<CalendarEvent['recurrence']>('none');
   const [eventRecurrenceEnd,  setEventRecurrenceEnd]  = useState('');
+  const [eventReminder,       setEventReminder]       = useState<number | null>(30);
 
   const [dtPickerTarget,   setDtPickerTarget]   = useState<PickerTarget | null>(null);
   const [dtPickerTempDate, setDtPickerTempDate] = useState<Date>(new Date());
@@ -264,7 +277,7 @@ const ScheduleScreen = () => {
     setEventEndDate(''); setEventAllDay(false);
     setEventStartTime('09:00'); setEventEndTime('10:00');
     setEventColor(EVENT_COLORS[0]); setEventRecurrence('none');
-    setEventRecurrenceEnd('');
+    setEventRecurrenceEnd(''); setEventReminder(30);
   };
 
   const openAdd  = () => { resetForm(); setModalVisible(true); };
@@ -280,6 +293,7 @@ const ScheduleScreen = () => {
     setEventColor(ev.color);
     setEventRecurrence(ev.recurrence);
     setEventRecurrenceEnd(ev.recurrenceEndDate ?? '');
+    setEventReminder(ev.reminderMinutes === undefined ? 30 : ev.reminderMinutes);
     setModalVisible(true);
   };
 
@@ -410,6 +424,7 @@ const ScheduleScreen = () => {
       color:     eventColor,
       recurrence: eventRecurrence,
       ...(eventRecurrence !== 'none' && eventRecurrenceEnd ? { recurrenceEndDate: eventRecurrenceEnd } : {}),
+      reminderMinutes: eventReminder,
     };
     const updated = editingId !== null ? events.map(e => e.id === editingId ? saved : e) : [...events, saved];
     setEvents(updated);
@@ -816,7 +831,6 @@ const ScheduleScreen = () => {
                           <WebTimePicker time={eventStartTime} onChange={handleStartTimeChange} />
                           <Text style={styles.webTimeLabel}>התחלה</Text>
                         </View>
-                        <View style={styles.webTimeDivider} />
                         <View style={styles.webTimeGroup}>
                           <WebTimePicker time={eventEndTime} onChange={setEventEndTime} />
                           <Text style={styles.webTimeLabel}>סיום</Text>
@@ -893,6 +907,19 @@ const ScheduleScreen = () => {
                     )}
                   </View>
                 )}
+
+                <View style={styles.formGroup}>
+                  <Text style={[styles.formLabel, { color: textSub }]}>התראה</Text>
+                  <View style={styles.recurrenceRow}>
+                    {REMINDER_OPTIONS.map(opt => (
+                      <TouchableOpacity key={opt.label}
+                        style={[styles.recurrenceBtn, { borderColor: borderClr, backgroundColor: surface }, eventReminder === opt.key && { borderColor: theme, backgroundColor: light }]}
+                        onPress={() => setEventReminder(opt.key)}>
+                        <Text style={[styles.recurrenceBtnText, { color: textSub }, eventReminder === opt.key && { color: theme }]}>{opt.label}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
 
                 <TouchableOpacity style={[styles.submitBtn, { backgroundColor: theme }]} onPress={handleSave}>
                   <Text style={styles.submitBtnText}>{editingId !== null ? 'שמור שינויים' : 'הוסף אירוע'}</Text>
@@ -1074,10 +1101,11 @@ const styles = StyleSheet.create({
   webPickerColonWrap:{ paddingBottom: 11 },
   webPickerColon:    { fontSize: 20, fontWeight: '700' },
   webEndTimeRow:     { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-end' },
-  webTimeRow:        { flexDirection: 'row-reverse', alignItems: 'center', gap: 0, alignSelf: 'flex-end' },
+  // Column, not row: the two picker groups (start + end), each ~200px wide, don't
+  // fit side by side on a phone screen without clipping — stack them instead.
+  webTimeRow:        { flexDirection: 'column', alignItems: 'flex-end', gap: 10, alignSelf: 'flex-end' },
   webTimeGroup:      { flexDirection: 'row', alignItems: 'center', gap: 8 },
   webTimeLabel:      { fontSize: 11, fontWeight: '600', flexShrink: 0 },
-  webTimeDivider:    { width: 1, height: 44, marginHorizontal: 12 },
 
   // iOS date picker sheet — absolute positioned inside form Modal (no nested Modal)
   dtPickerBackdrop:   { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.4)' },
