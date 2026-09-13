@@ -21,7 +21,7 @@ import { validatePassword } from './src/utils/helpers';
 
 const DEFAULT_ACCENT = '#E0659A';
 const DEFAULT_GRAD: [string, string] = ['#E8659A', '#F4A0C0'];
-const SKY_FADE:    [string, string] = ['#3785D8', '#E0EEFF'];
+const LOGIN_BG:    [string, string] = ['#FFFFFF', '#FFFFFF'];
 const NEW_USER_ACCENT    = '#ADC6E5';
 const NEW_USER_MODE      = 'light';
 const VERIFY_TIMEOUT_MS  = 10 * 60 * 1000; // 10 minutes
@@ -307,7 +307,7 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode, initialPendingEmail }: {
 
   if (emailJustVerified) {
     return (
-      <LinearGradient colors={isDark ? [BG, BG] : SKY_FADE} style={[s.container, { justifyContent: 'center', alignItems: 'center', padding: 32 }]}>
+      <LinearGradient colors={isDark ? [BG, BG] : LOGIN_BG} style={[s.container, { justifyContent: 'center', alignItems: 'center', padding: 32 }]}>
         <MaterialCommunityIcons name="check-circle-outline" size={80} color="#4CAF50" style={{ marginBottom: 24 }} />
         <Text style={{ color: TEXT, fontSize: 22, fontWeight: '700', textAlign: 'center', marginBottom: 16 }}>
           המייל אומת בהצלחה!
@@ -322,7 +322,7 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode, initialPendingEmail }: {
 
   if (waitingVerification) {
     return (
-      <LinearGradient colors={isDark ? [BG, BG] : SKY_FADE} style={[s.container, { justifyContent: 'center', alignItems: 'center', padding: 32 }]}>
+      <LinearGradient colors={isDark ? [BG, BG] : LOGIN_BG} style={[s.container, { justifyContent: 'center', alignItems: 'center', padding: 32 }]}>
         <MaterialCommunityIcons name="email-check-outline" size={72} color={ACCENT} style={{ marginBottom: 24 }} />
         <Text style={{ color: TEXT, fontSize: 22, fontWeight: '700', textAlign: 'center', marginBottom: 12 }}>
           אימות מייל
@@ -353,7 +353,7 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode, initialPendingEmail }: {
   }
 
   return (
-    <LinearGradient colors={isDark ? [BG, BG] : SKY_FADE} style={s.container}>
+    <LinearGradient colors={isDark ? [BG, BG] : LOGIN_BG} style={s.container}>
       <ScrollView
         contentContainerStyle={s.scrollContent}
         showsVerticalScrollIndicator={false}
