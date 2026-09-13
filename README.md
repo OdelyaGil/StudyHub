@@ -15,7 +15,7 @@
 
 ### 🔗 [Live App](https://study-hub-coral-seven.vercel.app)
 
-Open it in a mobile browser and add it to your home screen — StudyHub installs as a real app (PWA), icon and all.
+Open it in a mobile browser and add it to your home screen — StudyHub installs as a real app.
 
 ---
 
@@ -27,7 +27,6 @@ It runs from a single React Native + Expo codebase across iOS, Android, and the 
 
 ## ✨ Key Features
 
-* 🔐 **Secure auth** — Firebase Authentication with a custom-branded email verification flow (a Vercel serverless function + Nodemailer), protected by Firebase App Check (reCAPTCHA v3).
 * 📊 **Dashboard** — daily overview, upcoming tasks and events, weighted grade average, a credit-progress ring, and a Pomodoro-style study timer.
 * 📝 **Grades** — per-course tracking with automatic weighted-average and required-credits progress.
 * ✅ **Tasks** — priorities, due dates, file attachments.
@@ -35,7 +34,13 @@ It runs from a single React Native + Expo codebase across iOS, Android, and the 
 * 🧠 **Learning tracker** — mark topics per course as known or needing review.
 * 📚 **Study library** — Summaries, Glossary, Quiz Bank, Links, and Flashcards, all searchable.
 * 🎨 **Personalization** — light/dark themes with custom accent colors and gradients.
-* 🔒 **Face ID privacy lock** — an opt-in WebAuthn biometric gate (Face ID / Touch ID / Windows Hello) that locks an already-signed-in session on the same device.
+
+## 🛡️ Security & Privacy Architecture
+
+* 🔐 **Custom-verified auth** — Firebase Authentication backed by a dedicated Vercel serverless function that issues and emails branded verification links directly, instead of relying on Firebase's default flow.
+* 🤖 **Bot & abuse protection** — Firebase App Check with reCAPTCHA v3 verifies that requests to Firebase come from the real app, not a scraped API key or an automated script.
+* 🔒 **Face ID privacy lock** — an opt-in, on-device WebAuthn gate (Face ID / Touch ID / Windows Hello) that re-locks an already-signed-in session on every app open, independent of the Firebase login itself.
+* 🧱 **Least-privilege data access** — Firestore security rules scope every read and write to the authenticated user's own document tree; there is no shared or public data path.
 
 ## 💻 Tech Stack
 
@@ -110,11 +115,11 @@ StudyHub/
 └── storage.rules
 ```
 
-## 🧠 What We Learned
+## 🧠 What I Learned
 
-Turning a client-only app into a real, publicly deployed product surfaced problems that never show up in local development. The Firebase Admin SDK's v14 rewrite dropped its old namespaced API (`admin.apps`, `admin.credential.cert`) for modular functions, which crashed the email-verification function in production in a way `npm install` never warned about. `expo-notifications` turned out to have no web implementation at all — every scheduled reminder was silently failing there, invisible until tested for real, which meant building a browser-native fallback instead.
-
-The most useful lesson was platform honesty: a PWA behaves like an installed app most of the time, but iOS suspends it like any other backgrounded tab, which directly shaped decisions like the Face ID gate re-triggering on every reopen and reminder notifications being scoped to "while the app is alive" rather than promising delivery that the platform can't actually guarantee.
+* **From Local to Production:** Moving a project from my local machine to a live, deployed environment taught me a lot about debugging backend services and deployment pipelines (Vercel & Firebase) when things don't work out of the box.
+* **Cross-Platform Challenges:** Building an app that runs on web, iOS, and Android showed me how to handle differences between platforms and write smart fallbacks when a package doesn't support the web.
+* **Security & User Experience:** Working on features like Face ID and secure authentication gave me hands-on experience in protecting user data while keeping the app smooth and usable.
 
 ## 👩‍💻 Developed By
 
