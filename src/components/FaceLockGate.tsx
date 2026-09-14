@@ -6,14 +6,13 @@ import { verifyFaceLock } from '../utils/faceLock';
 
 type Props = {
   uid: string;
-  accent: string;
   mode: ThemeMode;
   onUnlock: () => void;
   onLogout: () => void;
 };
 
-const FaceLockGate = ({ uid, accent, mode, onUnlock, onLogout }: Props) => {
-  const theme = buildTheme(mode, accent);
+const FaceLockGate = ({ uid, mode, onUnlock, onLogout }: Props) => {
+  const theme = buildTheme(mode);
   const [checking, setChecking] = useState(false);
   const [failed,   setFailed]   = useState(false);
   const autoTried = useRef(false);

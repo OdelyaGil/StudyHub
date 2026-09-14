@@ -929,7 +929,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     flexDirection: 'row',
     borderRightWidth: 4,
-    borderRightColor: '#CE6385',
+    borderRightColor: '#FF8C42',
     shadowColor: '#3D1568',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.11,
@@ -951,7 +951,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: '#FFF0F5',
+    backgroundColor: '#FFF3E0',
     borderRadius: 6,
     paddingVertical: 5,
     paddingHorizontal: 8,
@@ -981,10 +981,10 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#CE6385',
+    backgroundColor: '#FF8C42',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#CE6385',
+    shadowColor: '#FF8C42',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -1011,11 +1011,11 @@ const styles = StyleSheet.create({
 
   prioritySelector:    { flexDirection: 'row', gap: 8 },
   priorityBtn:         { flex: 1, paddingVertical: 10, paddingHorizontal: 12, borderRadius: 8, borderWidth: 1, borderColor: '#e0e0e0', backgroundColor: '#f5f5f5', alignItems: 'center' },
-  priorityBtnActive:   { borderColor: '#CE6385', backgroundColor: '#FFF0F5' },
+  priorityBtnActive:   { borderColor: '#FF8C42', backgroundColor: '#FFF3E0' },
   priorityBtnText:     { fontSize: 12, color: '#999', fontWeight: '600' },
-  priorityBtnTextActive: { color: '#CE6385' },
+  priorityBtnTextActive: { color: '#FF8C42' },
 
-  submitBtn:     { backgroundColor: '#CE6385', paddingVertical: 13, borderRadius: 10, alignItems: 'center', marginTop: 10, marginBottom: 20 },
+  submitBtn:     { backgroundColor: '#FF8C42', paddingVertical: 13, borderRadius: 10, alignItems: 'center', marginTop: 10, marginBottom: 20 },
   submitBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
 
   // Web Pickers — same as ScheduleScreen
@@ -1029,7 +1029,7 @@ const styles = StyleSheet.create({
   webPickerHour:      { width: 80 },
   webPickerMinute:    { width: 80 },
   webPickerColonWrap: { paddingBottom: 11 },
-  webPickerColon:     { fontSize: 20, fontWeight: '700', color: '#CE6385' },
+  webPickerColon:     { fontSize: 20, fontWeight: '700', color: '#FF8C42' },
 
   // Picker btn (native date)
   pickerBtn:      { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
@@ -1051,10 +1051,10 @@ const styles = StyleSheet.create({
   dtPickerControl:    { height: 200 },
 
   // File attachment
-  filePickerBtn:     { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderColor: '#CE6385', borderRadius: 10, borderStyle: 'dashed', paddingVertical: 12, paddingHorizontal: 16, backgroundColor: '#f8f6ff' },
-  filePickerBtnText: { fontSize: 14, color: '#CE6385', fontWeight: '600' },
+  filePickerBtn:     { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderColor: '#FF8C42', borderRadius: 10, borderStyle: 'dashed', paddingVertical: 12, paddingHorizontal: 16, backgroundColor: '#f8f6ff' },
+  filePickerBtnText: { fontSize: 14, color: '#FF8C42', fontWeight: '600' },
   fileList:          { marginTop: 10, gap: 6 },
-  fileChip:          { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#FFF0F5', borderRadius: 8, paddingVertical: 7, paddingHorizontal: 10 },
+  fileChip:          { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#FFF3E0', borderRadius: 8, paddingVertical: 7, paddingHorizontal: 10 },
   fileChipText:      { flex: 1, fontSize: 13, color: '#333' },
   fileChipSize:      { fontSize: 11, color: '#aaa' },
   fileChipRemove:    { padding: 2 },

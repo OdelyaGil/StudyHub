@@ -22,9 +22,7 @@ const Stack = createNativeStackNavigator();
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading]   = useState(true);
-  const [accent, setAccent]         = useState('#ADC6E5');
   const [mode, setMode]             = useState<ThemeMode>('light');
-  const [savedAccent, setSavedAccent] = useState<string | undefined>(undefined);
   const [savedMode,   setSavedMode]   = useState<ThemeMode | undefined>(undefined);
   const [pendingVerificationEmail, setPendingVerificationEmail] = useState<string | undefined>(undefined);
   // Privacy gate (Face ID / Touch ID via WebAuthn), independent of Firebase auth —
@@ -42,7 +40,6 @@ export default function App() {
   };
 
   useEffect(() => {
-    AsyncStorage.getItem('savedAccent').then(v => { if (v) { setAccent(v); setSavedAccent(v); } });
     AsyncStorage.getItem('savedMode').then(v => { if (v) { setMode(v as ThemeMode); setSavedMode(v as ThemeMode); } });
   }, []);
 
@@ -89,8 +86,7 @@ export default function App() {
           const snap = await getDoc(doc(db, 'users', user.uid));
           if (snap.exists()) {
             const d = snap.data();
-            if (d.accent) setAccent(d.accent);
-            if (d.mode)   setMode(d.mode);
+            if (d.mode) setMode(d.mode);
           }
         } catch { }
         setFaceLockPassed(false);
@@ -110,7 +106,7 @@ export default function App() {
 
   if (isLoading) return (
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: savedMode === 'dark' ? '#0D0D1A' : '#F4EEF9' }}>
-      <ActivityIndicator size="large" color={savedAccent ?? '#ADC6E5'} />
+      <ActivityIndicator size="large" color={savedMode === 'dark' ? '#FFB347' : '#FF8C42'} />
     </View>
   );
 
@@ -122,14 +118,13 @@ export default function App() {
         <Stack.Navigator screenOptions={{ headerShown: false, animation: 'none' }}>
           {!isLoggedIn ? (
             <Stack.Screen name="Login">
-              {(props) => <LoginScreen {...props} onLogin={(a, m) => { if (a) setAccent(a); if (m) setMode(m as ThemeMode); setPendingVerificationEmail(undefined); setIsLoggedIn(true); }} savedAccent={savedAccent} savedMode={savedMode} initialPendingEmail={pendingVerificationEmail} />}
+              {(props) => <LoginScreen {...props} onLogin={() => { setPendingVerificationEmail(undefined); setIsLoggedIn(true); }} savedMode={savedMode} initialPendingEmail={pendingVerificationEmail} />}
             </Stack.Screen>
           ) : faceLockNeeded && !faceLockPassed ? (
             <Stack.Screen name="FaceLock">
               {() => (
                 <FaceLockGate
                   uid={auth.currentUser?.uid ?? ''}
-                  accent={accent}
                   mode={mode}
                   onUnlock={() => setFaceLockPassed(true)}
                   onLogout={handleLogout}
@@ -141,9 +136,7 @@ export default function App() {
               {(props) => (
                 <DashboardScreen
                   {...props}
-                  accent={accent}
                   mode={mode}
-                  onSetAccent={setAccent}
                   onSetMode={setMode}
                   onLogout={handleLogout}
                 />

@@ -28,6 +28,6 @@ const s = StyleSheet.create({
   wrap:    { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0D0D1A', padding: 32 },
   title:   { color: '#FFFFFF', fontSize: 22, fontWeight: '700', marginBottom: 12, textAlign: 'center' },
   body:    { color: '#9299B8', fontSize: 15, textAlign: 'center', marginBottom: 32 },
-  btn:     { backgroundColor: '#CBD8E8', paddingHorizontal: 32, paddingVertical: 14, borderRadius: 12 },
-  btnText: { color: '#0D0D1A', fontWeight: '700', fontSize: 16 },
+  btn:     { backgroundColor: '#FF8C42', paddingHorizontal: 32, paddingVertical: 14, borderRadius: 12 },
+  btnText: { color: '#FFFFFF', fontWeight: '700', fontSize: 16 },
 });

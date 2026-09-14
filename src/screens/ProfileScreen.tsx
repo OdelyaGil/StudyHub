@@ -4,7 +4,6 @@ import {
   TextInput, Modal, ActivityIndicator,
   KeyboardAvoidingView, Platform, Switch, Image,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import {
   EmailAuthProvider, reauthenticateWithCredential,
@@ -21,50 +20,15 @@ import * as ImagePicker from 'expo-image-picker';
 import { validatePassword } from '../utils/helpers';
 import { isFaceLockEnabled, isFaceLockSupported, registerFaceLock, disableFaceLock } from '../utils/faceLock';
 
-const GRADIENTS: { name: string; colors: [string, string] }[] = [
-  { name: 'MIDNIGHT OCEAN', colors: ['#1E0F75', '#3785D8'] },
-  { name: 'DEEP BLUE',      colors: ['#1C1DAB', '#ADC6E5'] },
-  { name: 'SKY FADE',       colors: ['#3785D8', '#E0EEFF'] },
-  { name: 'MIST BLOOM',     colors: ['#ADC6E5', '#BF8CE1'] },
-  { name: 'PURPLE DAWN',    colors: ['#BF8CE1', '#E893C5'] },
-  { name: 'SUNSET BLUSH',   colors: ['#E893C5', '#EBB2C3'] },
-  { name: 'PETAL SOFT',     colors: ['#EBB2C3', '#F5E0EA'] },
-  { name: 'PEARL DRIFT',    colors: ['#CBD8E8', '#F0F4FA'] },
-];
-
-const DARK_ACCENTS = [
-  { name: 'MIDNIGHT',     color: '#1E0F75' },
-  { name: 'ROYAL NAVY',   color: '#1C1DAB' },
-  { name: 'OCEAN BLUE',   color: '#3785D8' },
-  { name: 'ICE BLUE',     color: '#ADC6E5' },
-  { name: 'LAVENDER',     color: '#BF8CE1' },
-  { name: 'FLAMINGO',     color: '#E893C5' },
-  { name: 'ROSE QUARTZ',  color: '#EBB2C3' },
-  { name: 'SILVER MIST',  color: '#CBD8E8' },
-];
-
-const LIGHT_ACCENTS = [
-  { name: 'MIDNIGHT',     color: '#1E0F75' },
-  { name: 'ROYAL NAVY',   color: '#1C1DAB' },
-  { name: 'OCEAN BLUE',   color: '#3785D8' },
-  { name: 'ICE BLUE',     color: '#ADC6E5' },
-  { name: 'LAVENDER',     color: '#BF8CE1' },
-  { name: 'FLAMINGO',     color: '#E893C5' },
-  { name: 'ROSE QUARTZ',  color: '#EBB2C3' },
-  { name: 'SILVER MIST',  color: '#CBD8E8' },
-];
-
 type Props = {
-  accent: string;
   mode: ThemeMode;
-  onSetAccent: (c: string) => void;
   onSetMode: (m: ThemeMode) => void;
   onLogout: () => void;
   onAvatarChange?: (url: string) => void;
   onNameChange?: (name: string) => void;
 };
 
-const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvatarChange, onNameChange }: Props) => {
+const ProfileScreen = ({ mode, onSetMode, onLogout, onAvatarChange, onNameChange }: Props) => {
   const theme = useTheme();
   const { showAlert, alertNode } = useCustomAlert(theme.accent);
 
@@ -287,12 +251,6 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
     } finally { setPassLoading(false); }
   };
 
-  const handleSelectAccent = (color: string) => {
-    onSetAccent(color);
-    const user = auth.currentUser;
-    if (user) setDoc(doc(db, 'users', user.uid), { accent: color }, { merge: true }).catch(() => {});
-    AsyncStorage.setItem('savedAccent', color).catch(() => {});
-  };
 
   const handleToggleMode = (val: boolean) => {
     const newMode: ThemeMode = val ? 'dark' : 'light';
@@ -336,8 +294,7 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
     try {
       await deleteUser(user);
       // Clear persisted theme so the next user starts fresh
-      await AsyncStorage.multiRemove(['savedAccent', 'savedMode']);
-      onSetAccent('#ADC6E5');
+      await AsyncStorage.removeItem('savedMode');
       onSetMode('light');
       onLogout();
     } catch {
@@ -351,7 +308,6 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
     : '?';
 
   const isDark = mode === 'dark';
-  const accents = isDark ? DARK_ACCENTS : LIGHT_ACCENTS;
   const darkShadow: object = isDark
     ? (Platform.select({ web: { boxShadow: `0 4px 20px ${theme.accent}30, 0 1px 6px rgba(0,0,0,0.5)` } as any, default: { shadowColor: theme.accent, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.18, shadowRadius: 12, elevation: 6 } }) ?? {})
     : {};
@@ -482,64 +438,6 @@ const ProfileScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout, onAvata
             />
           </View>
 
-          <View style={[s.divider, { backgroundColor: theme.border }]} />
-
-          {/* Accent colors */}
-          <Text style={[s.subLabel, { color: theme.textSub }]}>צבע הדגשה</Text>
-          <View style={s.accentRow}>
-            {accents.map(a => (
-              <Pressable key={a.color} onPress={() => handleSelectAccent(a.color)} style={s.accentItem}>
-                <View style={[
-                  s.accentCircle,
-                  { backgroundColor: a.color },
-                  accent === a.color && { borderWidth: 3, borderColor: '#fff' },
-                  isDark && accent === a.color && {
-                    shadowColor: a.color,
-                    shadowOffset: { width: 0, height: 0 },
-                    shadowOpacity: 0.9,
-                    shadowRadius: 8,
-                    elevation: 6,
-                  },
-                ]} />
-                <Text style={[s.accentName, { color: accent === a.color ? theme.accent : theme.textSub }]}>
-                  {a.name}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-
-          {/* Gradients */}
-          <View style={[s.divider, { backgroundColor: theme.border, marginVertical: 12 }]} />
-          <Text style={[s.subLabel, { color: theme.textSub }]}>גרדיאנטים</Text>
-          <View style={s.gradientGrid}>
-            {GRADIENTS.map(g => {
-              const key = `gradient:${g.colors[0]},${g.colors[1]}`;
-              const isSelected = accent === key;
-              return (
-                <Pressable key={key} onPress={() => handleSelectAccent(key)} style={s.gradientItem}>
-                  <LinearGradient
-                    colors={g.colors}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={[
-                      s.gradientPill,
-                      isSelected && { borderWidth: 2.5, borderColor: '#fff' },
-                      isSelected && isDark && {
-                        shadowColor: g.colors[0],
-                        shadowOffset: { width: 0, height: 0 },
-                        shadowOpacity: 0.8,
-                        shadowRadius: 8,
-                        elevation: 6,
-                      },
-                    ]}
-                  />
-                  <Text style={[s.accentName, { color: isSelected ? theme.accent : theme.textSub }]}>
-                    {g.name}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
         </View>
 
         {/* Academic settings */}
@@ -714,10 +612,6 @@ const s = StyleSheet.create({
   toggleText:   { fontSize: 14, fontWeight: '600' },
   faceLockHint: { fontSize: 11, lineHeight: 16, textAlign: 'right', paddingTop: 2, paddingBottom: 4 },
   subLabel:     { fontSize: 11, fontWeight: '600', marginTop: 12, marginBottom: 10, textAlign: 'right' },
-  accentRow:    { flexDirection: 'row', flexWrap: 'wrap', paddingVertical: 8 },
-  accentItem:   { width: '25%', alignItems: 'center', gap: 6, paddingVertical: 6 },
-  accentCircle: { width: 40, height: 40, borderRadius: 20 },
-  accentName:   { fontSize: 9, textAlign: 'center' },
   logoutBtn: {
     width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 8, paddingVertical: 14, borderRadius: 12, borderWidth: 1.5, marginBottom: 12,
@@ -742,9 +636,6 @@ const s = StyleSheet.create({
   saveBtn:      { borderRadius: 10, paddingVertical: 13, alignItems: 'center' },
   saveBtnText:  { fontSize: 15, fontWeight: '700' },
 
-  gradientGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingVertical: 8 },
-  gradientItem: { width: '25%', alignItems: 'center', gap: 6, paddingVertical: 6 },
-  gradientPill:     { width: 40, height: 40, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(0,0,0,0.08)' },
   verifyBanner:     { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8, paddingHorizontal: 10, borderRadius: 8, borderWidth: 1, marginTop: 6 },
   verifyBannerText: { flex: 1, fontSize: 13 },
   verifyResend:     { fontSize: 13, fontWeight: '600' },

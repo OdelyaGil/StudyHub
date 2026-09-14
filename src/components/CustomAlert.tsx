@@ -15,7 +15,7 @@ type Props = {
   theme?: string;
 };
 
-const CustomAlert = ({ visible, title, message, buttons, theme = '#D58EAC' }: Props) => (
+const CustomAlert = ({ visible, title, message, buttons, theme = '#FF8C42' }: Props) => (
   <Modal visible={visible} transparent animationType="fade">
     <View style={styles.overlay}>
       <View style={styles.card}>

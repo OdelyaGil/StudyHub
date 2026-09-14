@@ -16,8 +16,13 @@ export interface AppTheme {
   sidebarBg2: string;
   heroBg:     string;
   heroGlow:   string;
+  danger:     string;
 }
 
+// Fixed brand palette ("warm sunset") — the whole app uses these seven colors,
+// light to dark. There is no per-user accent customization; only mode (light/
+// dark) is user-controlled, and both modes stay within this same palette.
+//   #FFD27F  #FFB347  #FF8C42  #E76F51  #D94E4E  #9E2A2B  #2C2A32
 function hexToHsl(hex: string): [number, number, number] {
   const h = hex.replace('#', '');
   const r = parseInt(h.slice(0, 2), 16) / 255;
@@ -46,46 +51,49 @@ function hslToHex(h: number, s: number, l: number): string {
   return `#${f(0)}${f(8)}${f(4)}`;
 }
 
-function sidebarColor(accent: string, targetL: number): string {
-  const [h, s] = hexToHsl(accent);
-  return hslToHex(h, Math.min(s, 58), targetL);
+// Re-lightness a palette color while keeping its hue/family — used to derive
+// the sidebar's two background shades from the fixed accent without another
+// hand-picked hex.
+function reLighten(hex: string, targetL: number): string {
+  const [h, s] = hexToHsl(hex);
+  return hslToHex(h, Math.min(s, 70), targetL);
 }
 
-function triadicColor(accent: string, targetL: number): string {
-  const [h, s] = hexToHsl(accent);
-  return hslToHex((h + 120) % 360, Math.min(s, 65), targetL);
-}
+const PALETTE_LIGHT = '#FFD27F';
+const PALETTE_AMBER  = '#FFB347';
+const PALETTE_ORANGE = '#FF8C42';
+const PALETTE_CORAL  = '#E76F51';
+const PALETTE_RED    = '#D94E4E';
+const PALETTE_MAROON = '#9E2A2B';
+const PALETTE_DARK   = '#2C2A32';
 
-function heroGlowColor(accent: string): string {
-  const [h] = hexToHsl(accent);
-  return hslToHex((h + 120) % 360, 80, 72);
-}
-
-export const buildTheme = (mode: ThemeMode, rawAccent: string): AppTheme => {
-  const dark     = mode === 'dark';
-  const isGrad   = rawAccent.startsWith('gradient:');
-  const gradArr  = isGrad
-    ? (rawAccent.replace('gradient:', '').split(',') as [string, string])
-    : null;
-  const accent   = isGrad ? gradArr![0] : rawAccent;
+export const buildTheme = (mode: ThemeMode): AppTheme => {
+  const dark   = mode === 'dark';
+  const accent = dark ? PALETTE_AMBER : PALETTE_ORANGE;
+  const accentGradient: [string, string] = dark
+    ? [PALETTE_AMBER, PALETTE_CORAL]
+    : [PALETTE_LIGHT, PALETTE_AMBER];
 
   return {
     mode,
     accent,
-    accentGradient: gradArr,
-    bg:         (gradArr && !dark) ? 'transparent' : (dark ? '#0A0A0F' : '#D9D9ED'),
+    accentGradient,
+    // Light mode stays transparent so the accentGradient wash (rendered behind
+    // the tab navigator) shows through, same mechanism as before.
+    bg:         dark ? PALETTE_DARK : 'transparent',
     surface:    dark ? 'rgba(255,255,255,0.06)' : '#FFFFFF',
-    border:     dark ? accent + '55' : '#E8E4F4',
-    text:       dark ? '#FFFFFF' : '#1A1A2E',
-    textSub:    dark ? '#7A7A9A' : '#7A7A9A',
-    tabBg:      dark ? '#0D0D1A' : '#FFFFFF',
-    sidebarBg:  sidebarColor(accent, 22),
-    sidebarBg2: sidebarColor(accent, 15),
-    heroBg:     triadicColor(accent, 22),
-    heroGlow:   heroGlowColor(accent),
+    border:     dark ? accent + '55' : '#F3D9BE',
+    text:       dark ? '#FFFFFF' : PALETTE_DARK,
+    textSub:    dark ? 'rgba(255,255,255,0.55)' : '#8A7F73',
+    tabBg:      dark ? '#231F27' : '#FFFFFF',
+    sidebarBg:  dark ? reLighten(PALETTE_MAROON, 12) : '#FFFFFF',
+    sidebarBg2: dark ? reLighten(PALETTE_MAROON, 8)  : reLighten(PALETTE_LIGHT, 92),
+    heroBg:     dark ? PALETTE_MAROON : PALETTE_CORAL,
+    heroGlow:   dark ? PALETTE_CORAL  : PALETTE_LIGHT,
+    danger:     PALETTE_RED,
   };
 };
 
-const ThemeContext = createContext<AppTheme>(buildTheme('light', '#ADC6E5'));
+const ThemeContext = createContext<AppTheme>(buildTheme('light'));
 export const useTheme = () => useContext(ThemeContext);
 export default ThemeContext;

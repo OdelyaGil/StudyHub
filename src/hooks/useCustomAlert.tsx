@@ -7,7 +7,7 @@ type AlertState = { visible: boolean; title: string; message: string; buttons: B
 
 const HIDDEN: AlertState = { visible: false, title: '', message: '', buttons: [] };
 
-export const useCustomAlert = (theme = '#D58EAC') => {
+export const useCustomAlert = (theme = '#FF8C42') => {
   const [state, setState] = useState<AlertState>(HIDDEN);
 
   const hide = () => setState(HIDDEN);

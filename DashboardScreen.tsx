@@ -32,15 +32,13 @@ const LibraryTab = withSwipeBack(LibraryScreen);
 
 type Props = {
   navigation:   NavigationProp<ParamListBase>;
-  accent:       string;
   mode:         ThemeMode;
-  onSetAccent:  (c: string) => void;
   onSetMode:    (m: ThemeMode) => void;
   onLogout:     () => void;
 };
 
-const DashboardScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout }: Props) => {
-  const theme = buildTheme(mode, accent);
+const DashboardScreen = ({ mode, onSetMode, onLogout }: Props) => {
+  const theme = buildTheme(mode);
   const { width } = useWindowDimensions();
   const isWide = Platform.OS === 'web' && width >= 720;
   const { top: safeTop } = useSafeAreaInsets();
@@ -121,9 +119,7 @@ const DashboardScreen = ({ accent, mode, onSetAccent, onSetMode, onLogout }: Pro
             {() => (
               <SwipeBackEdge>
                 <ProfileScreen
-                  accent={accent}
                   mode={mode}
-                  onSetAccent={onSetAccent}
                   onSetMode={onSetMode}
                   onLogout={onLogout}
                   onAvatarChange={(url) => setUserAvatar(url)}

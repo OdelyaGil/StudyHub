@@ -19,19 +19,21 @@ import { auth, db } from './src/config/firebase';
 import { useCustomAlert } from './src/hooks/useCustomAlert';
 import { validatePassword } from './src/utils/helpers';
 
-const DEFAULT_ACCENT = '#FFA951';
-const DEFAULT_GRAD: [string, string] = ['#FFA951', '#FFD09F'];
+// Fixed brand palette — same "warm sunset" palette as ThemeContext.tsx. There is
+// no per-user accent customization anymore, so these are the only colors the
+// login screen (and its button/link accent) ever uses.
+const ACCENT_LIGHT = '#FF8C42';
+const ACCENT_DARK  = '#FFB347';
+const GRAD_LIGHT: [string, string] = ['#FF8C42', '#E76F51'];
+const GRAD_DARK:  [string, string] = ['#FFB347', '#E76F51'];
 const LOGIN_BG:    [string, string] = ['#FFFFFF', '#FFFFFF'];
-const NEW_USER_ACCENT    = '#ADC6E5';
 const NEW_USER_MODE      = 'light';
 const VERIFY_TIMEOUT_MS  = 10 * 60 * 1000; // 10 minutes
 
-const LoginScreen = ({ onLogin, savedAccent, savedMode, initialPendingEmail }: { navigation: any; onLogin: (accent?: string, mode?: string) => void; savedAccent?: string; savedMode?: string; initialPendingEmail?: string }) => {
-  const isGrad  = savedAccent?.startsWith('gradient:');
-  const gradArr = isGrad ? savedAccent!.replace('gradient:', '').split(',') as [string, string] : null;
-  const ACCENT  = gradArr ? gradArr[0] : (savedAccent ?? DEFAULT_ACCENT);
-  const GRAD: [string, string] = gradArr ?? (savedAccent ? [savedAccent, savedAccent + 'BB'] : DEFAULT_GRAD);
+const LoginScreen = ({ onLogin, savedMode, initialPendingEmail }: { navigation: any; onLogin: () => void; savedMode?: string; initialPendingEmail?: string }) => {
   const isDark  = savedMode === 'dark';
+  const ACCENT  = isDark ? ACCENT_DARK : ACCENT_LIGHT;
+  const GRAD: [string, string] = isDark ? GRAD_DARK : GRAD_LIGHT;
 
   const BG      = isDark ? '#0A0A1A' : '#F4EEF9';
   const SURFACE = isDark ? '#111128' : '#FFFFFF';
@@ -178,7 +180,6 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode, initialPendingEmail }: {
           name: regName.trim(),
           email: regEmail.toLowerCase(),
           userType: 'student',
-          accent: NEW_USER_ACCENT,
           mode: NEW_USER_MODE,
           grades: [],
           tasks: [],
@@ -303,7 +304,7 @@ const LoginScreen = ({ onLogin, savedAccent, savedMode, initialPendingEmail }: {
       fontSize: 16, color: TEXT, textAlign: 'right',
     },
     forgotHint: { fontSize: 13, color: SUB, marginBottom: 20, lineHeight: 20, textAlign: 'right' },
-  }), [savedAccent, savedMode]);
+  }), [savedMode]);
 
   if (emailJustVerified) {
     return (
