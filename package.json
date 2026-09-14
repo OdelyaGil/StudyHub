@@ -1,7 +1,13 @@
 {
-  "name": "student-dashboard-expo",
+  "name": "studyhub",
   "version": "1.0.0",
-  "description": "Student Dashboard App - Expo/React Native",
+  "description": "StudyHub - a student productivity app (grades, tasks, schedule, study library) built with Expo/React Native",
+  "author": "Odelya Gil (https://github.com/OdelyaGil)",
+  "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/OdelyaGil/StudyHub.git"
+  },
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
     "start": "expo start",
