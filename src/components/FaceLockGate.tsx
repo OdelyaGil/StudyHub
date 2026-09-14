@@ -50,7 +50,7 @@ const FaceLockGate = ({ uid, mode, onUnlock, onLogout }: Props) => {
       </Text>
 
       {failed && (
-        <Text style={[st.errorText, { color: '#ff6b6b' }]}>
+        <Text style={[st.errorText, { color: '#D94E4E' }]}>
           האימות נכשל או בוטל. נסה/י שוב.
         </Text>
       )}

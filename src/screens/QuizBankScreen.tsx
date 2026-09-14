@@ -315,8 +315,8 @@ const QuizBankScreen = () => {
               <Text style={[s.sheetBtnText, { color: theme.text }]}>ערוך</Text>
             </TouchableOpacity>
             <TouchableOpacity style={s.sheetBtn} onPress={openDelete}>
-              <MaterialCommunityIcons name="trash-can-outline" size={20} color="#FF4444" />
-              <Text style={[s.sheetBtnText, { color: '#FF4444' }]}>מחק</Text>
+              <MaterialCommunityIcons name="trash-can-outline" size={20} color="#D94E4E" />
+              <Text style={[s.sheetBtnText, { color: '#D94E4E' }]}>מחק</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -358,7 +358,7 @@ const QuizBankScreen = () => {
       <Modal visible={deleteModal} transparent animationType="fade">
         <View style={s.overlay}>
           <View style={[s.confirmPanel, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-            <MaterialCommunityIcons name="trash-can-outline" size={36} color="#FF4444" />
+            <MaterialCommunityIcons name="trash-can-outline" size={36} color="#D94E4E" />
             <Text style={[s.confirmTitle, { color: theme.text }]}>מחיקת שאלה</Text>
             <Text style={[s.confirmMsg, { color: theme.textSub }]}>למחוק את השאלה?</Text>
             <View style={s.confirmBtns}>
@@ -405,8 +405,8 @@ const QuizBankScreen = () => {
               <Text style={[s.sheetBtnText, { color: theme.text }]}>שנה שם</Text>
             </TouchableOpacity>
             <TouchableOpacity style={s.sheetBtn} onPress={startDelFolder}>
-              <MaterialCommunityIcons name="trash-can-outline" size={20} color="#FF4444" />
-              <Text style={[s.sheetBtnText, { color: '#FF4444' }]}>מחק תיקייה</Text>
+              <MaterialCommunityIcons name="trash-can-outline" size={20} color="#D94E4E" />
+              <Text style={[s.sheetBtnText, { color: '#D94E4E' }]}>מחק תיקייה</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -438,7 +438,7 @@ const QuizBankScreen = () => {
       <Modal visible={delFolderModal} transparent animationType="fade">
         <View style={s.overlay}>
           <View style={[s.confirmPanel, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-            <MaterialCommunityIcons name="trash-can-outline" size={36} color="#FF4444" />
+            <MaterialCommunityIcons name="trash-can-outline" size={36} color="#D94E4E" />
             <Text style={[s.confirmTitle, { color: theme.text }]}>מחיקת תיקייה</Text>
             <Text style={[s.confirmMsg, { color: theme.textSub }]}>
               למחוק את "{folderMenuTarget?.name}"?{'\n'}השאלות בתיקייה לא יימחקו.
@@ -516,7 +516,7 @@ const s = StyleSheet.create({
   confirmMsg:    { fontSize: 14, textAlign: 'center' },
   confirmBtns:   { flexDirection: 'row', gap: 12, marginTop: 8, width: '100%' },
   confirmCancel: { flex: 1, paddingVertical: 14, borderRadius: 12, borderWidth: 1, alignItems: 'center' },
-  confirmDel:    { flex: 1, paddingVertical: 14, borderRadius: 12, alignItems: 'center', backgroundColor: '#FF4444' },
+  confirmDel:    { flex: 1, paddingVertical: 14, borderRadius: 12, alignItems: 'center', backgroundColor: '#D94E4E' },
 });
 
 export default QuizBankScreen;

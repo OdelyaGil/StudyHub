@@ -443,11 +443,11 @@ const SummariesScreen = () => {
         </View>
       )}
       {!importing && importError !== '' && (
-        <View style={[s.statusBanner, { backgroundColor: '#FF444422', borderColor: '#FF4444' }]}>
-          <MaterialCommunityIcons name="alert-circle-outline" size={16} color="#FF4444" />
-          <Text style={{ color: '#FF4444', fontSize: 13, flex: 1, textAlign: 'right' }}>{importError}</Text>
+        <View style={[s.statusBanner, { backgroundColor: '#D94E4E22', borderColor: '#D94E4E' }]}>
+          <MaterialCommunityIcons name="alert-circle-outline" size={16} color="#D94E4E" />
+          <Text style={{ color: '#D94E4E', fontSize: 13, flex: 1, textAlign: 'right' }}>{importError}</Text>
           <TouchableOpacity onPress={() => setImportError('')}>
-            <MaterialCommunityIcons name="close" size={16} color="#FF4444" />
+            <MaterialCommunityIcons name="close" size={16} color="#D94E4E" />
           </TouchableOpacity>
         </View>
       )}
@@ -512,7 +512,7 @@ const SummariesScreen = () => {
       <Modal visible={confirmModal} transparent animationType="fade">
         <View style={s.overlay}>
           <View style={[s.confirmPanel, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-            <MaterialCommunityIcons name="trash-can-outline" size={36} color="#FF4444" />
+            <MaterialCommunityIcons name="trash-can-outline" size={36} color="#D94E4E" />
             <Text style={[s.confirmTitle, { color: theme.text }]}>מחיקת סיכום</Text>
             <Text style={[s.confirmMsg,   { color: theme.textSub }]}>האם למחוק את הסיכום לצמיתות?</Text>
             <View style={s.confirmBtns}>
@@ -559,8 +559,8 @@ const SummariesScreen = () => {
               <Text style={[s.sheetBtnText, { color: theme.text }]}>שנה שם</Text>
             </TouchableOpacity>
             <TouchableOpacity style={s.sheetBtn} onPress={startDeleteFolder}>
-              <MaterialCommunityIcons name="trash-can-outline" size={20} color="#FF4444" />
-              <Text style={[s.sheetBtnText, { color: '#FF4444' }]}>מחק תיקייה</Text>
+              <MaterialCommunityIcons name="trash-can-outline" size={20} color="#D94E4E" />
+              <Text style={[s.sheetBtnText, { color: '#D94E4E' }]}>מחק תיקייה</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -592,7 +592,7 @@ const SummariesScreen = () => {
       <Modal visible={delFolderModal} transparent animationType="fade">
         <View style={s.overlay}>
           <View style={[s.confirmPanel, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-            <MaterialCommunityIcons name="trash-can-outline" size={36} color="#FF4444" />
+            <MaterialCommunityIcons name="trash-can-outline" size={36} color="#D94E4E" />
             <Text style={[s.confirmTitle, { color: theme.text }]}>מחיקת תיקייה</Text>
             <Text style={[s.confirmMsg, { color: theme.textSub }]}>
               למחוק את "{folderMenuTarget?.name}"?{'\n'}הסיכומים בתיקייה לא יימחקו.
@@ -620,7 +620,7 @@ const SummariesScreen = () => {
             <View style={s.editorActions}>
               {viewingFile && (
                 <TouchableOpacity onPress={() => askDelete(viewingFile.id)} style={s.delBtn}>
-                  <MaterialCommunityIcons name="trash-can-outline" size={20} color="#FF4444" />
+                  <MaterialCommunityIcons name="trash-can-outline" size={20} color="#D94E4E" />
                 </TouchableOpacity>
               )}
               <TouchableOpacity onPress={saveFileNotes} style={[s.saveBtn, { backgroundColor: theme.accent }]}>
@@ -681,7 +681,7 @@ const SummariesScreen = () => {
             <View style={s.editorActions}>
               {editing && (
                 <TouchableOpacity onPress={() => askDelete(editing.id)} style={s.delBtn}>
-                  <MaterialCommunityIcons name="trash-can-outline" size={20} color="#FF4444" />
+                  <MaterialCommunityIcons name="trash-can-outline" size={20} color="#D94E4E" />
                 </TouchableOpacity>
               )}
               <TouchableOpacity
@@ -822,7 +822,7 @@ const s = StyleSheet.create({
   confirmMsg:    { fontSize: 14, textAlign: 'center' },
   confirmBtns:   { flexDirection: 'row', gap: 12, marginTop: 8, width: '100%' },
   confirmCancel: { flex: 1, paddingVertical: 14, borderRadius: 12, borderWidth: 1, alignItems: 'center' },
-  confirmDel:    { flex: 1, paddingVertical: 14, borderRadius: 12, alignItems: 'center', backgroundColor: '#FF4444' },
+  confirmDel:    { flex: 1, paddingVertical: 14, borderRadius: 12, alignItems: 'center', backgroundColor: '#D94E4E' },
 
   panel:       { width: '100%', borderRadius: 18, borderWidth: 1, padding: 24, gap: 14 },
   panelTitle:  { fontSize: 18, fontWeight: '700', textAlign: 'right' },

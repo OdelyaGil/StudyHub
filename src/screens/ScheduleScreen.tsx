@@ -477,7 +477,7 @@ const ScheduleScreen = () => {
             <MaterialCommunityIcons name="pencil-outline" size={18} color={theme} />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => handleDelete(ev.id)} style={styles.actionBtn}>
-            <MaterialCommunityIcons name="trash-can-outline" size={18} color="#ff6b6b" />
+            <MaterialCommunityIcons name="trash-can-outline" size={18} color="#D94E4E" />
           </TouchableOpacity>
         </View>
       </View>

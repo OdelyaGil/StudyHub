@@ -132,7 +132,7 @@ const LearningScreen = () => {
           <MaterialCommunityIcons name="refresh" size={20} color={item.needsReview ? theme : '#999'} />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => handleDeleteTopic(item.id)} style={styles.actionBtn}>
-          <MaterialCommunityIcons name="trash-can" size={20} color="#ff6b6b" />
+          <MaterialCommunityIcons name="trash-can" size={20} color="#D94E4E" />
         </TouchableOpacity>
       </View>
     </View>

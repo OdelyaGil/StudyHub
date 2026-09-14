@@ -105,7 +105,7 @@ export default function App() {
   }, []);
 
   if (isLoading) return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: savedMode === 'dark' ? '#0D0D1A' : '#F4EEF9' }}>
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: savedMode === 'dark' ? '#2C2A32' : '#FFFFFF' }}>
       <ActivityIndicator size="large" color={savedMode === 'dark' ? '#FFB347' : '#FF8C42'} />
     </View>
   );

@@ -474,7 +474,7 @@ const ProfileScreen = ({ mode, onSetMode, onLogout, onAvatarChange, onNameChange
         </View>
 
         <Pressable style={s.deleteBtn} onPress={handleDeleteAccount}>
-          <MaterialCommunityIcons name="trash-can" size={20} color="#ff4757" />
+          <MaterialCommunityIcons name="trash-can" size={20} color="#D94E4E" />
           <Text style={s.deleteText}>מחיקת חשבון</Text>
         </Pressable>
 
@@ -526,14 +526,14 @@ const ProfileScreen = ({ mode, onSetMode, onLogout, onAvatarChange, onNameChange
           <View style={s.modalOverlay}>
             <View style={[s.modalCard, { backgroundColor: theme.mode === 'dark' ? '#111122' : '#fff', borderColor: theme.border }]}>
               <View style={s.modalHeader}>
-                <Text style={[s.modalTitle, { color: '#ff4757' }]}>מחיקת חשבון</Text>
+                <Text style={[s.modalTitle, { color: '#D94E4E' }]}>מחיקת חשבון</Text>
                 <Pressable onPress={() => { setShowDeleteModal(false); setDeletePassword(''); }}>
                   <MaterialCommunityIcons name="close" size={24} color={theme.textSub} />
                 </Pressable>
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, backgroundColor: '#fff1f2', borderRadius: 10, padding: 12, marginBottom: 16 }}>
-                <MaterialCommunityIcons name="alert-circle-outline" size={18} color="#ff4757" style={{ marginTop: 1 }} />
-                <Text style={{ flex: 1, fontSize: 13, color: '#ff4757', lineHeight: 20, textAlign: 'right' }}>
+                <MaterialCommunityIcons name="alert-circle-outline" size={18} color="#D94E4E" style={{ marginTop: 1 }} />
+                <Text style={{ flex: 1, fontSize: 13, color: '#D94E4E', lineHeight: 20, textAlign: 'right' }}>
                   פעולה זו תמחק את כל הנתונים שלך לצמיתות ולא ניתן לשחזרם.
                 </Text>
               </View>
@@ -551,7 +551,7 @@ const ProfileScreen = ({ mode, onSetMode, onLogout, onAvatarChange, onNameChange
                 autoFocus
               />
               <Pressable
-                style={[s.saveBtn, { backgroundColor: '#ff4757' }, deleteLoading && { opacity: 0.7 }]}
+                style={[s.saveBtn, { backgroundColor: '#D94E4E' }, deleteLoading && { opacity: 0.7 }]}
                 onPress={confirmDeleteAccount}
                 disabled={deleteLoading}
               >
@@ -620,9 +620,9 @@ const s = StyleSheet.create({
   deleteBtn: {
     width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 8, paddingVertical: 14, borderRadius: 12,
-    backgroundColor: 'rgba(255,71,87,0.1)', borderWidth: 1.5, borderColor: '#ff4757',
+    backgroundColor: 'rgba(217,78,78,0.1)', borderWidth: 1.5, borderColor: '#D94E4E',
   },
-  deleteText:   { fontSize: 15, fontWeight: '700', color: '#ff4757' },
+  deleteText:   { fontSize: 15, fontWeight: '700', color: '#D94E4E' },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', padding: 20 },
   modalCard:    { borderRadius: 20, padding: 24, borderWidth: 1 },
   modalHeader:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },

@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "icon": "./assets/icon.png",
-    "backgroundColor": "#F4EEF9",
+    "backgroundColor": "#FFFFFF",
     "assetBundlePatterns": [
       "**/*"
     ],
@@ -18,14 +18,14 @@
       "package": "com.studyhub.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#F4EEF9"
+        "backgroundColor": "#FFFFFF"
       }
     },
     "web": {
       "bundler": "metro",
       "favicon": "./public/favicon.png",
-      "themeColor": "#ADC6E5",
-      "backgroundColor": "#F4EEF9"
+      "themeColor": "#FF8C42",
+      "backgroundColor": "#FFFFFF"
     },
     "newArchEnabled": false,
     "plugins": [

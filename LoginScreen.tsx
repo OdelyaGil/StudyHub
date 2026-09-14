@@ -35,12 +35,12 @@ const LoginScreen = ({ onLogin, savedMode, initialPendingEmail }: { navigation: 
   const ACCENT  = isDark ? ACCENT_DARK : ACCENT_LIGHT;
   const GRAD: [string, string] = isDark ? GRAD_DARK : GRAD_LIGHT;
 
-  const BG      = isDark ? '#0A0A1A' : '#F4EEF9';
+  const BG      = isDark ? '#0A0A1A' : '#FFF3E0';
   const SURFACE = isDark ? '#111128' : '#FFFFFF';
   const TEXT    = isDark ? '#FFFFFF' : '#1A1A2E';
   const SUB     = isDark ? 'rgba(255,255,255,0.5)' : '#9299B8';
-  const BORDER  = isDark ? ACCENT + '44' : '#EBE4F4';
-  const SHADOW  = isDark ? ACCENT + '40' : '#C9B8DF';
+  const BORDER  = isDark ? ACCENT + '44' : '#F3D9BE';
+  const SHADOW  = isDark ? ACCENT + '40' : '#E8C9A0';
 
   const neuShadow = Platform.select<object>({
     web: { boxShadow: `6px 6px 18px ${SHADOW}, -6px -6px 18px ${isDark ? '#ffffff08' : '#FFFFFF'}` } as any,

@@ -218,7 +218,7 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({ item, onToggle, onDelete
 
         {/* Meta row */}
         <View style={styles.taskMeta}>
-          <Text style={[styles.taskDueText, daysLeft < 0 ? { color: '#ff6b6b' } : daysLeft <= 2 ? { color: '#ffa94d' } : { color: '#999' }]}>
+          <Text style={[styles.taskDueText, daysLeft < 0 ? { color: '#D94E4E' } : daysLeft <= 2 ? { color: '#ffa94d' } : { color: '#999' }]}>
             ⏰ {daysLeft >= 0 ? `${daysLeft} ימים` : 'חזר לאחור!'}
           </Text>
           {item.estimate > 0 && (
@@ -237,7 +237,7 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({ item, onToggle, onDelete
             <MaterialCommunityIcons name="pencil-outline" size={17} color={theme} />
           </TouchableOpacity>
           <TouchableOpacity accessibilityLabel={`מחק ${item.name}`} accessibilityRole="button" onPress={() => onDelete(item.id)} style={styles.actionIcon}>
-            <MaterialCommunityIcons name="trash-can-outline" size={17} color="#ff6b6b" />
+            <MaterialCommunityIcons name="trash-can-outline" size={17} color="#D94E4E" />
           </TouchableOpacity>
         </View>
       </View>
@@ -970,7 +970,7 @@ const styles = StyleSheet.create({
   emptyState:     { alignItems: 'center', justifyContent: 'center', paddingVertical: 60 },
   emptyStateText: { fontSize: 16, fontWeight: '600', marginTop: 12 },
   emptyStateSub:  { fontSize: 13, marginTop: 6, opacity: 0.7 },
-  swipeDeleteBtn: { backgroundColor: '#ff4757', justifyContent: 'center', alignItems: 'center', width: 72, borderRadius: 10, marginLeft: 8 },
+  swipeDeleteBtn: { backgroundColor: '#D94E4E', justifyContent: 'center', alignItems: 'center', width: 72, borderRadius: 10, marginLeft: 8 },
   swipeDeleteText: { color: '#fff', fontSize: 11, marginTop: 3 },
 
   // FAB

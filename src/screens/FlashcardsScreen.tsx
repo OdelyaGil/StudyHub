@@ -206,8 +206,8 @@ const FlashcardsScreen = () => {
               <Text style={[s.actionBtnText, { color: theme.text }]}>שנה שם</Text>
             </TouchableOpacity>
             <TouchableOpacity style={s.actionBtn} onPress={openDeleteSet}>
-              <MaterialCommunityIcons name="trash-can-outline" size={20} color="#FF4444" />
-              <Text style={[s.actionBtnText, { color: '#FF4444' }]}>מחק סט</Text>
+              <MaterialCommunityIcons name="trash-can-outline" size={20} color="#D94E4E" />
+              <Text style={[s.actionBtnText, { color: '#D94E4E' }]}>מחק סט</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -244,7 +244,7 @@ const FlashcardsScreen = () => {
       <Modal visible={deleteSetModal} transparent animationType="fade">
         <View style={s.overlay}>
           <View style={[s.confirmPanel, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-            <MaterialCommunityIcons name="trash-can-outline" size={36} color="#FF4444" />
+            <MaterialCommunityIcons name="trash-can-outline" size={36} color="#D94E4E" />
             <Text style={[s.confirmTitle, { color: theme.text }]}>מחיקת סט</Text>
             <Text style={[s.confirmMsg, { color: theme.textSub }]}>
               למחוק את "{menuTarget?.name}" וכל הכרטיסיות שלו?
@@ -265,7 +265,7 @@ const FlashcardsScreen = () => {
       <Modal visible={deleteCardModal} transparent animationType="fade">
         <View style={s.overlay}>
           <View style={[s.confirmPanel, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-            <MaterialCommunityIcons name="trash-can-outline" size={36} color="#FF4444" />
+            <MaterialCommunityIcons name="trash-can-outline" size={36} color="#D94E4E" />
             <Text style={[s.confirmTitle, { color: theme.text }]}>מחיקת כרטיסייה</Text>
             <Text style={[s.confirmMsg, { color: theme.textSub }]}>למחוק את הכרטיסייה לצמיתות?</Text>
             <View style={s.confirmBtns}>
@@ -368,7 +368,7 @@ const FlashcardsScreen = () => {
                 <MaterialCommunityIcons name="pencil-outline" size={18} color={theme.textSub} />
               </TouchableOpacity>
               <TouchableOpacity onPress={() => { setDeleteCardId(card.id); setDeleteCardModal(true); }} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}>
-                <MaterialCommunityIcons name="trash-can-outline" size={18} color="#FF4444" />
+                <MaterialCommunityIcons name="trash-can-outline" size={18} color="#D94E4E" />
               </TouchableOpacity>
             </View>
           </View>
@@ -387,7 +387,7 @@ const FlashcardsScreen = () => {
               <Text style={[s.panelTitle, { color: theme.text }]}>{editingCard ? 'עריכת כרטיסייה' : 'כרטיסייה חדשה'}</Text>
               {editingCard && (
                 <TouchableOpacity onPress={() => askDeleteCard(editingCard.id)}>
-                  <MaterialCommunityIcons name="trash-can-outline" size={20} color="#FF4444" />
+                  <MaterialCommunityIcons name="trash-can-outline" size={20} color="#D94E4E" />
                 </TouchableOpacity>
               )}
             </View>
@@ -499,11 +499,11 @@ const FlashcardsScreen = () => {
           {showBack && (
             <View style={s.studyActionBtns}>
               <TouchableOpacity
-                style={[s.studyActionBtn, { backgroundColor: '#FF4444' + '18', borderColor: '#FF4444' + '66' }]}
+                style={[s.studyActionBtn, { backgroundColor: '#D94E4E' + '18', borderColor: '#D94E4E' + '66' }]}
                 onPress={() => nextCard(false)}
               >
-                <MaterialCommunityIcons name="close" size={22} color="#FF4444" />
-                <Text style={{ color: '#FF4444', fontWeight: '700', fontSize: 14 }}>לא ידעתי</Text>
+                <MaterialCommunityIcons name="close" size={22} color="#D94E4E" />
+                <Text style={{ color: '#D94E4E', fontWeight: '700', fontSize: 14 }}>לא ידעתי</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[s.studyActionBtn, { backgroundColor: '#22CC66' + '18', borderColor: '#22CC66' + '66' }]}
@@ -630,7 +630,7 @@ const s = StyleSheet.create({
     flex: 1, paddingVertical: 14, borderRadius: 12, borderWidth: 1, alignItems: 'center',
   },
   confirmDelete: {
-    flex: 1, paddingVertical: 14, borderRadius: 12, alignItems: 'center', backgroundColor: '#FF4444',
+    flex: 1, paddingVertical: 14, borderRadius: 12, alignItems: 'center', backgroundColor: '#D94E4E',
   },
 });
 

@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f0f0',
   },
   btnDestructive: {
-    backgroundColor: '#ff4757',
+    backgroundColor: '#D94E4E',
   },
   btnText: {
     fontSize: 15,

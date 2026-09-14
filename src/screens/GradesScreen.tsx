@@ -298,7 +298,7 @@ const GradesScreen = ({ onClose }: { onClose?: () => void }) => {
               <MaterialCommunityIcons name="pencil-outline" size={17} color={theme} />
             </TouchableOpacity>
             <TouchableOpacity accessibilityLabel={`מחק ${item.name}`} accessibilityRole="button" onPress={() => handleDeleteGrade(item.id)} style={styles.actionBtn}>
-              <MaterialCommunityIcons name="trash-can-outline" size={17} color="#ff6b6b" />
+              <MaterialCommunityIcons name="trash-can-outline" size={17} color="#D94E4E" />
             </TouchableOpacity>
           </View>
         </View>
@@ -422,7 +422,7 @@ const GradesScreen = ({ onClose }: { onClose?: () => void }) => {
                     <MaterialCommunityIcons
                       name="close-circle-outline"
                       size={18}
-                      color={c.included ? '#ff6b6b' : textSub}
+                      color={c.included ? '#D94E4E' : textSub}
                     />
                   </TouchableOpacity>
                 </View>
@@ -709,7 +709,7 @@ const styles = StyleSheet.create({
   emptyState:        { alignItems: 'center', justifyContent: 'center', paddingVertical: 60 },
   emptyStateText:    { fontSize: 16, fontWeight: '600', marginTop: 12 },
   emptyStateSub:     { fontSize: 13, marginTop: 6, opacity: 0.7 },
-  swipeDeleteBtn:    { backgroundColor: '#ff4757', justifyContent: 'center', alignItems: 'center', width: 72, borderRadius: 10, marginLeft: 8 },
+  swipeDeleteBtn:    { backgroundColor: '#D94E4E', justifyContent: 'center', alignItems: 'center', width: 72, borderRadius: 10, marginLeft: 8 },
   swipeDeleteText:   { color: '#fff', fontSize: 11, marginTop: 3 },
   fab: {
     position: 'absolute', bottom: 20, right: 20,
