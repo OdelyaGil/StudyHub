@@ -19,8 +19,8 @@ import { auth, db } from './src/config/firebase';
 import { useCustomAlert } from './src/hooks/useCustomAlert';
 import { validatePassword } from './src/utils/helpers';
 
-const DEFAULT_ACCENT = '#E0659A';
-const DEFAULT_GRAD: [string, string] = ['#E8659A', '#F4A0C0'];
+const DEFAULT_ACCENT = '#FFA951';
+const DEFAULT_GRAD: [string, string] = ['#FFA951', '#FFD09F'];
 const LOGIN_BG:    [string, string] = ['#FFFFFF', '#FFFFFF'];
 const NEW_USER_ACCENT    = '#ADC6E5';
 const NEW_USER_MODE      = 'light';
