@@ -25,6 +25,19 @@ Open it in a mobile browser and add it to your home screen — StudyHub installs
 
 It runs from a single React Native + Expo codebase across iOS, Android, and the web, and is deployed today as an installable Progressive Web App backed by Firebase.
 
+## 📸 Gallery (Screenshots)
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/screenshots/dashboard.png" width="400"/><br/>Dashboard & Pomodoro timer</td>
+    <td align="center"><img src="docs/screenshots/grades.png" width="400"/><br/>Adding a grade</td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/learning.png" width="400"/><br/>Adding a learning topic</td>
+    <td align="center"><img src="docs/screenshots/schedule.png" width="400"/><br/>Schedule (month view)</td>
+  </tr>
+</table>
+
 ## ✨ Key Features
 
 * 📊 **Dashboard** — daily overview, upcoming tasks and events, weighted grade average, a credit-progress ring, and a Pomodoro-style study timer.
