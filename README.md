@@ -29,12 +29,12 @@ It runs from a single React Native + Expo codebase across iOS, Android, and the 
 
 <table>
   <tr>
-    <td align="center"><img src="docs/screenshots/dashboard.png" width="400"/><br/>Dashboard & Pomodoro timer</td>
+    <td align="center"><img src="docs/screenshots/dashboard.png" width="400"/><br/>Dashboard</td>
     <td align="center"><img src="docs/screenshots/grades.png" width="400"/><br/>Adding a grade</td>
   </tr>
   <tr>
     <td align="center"><img src="docs/screenshots/learning.png" width="400"/><br/>Adding a learning topic</td>
-    <td align="center"><img src="docs/screenshots/schedule.png" width="400"/><br/>Schedule (month view)</td>
+    <td align="center"><img src="docs/screenshots/schedule.png" width="400"/><br/>Schedule</td>
   </tr>
 </table>
 
