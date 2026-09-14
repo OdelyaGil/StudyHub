@@ -33,7 +33,6 @@ It runs from a single React Native + Expo codebase across iOS, Android, and the 
 * 📅 **Schedule** — day / week / month / year calendar views, recurring events, and a per-event reminder picker.
 * 🧠 **Learning tracker** — mark topics per course as known or needing review.
 * 📚 **Study library** — Summaries, Glossary, Quiz Bank, Links, and Flashcards, all searchable.
-* 🎨 **Light/dark modes** — a fixed, cohesive brand palette across the whole app in both modes; there's no per-user color customization.
 
 ## 🛡️ Security & Privacy Architecture
 
