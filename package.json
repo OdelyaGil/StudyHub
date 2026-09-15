@@ -14,7 +14,8 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "eject": "expo eject"
+    "eject": "expo eject",
+    "lint": "eslint ."
   },
   "dependencies": {
     "@babel/core": "^7.20.0",
@@ -28,6 +29,8 @@
     "@react-navigation/stack": "^6.3.20",
     "@types/react": "~19.1.10",
     "babel-preset-expo": "~54.0.10",
+    "eslint": "^9.39.5",
+    "eslint-config-expo": "~10.0.0",
     "expo": "~54.0.35",
     "expo-device": "~8.0.10",
     "expo-document-picker": "~14.0.8",
