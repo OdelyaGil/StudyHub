@@ -258,6 +258,7 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({ item, onToggle, onDelete
     </Swipeable>
   );
 });
+TaskItem.displayName = 'TaskItem';
 
 // ── TasksScreen ───────────────────────────────────────────────────────────────
 const TasksScreen = () => {
