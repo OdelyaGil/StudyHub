@@ -3,7 +3,7 @@
 # 🎓 StudyHub
 ### Your entire academic life, in one place.
 
-[![Lint Code Base](https://github.com/OdelyaGil/StudyHub/actions/workflows/lint.yml/badge.svg)](https://github.com/OdelyaGil/StudyHub/actions/workflows/lint.yml)
+[![Lint Status](https://img.shields.io/github/actions/workflow/status/OdelyaGil/StudyHub/lint.yml?style=for-the-badge&logo=github)](https://github.com/OdelyaGil/StudyHub/actions/workflows/lint.yml)
 ![React Native](https://img.shields.io/badge/React_Native-0.81-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
 ![Expo](https://img.shields.io/badge/Expo-54-000020?style=for-the-badge&logo=expo&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.1-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
