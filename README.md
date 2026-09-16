@@ -1,10 +1,8 @@
 <div align="center">
 
-<video src="https://github.com/OdelyaGil/StudyHub/raw/main/docs/demo-preview-15s.mp4" controls width="480">
-  Your browser doesn't support embedded videos — <a href="https://github.com/OdelyaGil/StudyHub/raw/main/docs/StudyHub_walkthrough_demo.webm">watch it here</a> instead.
-</video>
+<img src="docs/demo-preview-15s.gif" width="480" alt="StudyHub demo preview" />
 
-▶️ [Watch the full walkthrough](https://github.com/OdelyaGil/StudyHub/raw/main/docs/StudyHub_walkthrough_demo.webm)
+📺 [Click Here to Watch the Full Video Demo](docs/StudyHub_walkthrough_demo.webm)
 
 </div>
 
