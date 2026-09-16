@@ -1,13 +1,5 @@
 <div align="center">
 
-<img src="docs/demo-preview-15s.gif" width="480" alt="StudyHub demo preview" />
-
-📺 [Click Here to Watch the Full Video Demo](docs/StudyHub_walkthrough_demo.webm)
-
-</div>
-
-<div align="center">
-
 # 🎓 StudyHub
 ### Your entire academic life, in one place.
 
@@ -17,6 +9,10 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.1-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
 ![Firebase](https://img.shields.io/badge/Firebase-Auth%20%7C%20Firestore-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)
 ![Vercel](https://img.shields.io/badge/Vercel-Hosting%20%7C%20API-000000?style=for-the-badge&logo=vercel&logoColor=white)
+
+<img src="docs/demo-preview-15s.gif" width="800" alt="StudyHub demo preview" />
+
+📺 [Click Here to Watch the Full Video Demo](docs/StudyHub_walkthrough_demo.webm)
 
 </div>
 
