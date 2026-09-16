@@ -1,5 +1,15 @@
 <div align="center">
 
+<video src="https://github.com/OdelyaGil/StudyHub/raw/main/docs/demo-preview-15s.mp4" controls width="480">
+  Your browser doesn't support embedded videos — <a href="https://github.com/OdelyaGil/StudyHub/raw/main/docs/StudyHub_walkthrough_demo.webm">watch it here</a> instead.
+</video>
+
+▶️ [Watch the full walkthrough](https://github.com/OdelyaGil/StudyHub/raw/main/docs/StudyHub_walkthrough_demo.webm)
+
+</div>
+
+<div align="center">
+
 # 🎓 StudyHub
 ### Your entire academic life, in one place.
 
